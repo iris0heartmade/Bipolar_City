@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#244f46">
+  <title>BIPOLE · 河湾镇城市纪事</title>
+  <link rel="icon" href="/static/assets/emblem.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="BIPOLE 首页"><img src="/static/assets/emblem.svg" alt=""><span>BIPOLE<small>双极 · 城市纪事</small></span></a>
+      <div class="city-title"><span class="eyebrow">一座小城，无数种未来</span><h1 id="city-name">河湾镇 <span>城市经营</span></h1></div>
+      <div class="header-actions"><span class="prototype-tag"><i></i>可玩原型 0.1</span><button class="icon-button" id="help-btn" aria-label="操作指南">?</button><button class="quiet-button" id="load-btn">读取</button><button class="save-button" id="save-btn"><span>▣</span> 保存城市</button></div>
+    </header>
+
+    <section class="metrics" aria-label="城市经营数据">
+      <div class="metric"><span class="metric-icon gold">◈</span><div><label>市政资金 <small>银镑</small></label><strong id="cash">—</strong><span id="cash-change">等待城市数据</span></div></div>
+      <div class="metric"><span class="metric-icon green">♙</span><div><label>城市人口 <small>人</small></label><strong id="population">—</strong><span id="migration">月度更新</span></div></div>
+      <div class="metric"><span class="metric-icon brick">⌂</span><div><label>住房容量 <small>人</small></label><strong id="capacity">—</strong><span id="vacancy">容量不等于入住</span></div></div>
+      <div class="metric"><span class="metric-icon blue">⚒</span><div><label>就业岗位 <small>个</small></label><strong id="jobs">—</strong><span>初版按人口匹配迁入</span></div></div>
+    </section>
+
+    <main class="workspace">
+      <aside class="build-panel panel">
+        <div class="panel-heading"><div><span class="eyebrow">CITY PLANNING</span><h2>让小城生长</h2></div><span class="heading-symbol">✦</span></div>
+        <p class="panel-intro">从一栋温暖的房子开始。</p>
+        <div class="category-tabs" role="group" aria-label="建筑分类"><button data-category="全部" class="active">全部</button><button data-category="住宅">住宅</button><button data-category="公共">公共</button><button data-category="产业">经营</button></div>
+        <div id="building-catalog" class="building-catalog"></div>
+        <div class="planning-note"><span>✧</span><p><strong>蓝图规划免费</strong><br>确认施工后才会扣除预算。</p></div>
+        <button id="inspect-btn" class="inspect-button active">↖ 查看城市 / 选择建筑</button>
+        <div class="sidebar-bottom"><span>原型测试城市 · 非小说正史</span><button id="new-btn">新建开局 ↗</button></div>
+      </aside>
+
+      <section class="map-panel" aria-label="等距城市地图">
+        <div class="map-top"><div><span class="map-title"><i></i>河湾镇 · 城市视图</span><small id="map-subtitle">北方河岸 / 第一年</small></div><div class="map-view-tools"><button id="grid-btn" aria-pressed="false" title="切换格子线">▦ 格子</button><button id="layer-btn" aria-pressed="false" title="显示住宅容量">⌂ 住房</button></div></div>
+        <canvas id="city-canvas" tabindex="0" aria-label="城市地图；选择建筑后点击空地放蓝图，R 旋转，Esc 退出，拖动平移，滚轮缩放"></canvas>
+        <div class="map-caption"><span class="compass">N <b>↗</b></span><div><strong>河岸的风，吹向新的生活。</strong><span>蒸汽与魔法交织的时代，城市由你书写。</span></div></div>
+        <div id="placement-hint" class="placement-hint" hidden></div>
+        <div class="map-controls"><button id="zoom-in" aria-label="放大地图">＋</button><button id="zoom-out" aria-label="缩小地图">−</button><button id="reset-view" aria-label="重置地图视角">⌖</button><span id="zoom-label">100%</span></div>
+        <div class="mini-map"><canvas id="minimap" width="144" height="100" aria-label="城市全图"></canvas><span>河湾地区 / 28 × 28</span></div>
+        <div class="map-help"><span>拖动平移</span><i>·</i><span>滚轮缩放</span><i>·</i><span>R 旋转</span></div>
+        <div id="plan-bar" class="plan-bar" hidden><div><strong id="plan-count">规划 0 座建筑</strong><span id="plan-cost">预算 —</span></div><button id="rotate-btn" class="quiet-button">↻ 旋转</button><button id="cancel-btn" class="quiet-button">取消蓝图</button><button id="commit-btn" class="save-button">确认施工 →</button></div>
+      </section>
+
+      <aside class="overview-panel panel">
+        <div class="overview-tabs" role="group" aria-label="信息面板"><button data-pane="overview" class="active">城市概况</button><button data-pane="ledger">财政账本</button></div>
+        <div id="overview-pane">
+          <div class="city-card"><span class="city-seal">⌂</span><span class="eyebrow">RIVER TOWN</span><h2>河湾镇</h2><p>一座正在苏醒的河岸小城</p><div><span>建城第一章</span><b id="town-stage">安居与生长</b></div></div>
+          <section class="housing-section"><div class="section-label"><h3>居住与生活</h3><span id="housing-percent">—</span></div><div class="progress-track"><div id="housing-progress"></div></div><div class="legend"><span><i></i>已入住人口</span><span id="housing-ratio">— / —</span></div><p id="city-advice" class="city-advice">正在连接城市……</p></section>
+          <section id="selection-section" class="selection-section" hidden><div class="section-label"><h3 id="selected-name">建筑详情</h3><button id="clear-selection" aria-label="关闭建筑详情">×</button></div><p id="selected-description"></p><dl id="selected-stats"></dl></section>
+          <section class="growth-section"><div class="section-label"><h3>人口足迹</h3><span>最近 24 月</span></div><svg id="growth-chart" viewBox="0 0 240 64" role="img" aria-label="实际月度人口趋势"></svg><div class="chart-caption"><span id="chart-start">开局</span><span id="chart-end">推进月份后记录</span></div></section>
+          <section class="chronicle"><div class="section-label"><h3>城市纪事</h3><span class="tiny-dot"></span></div><div id="events"></div></section>
+        </div>
+        <div id="ledger-pane" hidden><div class="panel-heading"><h2>每一笔都看得见</h2></div><p class="panel-intro">贷款、房屋销售与租金尚未接入。当前收入为简化税收。</p><dl id="finance-summary" class="finance-summary"></dl><div id="ledger-list" class="ledger-list"></div></div>
+        <div class="overview-footer"><span class="connection-dot"></span><span id="connection-status">连接本地模拟</span></div>
+      </aside>
+    </main>
+
+    <footer class="timebar"><div class="calendar"><span>◷</span><div><strong id="date">第 1 年 · 1 月</strong><small id="day">第 1 日 · 早春</small></div></div><div class="time-controls"><button id="pause-btn" class="pause-button" aria-label="继续模拟">▶ 继续</button><div class="speed-controls" role="group" aria-label="时间倍率"><button data-speed="0.5">0.5×</button><button data-speed="1" class="active">1×</button><button data-speed="2">2×</button></div><button id="advance-btn" class="advance-button">推进一个月 →</button></div><button id="queue-toggle" class="queue-toggle">⚒ <span id="queue-count">没有施工项目</span><b>⌃</b></button><span class="timebar-label">慢慢来，城市会长大。</span></footer>
+    <section id="queue-drawer" class="queue-drawer" hidden><div class="section-label"><h3>施工队列</h3><button id="queue-close" aria-label="关闭施工队列">×</button></div><div id="queue-list"></div></section>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <dialog id="help-dialog"><button class="dialog-close" data-close aria-label="关闭指南">×</button><span class="eyebrow">YOUR FIRST CITY</span><h2>欢迎，河湾镇的新市长。</h2><p>这里没有强制主线。先造一栋房子，再看小城生长。</p><ol><li>在左侧选择住宅，沿道路空地移动鼠标。入口须接通道路，按 <kbd>R</kbd> 调整方向。</li><li>点击放下免费蓝图，再点「确认施工」扣除预算。</li><li>点「继续」按日运行，或暂停后「推进一个月」。住宅竣工后居民逐月迁入。</li><li>查看财政账本和施工队列，随时保存；读取会恢复保存时的完整城市。</li></ol><p class="dialog-note">所有地图素材均由代码绘制。初版采用市政持有住房；集市/工坊提供简化岗位，花园暂未提供环境加成。银行、议会、人才和城际贸易将在后续版本加入。</p><button class="save-button" data-close>开始书写城市故事 →</button></dialog>
+  <dialog id="new-dialog"><button class="dialog-close" data-close aria-label="关闭新建开局">×</button><span class="eyebrow">A NEW CHAPTER</span><h2>重新接手一座小城</h2><p>会替换当前未保存的城市，不会删除已有存档。同一种子得到同一开局。</p><label class="seed-label" for="seed-input">开局种子</label><input id="seed-input" type="number" min="0" max="2147483647" value="20261012"><button id="confirm-new" class="save-button">创建新开局 →</button></dialog>
+  <script type="module" src="/static/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+[
+  {"id":"row_house","name":"河岸联排住宅","category":"住宅","description":"温暖的砖墙与尖屋顶，为迁入居民提供安稳的家。初版采用市政持有。","width":2,"height":2,"entry":[0,2],"cost":420000,"duration":14,"capacity":28,"jobs":0,"maintenance":1800,"color":"#a9654f","buildable":true},
+  {"id":"apartment","name":"工人公寓","category":"住宅","description":"更紧凑的三层公寓，提供较多住房；需承担更高维护费用。","width":2,"height":3,"entry":[0,3],"cost":780000,"duration":24,"capacity":56,"jobs":0,"maintenance":3800,"color":"#c1925d","buildable":true},
+  {"id":"park","name":"街角花园","category":"公共","description":"为街区添一片绿意。初版计入维护，环境加成将在后续版本接入。","width":2,"height":2,"entry":[0,2],"cost":160000,"duration":7,"capacity":0,"jobs":0,"maintenance":900,"color":"#6f9964","buildable":true},
+  {"id":"market","name":"河湾集市","category":"商业","description":"提供基础就业空间。当前仅计算岗位和维护，商户入驻系统尚未接入。","width":3,"height":2,"entry":[0,2],"cost":560000,"duration":18,"capacity":0,"jobs":45,"maintenance":2400,"color":"#c79d5c","buildable":true},
+  {"id":"workshop","name":"蒸汽工坊","category":"产业","description":"传统工业街区的起点。当前提供基础岗位，生产与战略库存将在后续接入。","width":3,"height":2,"entry":[0,2],"cost":640000,"duration":21,"capacity":0,"jobs":60,"maintenance":3200,"color":"#70818b","buildable":true},
+  {"id":"town_hall","name":"河湾市政厅","category":"市政","description":"市政管理的所在地，也是城镇道路网络的起点。","width":3,"height":3,"entry":[0,3],"cost":0,"duration":0,"capacity":0,"jobs":0,"maintenance":4500,"color":"#9f8971","buildable":false}
+]

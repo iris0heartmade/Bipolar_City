@@ -1,0 +1,14 @@
+{
+  "id": "river_town", "name": "河湾镇", "subtitle": "北方河岸 · 原型测试城市",
+  "width": 28, "height": 28,
+  "river_start_x": 23, "river_bend_y": 15, "river_bend_offset": -1,
+  "road_columns": [8, 15], "road_rows": [10, 17], "bridge_rows": [17],
+  "initial_houses": 10,
+  "house_candidates": [[2,8],[5,8],[9,8],[12,8],[16,8],[19,8],[2,15],[5,15],[9,15],[12,15],[16,15],[19,15]],
+  "landmarks": [
+    {"definition_id":"town_hall", "x":9, "y":11, "rotation":2},
+    {"definition_id":"workshop", "x":16, "y":18, "rotation":2},
+    {"definition_id":"market", "x":5, "y":18, "rotation":2},
+    {"definition_id":"park", "x":12, "y":18, "rotation":2}
+  ]
+}

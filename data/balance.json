@@ -1,0 +1,14 @@
+{
+  "note": "全部为初版测试参数；金额为银镑的百分之一，不属于正式经济平衡。",
+  "starting_cash": 4800000,
+  "initial_population": 168,
+  "tax_per_resident": 420,
+  "migration_per_month": 14,
+  "base_jobs": 200,
+  "days_per_month": 30,
+  "months_per_year": 12,
+  "seconds_per_day": 5,
+  "event_limit": 30,
+  "history_limit": 24,
+  "starting_seed": 20261012
+}
