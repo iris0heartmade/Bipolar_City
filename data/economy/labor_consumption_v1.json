@@ -1,0 +1,135 @@
+{
+  "config_id": "labor_consumption_v1",
+  "config_version": "1.0.0",
+  "schema_version": 1,
+  "description": "P03 居民分群、劳动力市场与消费预算。首月沿用 P00 校准总额，后续月份由上期可支配收入反馈驱动。",
+  "source": "原设计稿 Q32（按劳动者/商人/专业人士群体模拟诉求）与经济输入 V1.0 §1/2/4.3；分群口径见校准项 A-05 与 A-08",
+  "amount_unit": "CR",
+
+  "note": "原始输入未给出收入层与技能结构的人数分布，本文件按经济逻辑补齐并登记为 A-08；不得当作原文正史。",
+
+  "identity_rules": {
+    "population_identity": "employed + unemployed + not_in_labour_force == population",
+    "labour_force": "employed + unemployed",
+    "rule": "职业身份与财产身份分开记账；房东是家庭财产身份，不得额外增加人口。"
+  },
+
+  "income_bands": [
+    {
+      "id": "low",
+      "name": "低收入群体",
+      "households": 375,
+      "population": 1500,
+      "employed": 750,
+      "unemployed": 75,
+      "not_in_labour_force": 675,
+      "wage_income": 60000,
+      "asset_income": 5000,
+      "property_tax_share": 0.10,
+      "relief_share": 0.60,
+      "spend_ratio": 0.85,
+      "basket": {
+        "food": 0.55,
+        "fuel": 0.12,
+        "clothing": 0.10,
+        "services": 0.13,
+        "culture": 0.04,
+        "transport": 0.06
+      },
+      "note": "食品占商品消费 55%，处于 E §5 的 55%—65% 建议区间下沿；储蓄能力最弱，对欠薪最敏感。"
+    },
+    {
+      "id": "middle",
+      "name": "中等收入群体",
+      "households": 262,
+      "population": 1048,
+      "employed": 600,
+      "unemployed": 50,
+      "not_in_labour_force": 398,
+      "wage_income": 55000,
+      "asset_income": 12000,
+      "property_tax_share": 0.50,
+      "relief_share": 0.30,
+      "spend_ratio": 0.75,
+      "basket": {
+        "food": 0.45,
+        "fuel": 0.10,
+        "clothing": 0.12,
+        "services": 0.18,
+        "culture": 0.08,
+        "transport": 0.07
+      }
+    },
+    {
+      "id": "high",
+      "name": "高收入群体",
+      "households": 113,
+      "population": 452,
+      "employed": 150,
+      "unemployed": 25,
+      "not_in_labour_force": 277,
+      "wage_income": 21300,
+      "asset_income": 20000,
+      "property_tax_share": 0.40,
+      "relief_share": 0.10,
+      "spend_ratio": 0.62,
+      "basket": {
+        "food": 0.30,
+        "fuel": 0.07,
+        "clothing": 0.13,
+        "services": 0.25,
+        "culture": 0.17,
+        "transport": 0.08
+      },
+      "note": "工资占比低，资产收入与租金占比高；是分期与投资的主要资金来源。"
+    }
+  ],
+
+  "basket_categories": ["food", "fuel", "clothing", "services", "culture", "transport"],
+
+  "cash_rules": {
+    "wallet_split": "gross_income",
+    "wallet_split_note": "家庭主钱包只有一个聚合账户，按各层税前毛收入比例拆到收入层；这只是预算视角的切分，不产生任何现金转移，全城现金不变。",
+    "inflow_rule": "本期到手现金 = 本层工资收入 + 本层资产收入（股息与净房产收入）+ 按 relief_share 分摊的救济。",
+    "mandatory_rule": "本期必付现金 = 本层所得税 + 本层房产税 + 按户数分摊的住宅租金 + 按户数分摊的宗教奉献。",
+    "capacity_formula": "可动用容量 = 期初钱包 + 本期到手现金 − 本期必付现金；商品服务消费不得超过该容量。",
+    "last_disposable_rule": "上期可支配收入 = 税前毛收入 − 两项税 + 救济，且不得超过上期实际到手的钱，以免用没到账的收入做预算。",
+    "landlord_distribution_ratio": 1.0,
+    "landlord_distribution_note": "房东是家庭的财产身份，本阶段没有独立的消费行为：净房产收入（住宅租金＋商业租金−维修）按月按该比例分配回家庭主钱包，房东子账户月末归零。设为 0 即表示房东自行留存，待 P05 引入个体财富后再启用。",
+    "rounding_note": "所有按比例分摊都把不足 1 分的残差归入第一项，保证分摊合计精确等于全额。"
+  },
+
+  "labour_market": {
+    "private_post_total": 1380,
+    "public_post_total": 120,
+    "employed_total": 1500,
+    "unemployed_total": 150,
+    "minimum_wage_note": "低于最低工资的岗位不得开设；基准配置本身已满足，引擎需持续校验。",
+    "wage_convergence": {
+      "target_rate": 0.25,
+      "monthly_limit": 0.03,
+      "note": "工资目标每月收敛 25%，普通月涨跌不超过 ±3%。"
+    },
+    "fill_rule": "岗位空缺不得超过实际可用劳动者；录用后该群体剩余劳动力相应减少，同一人不得被两家企业重复录用。"
+  },
+
+  "consumption": {
+    "month_1_reference_total": 119000,
+    "month_1_note": "首月为校准基准，总额固定以对齐 P02 已验证的 +27100；各层按 spend_ratio 加权后统一缩放到该总额。",
+    "normal_rule": "第 2 月起，各层商品服务消费 = min(该层上期可支配收入 × spend_ratio, 该层可动用容量)，不再缩放，形成真实的收入反馈。",
+    "reserved_needs": ["rent", "food", "fuel"],
+    "reserve_note": "基本房租、食品与燃料先行预留；无可动用储蓄时消费不得超过上期可支配收入。",
+    "unspent_rule": "未花预算留在家庭钱包，不能当作商户收入。"
+  },
+
+  "migration": {
+    "monthly_cap_ratio": 0.01,
+    "formula": "U = 0.30*real_disposable_income - 0.25*housing_burden - 0.15*commute + 0.15*services - 0.15*danger",
+    "note": "各指数先归一化。普通月净迁徙不超过当前人口 1%，不得沿用原型对所有人口规模的固定值。",
+    "cash_rule": "迁入者自带资金由外部或原城市转入，迁出带走现金；不得漏计净流入。"
+  },
+
+  "education": {
+    "note": "培训与毕业延迟 12 月，属 P07 范围；本阶段学龄人口只作为非劳动力子集存在，不额外增加人口。"
+  }
+}

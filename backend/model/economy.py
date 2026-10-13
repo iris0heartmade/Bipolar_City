@@ -80,6 +80,9 @@ class ReferenceCity:
         self.config = config or REFERENCE_CITY
         self.calibration = CALIBRATION
         self.last_journal = []
+        # P03 收入层登记表挂在城上：跨月延续消费反馈的唯一载体。
+        # 放在城上而不是每次调用现造，是为了杜绝「忘记传 registry 导致反馈静默归零」。
+        self._registry = None
         if book is None:
             self.book = AccountBook()
             self._open_accounts()
@@ -87,6 +90,14 @@ class ReferenceCity:
             # 读档路径：沿用存档中的账户簿，不重新开账户，避免覆盖已有余额
             self.book = book
         self.sectors = self._build_sectors()
+
+    @property
+    def household_registry(self):
+        """惰性装配收入层登记表；此处局部导入以避开 economy↔households 的循环依赖。"""
+        if self._registry is None:
+            from backend.model.households import HouseholdRegistry
+            self._registry = HouseholdRegistry()
+        return self._registry
 
     # --- 场景装配 -----------------------------------------------------
 

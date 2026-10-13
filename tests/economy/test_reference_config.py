@@ -243,14 +243,21 @@ def test_assumptions_are_declared_with_reasons():
     assert len(ids) == len(set(ids)), "假设编号不得重复"
     for item in assumptions:
         assert item["reason"].strip(), f"{item['id']} 缺少理由"
-        assert item["status"] in {"calibration", "derived", "pending"}
+        assert item["status"] in {"calibration", "derived", "pending", "partially_resolved"}
         assert item["verify_in"].strip(), f"{item['id']} 缺少验证阶段"
 
 
 def test_pending_assumptions_block_downstream_claims():
-    """尚未补齐的项必须标 pending，不能悄悄按已确认数据使用。"""
+    """尚未补齐的项必须标 pending，不能悄悄按已确认数据使用。
+
+    A-05 原为整项 pending，P03 补齐了家庭分层但技能人数分布仍缺，
+    因此降级为 partially_resolved 而不是直接改成已完成。
+    """
     pending = {a["id"] for a in CALIBRATION["assumptions"] if a["status"] == "pending"}
-    assert pending == {"A-05", "A-06", "A-07"}, "P00/P01 阶段不应新增未登记的缺口"
+    partial = {a["id"] for a in CALIBRATION["assumptions"]
+               if a["status"] == "partially_resolved"}
+    assert pending == {"A-06", "A-07"}, "只允许 P00—P03 已登记的缺口，不得新增未登记缺口"
+    assert partial == {"A-05"}
 
 
 def test_opening_cash_is_stock_not_first_month_revenue():

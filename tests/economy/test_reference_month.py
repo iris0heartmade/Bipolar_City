@@ -203,7 +203,8 @@ def test_same_month_replay_does_not_pay_twice(city):
 
     assert city.book.snapshot() == after_first, "重复提交同一月份不得二次付款"
     assert replay.city_cash_change_cents == 0, "被幂等跳过的月份不再产生新的现金变动"
-    assert len(journal) == 24, "本月恰好 24 笔交易，重放不新增"
+    # P03 新增「房东净房产收入分配回主钱包」一笔，本月共 25 笔，重放不新增
+    assert len(journal) == 25, "本月恰好 25 笔交易，重放不新增"
 
 
 def test_world_is_external_and_may_go_negative(city):
@@ -214,9 +215,30 @@ def test_world_is_external_and_may_go_negative(city):
 
 
 def test_landlord_is_household_property_not_extra_population(city):
+    """房东是财产身份不是独立主体：租金进子钱包，但同月全额分配回主钱包。
+
+    P03 之前的 P02 行为是房东子账户月底留下 21000 不动，主钱包每月净流出
+    12569，第 13 个月必然破产。分配这一步是修复该问题的关键半步。
+    """
     simulate_month(city, month=1)
     landlords = city.book[ReferenceCity.LANDLORDS]
     assert landlords.owner_kind == "landlord"
     assert landlords.parent_account_id == ReferenceCity.HOUSEHOLDS
     assert city.book.mirrored_pairs() == [], "房东与家庭主钱包不是同一主体的镜像"
-    assert landlords.cash_cents == 21000 * CENT
+
+    distribution = [tx for tx in city.last_journal if tx.source_ref == "landlord-property-income"]
+    assert len(distribution) == 1, "净房产收入分配必须是且只是一笔，不得重复入账"
+    row = distribution[0]
+    assert row.from_account == ReferenceCity.LANDLORDS and row.to_account == ReferenceCity.HOUSEHOLDS
+    assert row.amount_cents == 21000 * CENT, "分配额＝住宅租金＋商业租金−维修"
+    assert landlords.cash_cents == 0, "房东不另设消费行为，分配后子账户归零"
+
+    # 主钱包必须确实收到了这笔钱，而不是凭空多出来的：逐笔对账而不是只看余额
+    households = city.book[ReferenceCity.HOUSEHOLDS].cash_cents
+    inflows = sum(tx.amount_cents for tx in city.last_journal
+                  if tx.to_account == ReferenceCity.HOUSEHOLDS)
+    outflows = sum(tx.amount_cents for tx in city.last_journal
+                   if tx.from_account == ReferenceCity.HOUSEHOLDS)
+    assert inflows - outflows == households - cr_to_cents(157131)
+    assert row.amount_cents in (tx.amount_cents for tx in city.last_journal
+                                if tx.to_account == ReferenceCity.HOUSEHOLDS)

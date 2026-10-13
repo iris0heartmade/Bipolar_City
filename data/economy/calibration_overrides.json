@@ -91,11 +91,11 @@
     {
       "id": "A-05",
       "topic": "技能结构与家庭分层",
-      "status": "pending",
-      "value": null,
-      "reason": "原输入未给 basic/skilled/professional/mage 的人数分布，低/高收入篮子也无法据此拆分。",
-      "impact": "P03 消费篮子和招聘匹配在此之前只能跑聚合值。",
-      "verify_in": "P03 test_population_identity.py"
+      "status": "partially_resolved",
+      "value": "家庭分层已由 A-08 给出；技能人数分布仍缺失",
+      "reason": "原输入未给 basic/skilled/professional/mage 的人数分布。收入层已按人均收入分层并通过 P03 人口恒等式校验，但岗位匹配当前按人均收入而非技能等级排序。",
+      "impact": "低/高收入篮子已可分别配置；逐技能招聘匹配须等技能分布给出后再做。",
+      "verify_in": "P03 test_population_identity.py（分层部分）、P07（技能部分）"
     },
     {
       "id": "A-06",
@@ -114,6 +114,24 @@
       "reason": "生产法组成（私企176500+房产21000+政府14400）可核对；支出法的等价展开尚未在引擎中实现验证。",
       "impact": "两口径收敛前不能宣称 GVA 已双向验证。",
       "verify_in": "P02 test_reference_month.py"
+    },
+    {
+      "id": "A-08",
+      "topic": "收入层与技能结构",
+      "status": "calibration",
+      "value": "low/middle/high 三层；户数 375/262/113，人均收入 38.0/71.6/91.4 CR",
+      "reason": "原输入未给收入层的人数分布。层内人数按人口恒等式推导，层间工资与资产收入按经济逻辑分配：工资合计精确等于 136300（私企 121900＋公共 14400），资产收入合计精确等于 37000（股息 16000＋净房产 21000），因此分群合计与 P02 已验证的全城口径严丝合缝。收入层按人均收入排序，不按收入总额排序——高收入层人少，总额本来就低。",
+      "impact": "决定分层消费率、食品占比、房产税与救济份额；不改变首月 157131 可支配与 517 市政结余。",
+      "verify_in": "P03 test_population_identity.py、test_consumption_budget.py"
+    },
+    {
+      "id": "A-09",
+      "topic": "房东净房产收入分配比例",
+      "status": "calibration",
+      "value": 1.0,
+      "reason": "原输入把租金记在房东子账户，却没有给房东的消费行为。若净房产收入只进不出，21000 CR/月会永远堆在子账户，而住户钱包每月净流出 12569，第 13 个月必然破产——这是 P02 实际观察到的现象。",
+      "impact": "分配比例设为 1.0 时房东子账户月末归零，家庭钱包完整收到统计口径的净房产收入；设为 0 即表示房东自行留存，待 P05 引入个体财富模型后再启用。",
+      "verify_in": "P03 test_reference_month.py::test_landlord_is_household_property_not_extra_population"
     }
   ],
 

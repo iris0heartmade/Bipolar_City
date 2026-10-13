@@ -1,11 +1,13 @@
-"""P02：全城现金守恒的长期与边界验证。
+"""P02/P03：全城现金守恒的长期与边界验证。
 
 守恒恒等式：各本地账户现金变化之和，必须等于与非本地账户的实际净收付款的相反数。
 两者相加为零，说明全世界的现金既没有被创造也没有被销毁。
 """
+from copy import deepcopy
+
 import pytest
 
-from backend.config import CALIBRATION
+from backend.config import CALIBRATION, REFERENCE_CITY
 from backend.core.monthly import simulate_month
 from backend.core.settlement import InsufficientFunds, Settlement
 from backend.model.accounts import AccountBook
@@ -86,45 +88,69 @@ def test_internal_transfers_alone_do_not_create_cash():
 # --- 长期稳定性 -------------------------------------------------------
 
 def test_twelve_consecutive_months_stay_balanced():
-    """固定配置下连续 12 个月，每月都应闭合且世界现金不变。"""
-    city = ReferenceCity()
-    opening_total = world_total(city.book)
-    for month in range(1, 13):
-        before = world_total(city.book)
-        report = simulate_month(city, month=month)
-        assert world_total(city.book) == before, f"第 {month} 月世界现金发生变化"
-        assert report.city_cash_change_cents == cr_to_cents(TARGETS["city_net_cash_change"])
-    assert world_total(city.book) == opening_total
+    """连续 12 个月每月都应闭合且世界现金不变。
 
-
-def test_fixed_baseline_drains_household_savings_and_then_stalls():
-    """已知边界：P02 固定配置下居民每月净流出 12569，第 13 个月将无力支付，整批被拒。
-
-    这不是 bug，而是「消费不随收入变化」的结果——P03 引入预算反馈后才会改变。
-    这里把行为钉死，防止将来有人误以为是无穷印钞或莫名破产。
+    首月消费走校准总额 119000，第 2 月起消费改由上期可支配收入反馈得出。
+    但消费是家庭付给企业的内部转移（通俗比喻：只是把钱从左口袋挪到右口袋），
+    不改变全城现金总额——全城现金变化只由进出口、游客、资本、拨款与利息决定，
+    所以这 12 个月都应稳定在基准 +27100，而家庭与企业的账却在互相挪动。
     """
     city = ReferenceCity()
+    opening_total = world_total(city.book)
+    baseline = cr_to_cents(TARGETS["city_net_cash_change"])
+    household_changes = []
     for month in range(1, 13):
-        simulate_month(city, month=month)
-    households = city.book[HOUSEHOLDS].cash_cents
-    assert households < cr_to_cents(20000), "第 12 月末居民储蓄应已接近耗尽"
+        before = world_total(city.book)
+        before_households = city.book[HOUSEHOLDS].cash_cents
+        report = simulate_month(city, month=month)
+        assert world_total(city.book) == before, f"第 {month} 月世界现金发生变化"
+        assert report.city_cash_change_cents == baseline, f"第 {month} 月全城现金变化偏离基准"
+        assert report.city_cash_change_cents == -report.external_cash_change_cents
+        household_changes.append(city.book[HOUSEHOLDS].cash_cents - before_households)
 
-    with pytest.raises(InsufficientFunds):
-        simulate_month(city, month=13)
-    assert city.book[HOUSEHOLDS].cash_cents == households, "清算失败不得扣动居民余额"
+    assert world_total(city.book) == opening_total
+    assert household_changes[0] != household_changes[1], \
+        "消费反馈必须让家庭账逐月变化，否则说明跨月反馈根本没接上"
 
 
-def test_failure_leaves_every_account_untouched():
+def test_consumption_feedback_prevents_the_month_13_bankruptcy():
+    """P03 的核心验收：P02 里第 13 个月因余额不足被整批拒绝，现在必须能跑通。
+
+    P02 固定配置下住户钱包每月净流出 12569，第 13 个月无力支付。
+    P03 做了两件事把它修掉：
+    1. 房东净房产收入按月分配回家庭主钱包，钱不再只进不出；
+    2. 消费由上期可支配收入反馈决定，并受真实现金容量封顶，不再是写死的常数。
+    """
     city = ReferenceCity()
-    for month in range(1, 14):
-        try:
-            simulate_month(city, month=month)
-        except InsufficientFunds:
-            break
+    for month in range(1, 25):
+        report = simulate_month(city, month=month)
+        assert report.revenue_cents > 0, f"第 {month} 月消费塌成零"
+        for account in city.book.local_leaves():
+            assert account.cash_cents >= 0, f"第 {month} 月账户 {account.account_id} 透支"
+
+    households = city.book[HOUSEHOLDS].cash_cents
+    assert households > cr_to_cents(150000), "24 个月后居民储蓄应稳定增长而非耗尽"
+    assert city.book[LANDLORDS].cash_cents == 0, "房东净房产收入已按月分配回主钱包"
+
+
+def test_failed_month_never_leaves_a_partial_state():
+    """付款不足时整批不落账：本地账户快照必须与失败前逐分一致。
+
+    基准配置下所有账户每月都是净流入，付不出钱的情况不会自然发生，
+    因此这里人为把市政救济抬到远超收入、再清空市政钱包，制造一次真实的拒付。
+    """
+    config = deepcopy(REFERENCE_CITY)
+    config["fiscal"]["relief_payments"] = 60000      # 市政每月净流出远超其收入
+    city = ReferenceCity(config=config)
+    simulate_month(city, month=1)
+    assert city.book[GOV].cash_cents < cr_to_cents(60000), "前置条件：市政确实已入不敷出"
+
+    city.book[GOV].cash_cents = 0
     snapshot = city.book.snapshot()
+
     with pytest.raises(InsufficientFunds):
-        simulate_month(city, month=13)
-    assert city.book.snapshot() == snapshot
+        simulate_month(city, month=2)
+    assert city.book.snapshot() == snapshot, "清算失败不得扣动任何账户"
 
 
 # --- 存档与恢复 -------------------------------------------------------
