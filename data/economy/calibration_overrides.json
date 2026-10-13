@@ -1,0 +1,156 @@
+{
+  "config_id": "calibration_overrides",
+  "config_version": "1.0.0",
+  "schema_version": 1,
+  "description": "P00 校准项：把原始输入没有给出、但真实清算必须显式假设的部分单独登记。任何进入此文件的数值都不是原文正史。",
+  "source": "docs/03_设计规范/游戏模块开发要求与详细设计.md#calibration",
+  "amount_unit": "CR",
+
+  "opening_balances": {
+    "note": "期初现金是存量，不计首月收入。E §11/12 给了政府和教会现金，但未给每家企业、家庭现金。",
+    "city_government": 100000,
+    "church": 20000,
+    "households_total": 157131,
+    "households_basis": "1 个月居民可支配收入，保证首月消费/租金/奉献有真实资金来源，不用未到账工资虚构预算",
+    "firms": [
+      {"sector": "agriculture",     "opening_cash": 33600, "basis": "2x 月固定支出"},
+      {"sector": "light_industry", "opening_cash": 81800, "basis": "2x 月固定支出"},
+      {"sector": "heavy_mining",   "opening_cash": 50400, "basis": "2x 月固定支出"},
+      {"sector": "retail",         "opening_cash": 50320, "basis": "2x 月固定支出"},
+      {"sector": "logistics",      "opening_cash": 25480, "basis": "2x 月固定支出"},
+      {"sector": "services",       "opening_cash": 23600, "basis": "2x 月固定支出"}
+    ],
+    "firms_monthly_fixed_basis": "工资 + 商租 + 规费（不含采购与折旧，采购由当月收入覆盖）"
+  },
+
+  "algorithm_conventions": {
+    "dividend_payout": {
+      "value": "16000/37312",
+      "rational_form": true,
+      "note": "E §11 给 0.4288，量化后 15999.3856，无法同时满足首月 16000。参考 fixture 用有理数表达，普通演化配置可用 0.4288 但须相应重算预期。不强改企业余额。"
+    },
+    "faith_timing": {
+      "value": "opening",
+      "note": "基准首月按期初信仰 0.55 计算税、工资/工时和捐赠；月底慢变到 0.5497 只影响下一月，报告分开保存期初/期末。"
+    },
+    "capacity_normalisation": {
+      "value": 425000,
+      "note": "加入基准安全/技能损失时须重归一化 K，不在原 80% 利用率上重复扣同一损失。"
+    },
+    "church_formula": {
+      "value": "closing = opening + donation + official_subsidy - donation_to_city",
+      "note": "E §6.3 简式漏了 §6.2 官方扶持收入，此处用完整式；中立基准扶持为 0，不改变 +840。"
+    },
+    "depreciation_cash_rule": {
+      "value": "non_cash",
+      "note": "折旧扣利润但不再扣钱包；现金口径只减真正支付的投入/工资/租金/税/股息/资本/利息。"
+    },
+    "rounding": {
+      "value": "integer_cents",
+      "note": "内部一律整数分；聚合舍入残差最多 1 分且必须归属明确的舍入项，月末不创造神秘调整收入。"
+    }
+  },
+
+  "assumptions": [
+    {
+      "id": "A-01",
+      "topic": "家庭期初现金",
+      "status": "calibration",
+      "value": 157131,
+      "reason": "原输入未给家庭流动资金。若期初现金不足，首月消费/租金/奉献将无法真实清算，或被迫用未到账工资造钱。",
+      "impact": "决定首月居民钱包起点；不影响月度差额结论。",
+      "verify_in": "P02 tests/economy/test_reference_month.py"
+    },
+    {
+      "id": "A-02",
+      "topic": "企业期初现金",
+      "status": "calibration",
+      "value": "2x 月固定支出，逐行业 265200",
+      "reason": "原输入未给每家企业现金；固定支出口径保证工资/租金/规费有付款账户，同时不虚增营业额。",
+      "impact": "决定企业能否在收入到账前先付工资；不影响利润与税基。",
+      "verify_in": "P02 tests/economy/test_cash_conservation.py"
+    },
+    {
+      "id": "A-03",
+      "topic": "救济金 3200",
+      "status": "derived",
+      "value": 3200,
+      "reason": "由市政结余 517 反推的唯一解：28817-28300=517，需要 3200 才能同时满足居民可支配 157131 与市政结余。",
+      "impact": "同时决定居民可支配收入和市政结余，是闭合关键项。",
+      "verify_in": "P02 双口径断言"
+    },
+    {
+      "id": "A-04",
+      "topic": "贷款摊还期限 12 月",
+      "status": "calibration",
+      "value": 12,
+      "reason": "原输入只给剩余 12 月宽限与月息 1%，未给宽限后的摊还月数。不能从宽限期推断。",
+      "impact": "第 13 月起的本金偿还节奏；首月不受影响。",
+      "verify_in": "P05 第 13 月本金验收"
+    },
+    {
+      "id": "A-05",
+      "topic": "技能结构与家庭分层",
+      "status": "pending",
+      "value": null,
+      "reason": "原输入未给 basic/skilled/professional/mage 的人数分布，低/高收入篮子也无法据此拆分。",
+      "impact": "P03 消费篮子和招聘匹配在此之前只能跑聚合值。",
+      "verify_in": "P03 test_population_identity.py"
+    },
+    {
+      "id": "A-06",
+      "topic": "企业间交易矩阵",
+      "status": "pending",
+      "value": null,
+      "reason": "只给了互购总额 86000 与各行业采购总额，未给行业×行业的具体分配。P02 以聚合边界账户承接，不硬编矩阵。",
+      "impact": "逐店拆分在 P05 需要真实矩阵，否则行业间转移无法双对手匹配。",
+      "verify_in": "P05 test_firm_rollup.py"
+    },
+    {
+      "id": "A-07",
+      "topic": "GVA 支出法展开",
+      "status": "pending",
+      "value": 211900,
+      "reason": "生产法组成（私企176500+房产21000+政府14400）可核对；支出法的等价展开尚未在引擎中实现验证。",
+      "impact": "两口径收敛前不能宣称 GVA 已双向验证。",
+      "verify_in": "P02 test_reference_month.py"
+    }
+  ],
+
+  "derived_targets": {
+    "note": "以下为设计文档 §3.2 的会计硬门槛，仅供测试断言。引擎必须自行计算这些值，禁止用本表覆盖实际结果。",
+    "wages_private": 121900,
+    "wages_public": 14400,
+    "wages_total": 136300,
+    "profit_before_tax": 42400,
+    "profit_tax": 5088,
+    "profit_after_tax": 37312,
+    "dividends": 16000,
+    "retained_profit": 21312,
+    "firm_cash_change": 17312,
+    "resident_gross_income": 173300,
+    "income_tax": 13864,
+    "property_tax": 5505,
+    "resident_disposable_income": 157131,
+    "resident_cash_change": 8431,
+    "municipal_income": 28817,
+    "municipal_spending": 28300,
+    "municipal_surplus": 517,
+    "church_reserve_change": 840,
+    "city_net_cash_change": 27100,
+    "external_net_cash_change": 27100,
+    "gva": 211900,
+    "firm_revenue": 340000,
+    "firm_input_cost": 154000,
+    "commercial_rent": 9500,
+    "depreciation": 11000,
+    "business_fees": 1200,
+    "residential_rent": 28200,
+    "owner_repair_spend": 16700,
+    "imports": 68000,
+    "exports": 88200,
+    "tourist_spend": 5000,
+    "central_grant": 2500,
+    "external_interest": 600
+  }
+}

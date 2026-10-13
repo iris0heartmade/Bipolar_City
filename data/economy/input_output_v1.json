@@ -1,0 +1,131 @@
+{
+  "config_id": "input_output_v1",
+  "config_version": "1.0.0",
+  "schema_version": 1,
+  "description": "P02 参考月的投入产出流量表：谁付钱、谁收钱、多少钱。所有金额单位为 CR（整元）。",
+  "source": "docs/03_设计规范/游戏模块开发要求与详细设计.md#calibration",
+  "amount_unit": "CR",
+  "flow_accounting": {
+    "rule": "营业额只是收款方的收入，必须有付款方；派生结果（利润/税额/结余/GVA）不在此存储，由引擎计算。",
+    "rounding": "金额在本表以整元存储，引擎内部转为整数分后计算，月末残差按稳定 ID 分摊。"
+  },
+
+  "firm_revenue_sources": {
+    "household_consumption": 119000,
+    "owner_repair_spend": 16700,
+    "municipal_procurement": 8600,
+    "municipal_capital": 1500,
+    "private_capital": 15000,
+    "exports": 88200,
+    "tourist_spend": 5000,
+    "firm_intermediate": 86000,
+    "note": "八来源合计必须等于六行业营业额 340000。"
+  },
+
+  "firm_input_split": {
+    "local_intermediate": 86000,
+    "imports": 68000,
+    "note": "企业投入 154000 = 本地互购 86000 + 进口 68000；本地互购同时是另一企业的收入，不重复计入全城新增。"
+  },
+
+  "trade": {
+    "imports": [
+      {"commodity": "grain",          "qty": 50, "unit_price": 90,  "value": 4500,  "note": "战略品，金额已含在 imports 68000 内"},
+      {"commodity": "magic_material", "qty": 2,  "unit_price": 500, "value": 1000,  "note": "战略品，金额已含在 imports 68000 内"},
+      {"commodity": "other",          "value": 62500, "note": "非战略品合计"}
+    ],
+    "exports": [
+      {"commodity": "coal",  "qty": 30, "unit_price": 40,  "value": 1200, "note": "战略品，金额已含在 exports 88200 内"},
+      {"commodity": "steel", "qty": 10, "unit_price": 180, "value": 1800, "note": "战略品，金额已含在 exports 88200 内"},
+      {"commodity": "other", "value": 85200, "note": "非战略品合计"}
+    ],
+    "tourist_spend": 5000,
+    "central_grant": 2500,
+    "external_interest_paid": 600,
+    "external_net_derived": 27100,
+    "note": "对外净变化=88200+5000-68000+2500-600=27100；外部订单此时聚合为一个边界账户，NPC 城市在 P06 接入。"
+  },
+
+  "resident_flows": {
+    "gross_income_derived": 173300,
+    "gross_income_sources": {
+      "wages_public": 14400,
+      "wages_private": 121900,
+      "dividends": 16000,
+      "net_property_income": 21000
+    },
+    "outflows": {
+      "consumption": 119000,
+      "residential_rent": 28200,
+      "donation": 1500,
+      "income_tax": 13864,
+      "property_tax": 5505
+    },
+    "inflows": {
+      "relief": 3200
+    },
+    "cash_change_derived": 8431,
+    "net_property_income_note": "净房产收入=租金37700-维修16700；家庭实际现金流水仍保留每笔收租/维修/付租，不再额外加一次。",
+    "note": "现金变化=173300-13864-5505+3200-119000-28200-1500=8431。"
+  },
+
+  "municipal_flows": {
+    "inflows": {
+      "income_tax": 13864,
+      "property_tax": 5505,
+      "profit_tax": 5088,
+      "business_fees": 1200,
+      "church_donation": 660,
+      "central_grant": 2500
+    },
+    "outflows": {
+      "public_wages": 14400,
+      "procurement": 8600,
+      "relief": 3200,
+      "interest": 600,
+      "capital": 1500
+    },
+    "surplus_derived": 517,
+    "note": "结余=实际收入-实际支出=28817-28300=517；贷款本金不记财政收入，偿还本金不入费用。"
+  },
+
+  "firm_flows": {
+    "inflows": {"revenue": 340000},
+    "outflows": {
+      "input_cost": 154000,
+      "wages": 121900,
+      "commercial_rent": 9500,
+      "fees": 1200,
+      "profit_tax": 5088,
+      "dividends": 16000,
+      "capital_purchase": 15000
+    },
+    "cash_change_derived": 17312,
+    "note": "折旧 11000 是非现金账面成本，不扣现金：现金变化=340000-322688=17312。"
+  },
+
+  "church_flows": {
+    "inflows": {"resident_donation": 1500, "official_subsidy": 0},
+    "outflows": {"donation_to_city": 660},
+    "reserve_change_derived": 840,
+    "note": "完整式：教会期末=期初+居民奉献+官方扶持-向市政捐赠。中立基准扶持为 0。"
+  },
+
+  "gva": {
+    "method_production_derived": 211900,
+    "method_expenditure_derived": 211900,
+    "components": {
+      "private_firms": 176500,
+      "property_and_landlords": 21000,
+      "government_non_market_output": 14400
+    },
+    "note": "两种口径必须收敛到同一结果。生产法组成已可核对；支出法的完整展开随 P02 引擎实现时验证，未实现前不作为已通过的结论。"
+  },
+
+  "conservation": {
+    "city_net_cash_change_derived": 27100,
+    "external_net_cash_change_derived": 27100,
+    "identity": "家庭8431 + 企业17312 + 市政517 + 教会840 = 27100 = 对外净变化",
+    "note": "P01 起每月断言：各本地叶子钱包 delta 合计 = 与非本地账户实际净收付款。"
+  }
+}

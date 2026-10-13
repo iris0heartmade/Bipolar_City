@@ -1,0 +1,151 @@
+{
+  "config_id": "reference_city_v1",
+  "config_version": "1.0.0",
+  "schema_version": 1,
+  "description": "P00 参考场景：3000 人/750 户/800 套的小工业城市原始参数。所有金额单位为 CR（整元），引擎内部统一转为整数分。",
+  "source": "docs/03_设计规范/游戏模块开发要求与详细设计.md#calibration",
+  "amount_unit": "CR",
+  "currency": {
+    "code": "CR",
+    "minor_units_per_major": 100,
+    "legacy_unit": "silver_pound",
+    "note": "旧银镑档保留原单位，不默认与 CR 等值换币。"
+  },
+  "calendar": {
+    "days_per_month": 30,
+    "months_per_year": 12
+  },
+  "map": {
+    "width_cells": 64,
+    "height_cells": 64,
+    "meters_per_cell": 20,
+    "note": "旧原型 28x28 模板并存保留，不拉伸旧存档。"
+  },
+  "demographics": {
+    "population": 3000,
+    "households": 750,
+    "household_size_derived": 4.0,
+    "employed": 1500,
+    "unemployed": 150,
+    "not_in_labour_force": 1350,
+    "labour_force_derived": 1650,
+    "skill_levels": ["basic", "skilled", "professional", "mage"],
+    "note": "就业+失业+非劳动力=总人口；非劳动力含学龄人口子集，不另加人口。"
+  },
+  "housing": {
+    "total_units": 800,
+    "rented_units": 600,
+    "owner_occupied_units": 150,
+    "vacant_units": 50,
+    "rent_per_rented_unit": 47,
+    "residential_rent_derived": 28200,
+    "owner_repair_spend": 16700,
+    "assessed_value": 5000000,
+    "landlord_identity": "household",
+    "note": "房东是本地家庭财产身份，不是额外人口。住宅租金=600x47。"
+  },
+  "firms": {
+    "sector_count_derived": 86,
+    "sectors": [
+      {"id": "agriculture",     "name": "农业",       "firms": 12, "employees": 240, "wage_per_employee": 65,  "revenue": 47000,  "input_cost": 22000, "commercial_rent": 1000, "depreciation": 2500, "fees": 200},
+      {"id": "light_industry", "name": "轻工业",     "firms": 18, "employees": 400, "wage_per_employee": 95,  "revenue": 120000, "input_cost": 65000, "commercial_rent": 2500, "depreciation": 4000, "fees": 400},
+      {"id": "heavy_mining",   "name": "重工业/矿业", "firms": 8,  "employees": 210, "wage_per_employee": 110, "revenue": 78000,  "input_cost": 36000, "commercial_rent": 1900, "depreciation": 3000, "fees": 200},
+      {"id": "retail",         "name": "零售",       "firms": 24, "employees": 280, "wage_per_employee": 82,  "revenue": 50000,  "input_cost": 19000, "commercial_rent": 2000, "depreciation": 500,  "fees": 200},
+      {"id": "logistics",      "name": "物流",       "firms": 10, "employees": 130, "wage_per_employee": 88,  "revenue": 27000,  "input_cost": 9500,  "commercial_rent": 1200, "depreciation": 600,  "fees": 100},
+      {"id": "services",       "name": "生活服务",   "firms": 14, "employees": 120, "wage_per_employee": 90,  "revenue": 18000,  "input_cost": 2500,  "commercial_rent": 900,  "depreciation": 400,  "fees": 100}
+    ],
+    "capital_reserve_factor": 0.8,
+    "note": "税前利润不在此存储，由营业额-采购-工资-商租-折旧-规费计算生成。"
+  },
+  "public_sector": {
+    "employees": 120,
+    "wage_bill": 14400,
+    "posts": [
+      {"id": "teachers",   "name": "教师",   "staff": 30, "wage": 120, "spend": 3600},
+      {"id": "medical",    "name": "医护",   "staff": 15, "wage": 130, "spend": 1950},
+      {"id": "admin",      "name": "行政",   "staff": 15, "wage": 100, "spend": 1500},
+      {"id": "sanitation", "name": "环卫",   "staff": 20, "wage": 70,  "spend": 1400},
+      {"id": "roads",      "name": "道路",   "staff": 10, "wage": 75,  "spend": 750},
+      {"id": "patrol",     "name": "巡逻",   "staff": 10, "wage": 80,  "spend": 800},
+      {"id": "mages",      "name": "魔法师", "staff": 20, "wage": 220, "spend": 4400}
+    ],
+    "procurement": [
+      {"id": "roads",          "name": "道路维护",   "spend": 2200},
+      {"id": "school_build",   "name": "校舍",       "spend": 1100},
+      {"id": "hospital",       "name": "医院",       "spend": 900},
+      {"id": "sanitation",     "name": "环卫",       "spend": 1400},
+      {"id": "magic_material", "name": "魔法材料",   "spend": 1100},
+      {"id": "admin_supplies", "name": "行政用品",   "spend": 800},
+      {"id": "lighting_water", "name": "照明/供水",  "spend": 1100}
+    ],
+    "note": "防御材料 1100 已含在魔法材料项内，不得重复计费。"
+  },
+  "fiscal": {
+    "income_tax_rate": 0.08,
+    "income_tax_rate_range": [0.0, 0.20],
+    "income_tax_step_pp": 0.02,
+    "profit_tax_rate": 0.12,
+    "profit_tax_rate_range": [0.0, 0.25],
+    "profit_tax_step_pp": 0.03,
+    "property_tax_monthly_rate": 0.0012,
+    "property_tax_rate_range": [0.0003, 0.0025],
+    "property_relief_religion_factor": 0.15,
+    "policy_cooldown_months": 6,
+    "central_grant": 2500,
+    "relief_payments": 3200,
+    "interest_paid": 600,
+    "municipal_capital_spend": 1500,
+    "collection_efficiency": 1.0,
+    "note": "房产税=评估值x0.0012x(1-0.15x信仰)。救济 3200 为闭合反推的校准值，见 calibration_overrides.json。"
+  },
+  "finance": {
+    "government_loan_principal": 60000,
+    "monthly_interest_rate": 0.01,
+    "grace_months_remaining": 12,
+    "amortization_months": 12,
+    "new_borrowing_cap_months_of_tax": 6,
+    "note": "宽限期内只付息；摊还月数为显式校准配置，不从宽限期推断。"
+  },
+  "education": {
+    "seats_per_teacher": 24,
+    "school_age_population": 900,
+    "training_months": 12,
+    "completion_rate": 0.75,
+    "skill_conversion_rate": 0.35,
+    "note": "教师 30 人 x 24 席 = 720 席，对 900 学龄人口覆盖率 80%。"
+  },
+  "religion": {
+    "opening_faith": 0.55,
+    "opening_reserve": 20000,
+    "resident_donation": 1500,
+    "donation_to_city_formula": "min(cash, 1200 * faith)",
+    "wage_tolerance_alpha": {"basic": 0.10, "skilled": 0.03, "professional": 0.01, "mage": 0.0},
+    "obligation_hours_factor": 0.04,
+    "policy_tiers": [
+      {"tier": -2, "name": "严格限制", "a": 0.0010, "b": 0.0060, "subsidy": 0},
+      {"tier": -1, "name": "有限限制", "a": 0.0020, "b": 0.0045, "subsidy": 0},
+      {"tier":  0, "name": "宗教中立", "a": 0.0030, "b": 0.0030, "subsidy": 0},
+      {"tier":  1, "name": "鼓励传教", "a": 0.0060, "b": 0.0025, "subsidy": 0},
+      {"tier":  2, "name": "官方扶持", "a": 0.0090, "b": 0.0020, "subsidy": 200}
+    ],
+    "policy_cooldown_months": 6,
+    "shock_decay_months": 3,
+    "note": "基准首月按期初信仰 0.55 计算，月底慢变为 0.5497 只影响下一月。"
+  },
+  "resources": [
+    {"id": "grain",          "name": "粮食",     "unit": "吨",   "unit_price": 90,  "opening": 600, "produced": 250, "used": 300, "imported": 50, "exported": 0,  "closing": 600},
+    {"id": "coal",           "name": "煤",       "unit": "吨",   "unit_price": 40,  "opening": 800, "produced": 420, "used": 390, "imported": 0,  "exported": 30, "closing": 800},
+    {"id": "steel",          "name": "钢",       "unit": "吨",   "unit_price": 180, "opening": 170, "produced": 110, "used": 100, "imported": 0,  "exported": 10, "closing": 170},
+    {"id": "magic_material", "name": "魔法材料", "unit": "箱",   "unit_price": 500, "opening": 20,  "produced": 3,   "used": 5,   "imported": 2,  "exported": 0,  "closing": 20}
+  ],
+  "production": {
+    "capacity_units": 425000,
+    "utilisation_rate": 0.8,
+    "note": "产能 425000 与 80% 利用率是校准选择；加入安全/技能损失须重归一化 K，不重复扣减。"
+  },
+  "opening_cash": {
+    "city_government": 100000,
+    "church": 20000,
+    "note": "家庭与企业期初现金见 calibration_overrides.json 的显式校准假设。"
+  }
+}
