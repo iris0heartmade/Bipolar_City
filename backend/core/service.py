@@ -10,6 +10,9 @@ from backend.persistence.savegame import load_world, save_world
 from backend.systems.construction import cancel_blueprints, commit_construction, place_blueprint
 from backend.systems.generator import new_world
 from backend.systems.population import city_capacity, city_jobs
+from backend.systems.housing import available_capacity, housing_summary, maintenance_cost, set_housing_mode
+from backend.systems.commerce import commerce_summary
+from backend.systems.finance import finance_forecast
 
 logger = logging.getLogger(__name__)
 
@@ -23,17 +26,20 @@ class GameService:
 
     def snapshot(self):
         world = self.world
-        completed = [b for b in world.buildings if b.status == "completed"]
         blueprints = [b for b in world.buildings if b.status == "blueprint"]
-        revenue = world.population * BALANCE["tax_per_resident"]
-        upkeep = sum(CATALOG[b.definition_id]["maintenance"] for b in completed)
+        finance = finance_forecast(world)
         return {"world":world.to_dict(),"catalog":list(CATALOG.values()),
                 "city":{"name":TEMPLATE["name"],"subtitle":TEMPLATE["subtitle"]},
                 "calendar":{"days_per_month":BALANCE["days_per_month"],"months_per_year":BALANCE["months_per_year"]},
                 "summary":{"capacity":city_capacity(world),"jobs":city_jobs(world),
-                           "revenue":revenue,"upkeep":upkeep,"net":revenue-upkeep,
+                           "revenue":finance["revenue"],"upkeep":finance["upkeep"],"net":finance["net"],
                            "blueprint_cost":sum(CATALOG[b.definition_id]["cost"] for b in blueprints),
                            "blueprints":len(blueprints),"construction":sum(b.status in ("queued","constructing") for b in world.buildings)},
+                "housing":housing_summary(world),"commerce":commerce_summary(world),"finance":finance,
+                "building_info":{b.id:{"capacity":available_capacity(b),"maintenance":maintenance_cost(b),
+                                        "jobs":(b.merchants*CATALOG[b.definition_id]["jobs_per_merchant"]
+                                                if CATALOG[b.definition_id].get("merchant_slots") else CATALOG[b.definition_id]["jobs"])
+                                        if b.status=="completed" else 0} for b in world.buildings},
                 "save_exists":(self.save_dir / "slot1.json").exists()}
 
     def command(self, command):
@@ -43,7 +49,12 @@ class GameService:
         world = deepcopy(self.world)
         kind = command["type"]
         if kind == "place_blueprint":
-            place_blueprint(world, command.get("definition_id"), command.get("x"), command.get("y"), command.get("rotation",0))
+            place_blueprint(world, command.get("definition_id"), command.get("x"), command.get("y"),
+                            command.get("rotation",0), command.get("housing_mode","public"))
+        elif kind == "set_housing_mode":
+            if type(command.get("building_id")) is not int:
+                raise GameError("建筑编号无效。")
+            set_housing_mode(world, command["building_id"], command.get("housing_mode"))
         elif kind == "commit":
             count = sum(b.status == "blueprint" for b in world.buildings)
             commit_construction(world)

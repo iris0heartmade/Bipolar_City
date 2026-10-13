@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api")
 
 class Command(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    type: Literal["place_blueprint","commit","cancel","pause","speed","advance_month","save","load","new_game"]
+    type: Literal["place_blueprint","commit","cancel","pause","speed","advance_month","save","load","new_game","set_housing_mode"]
     request_id: str | None = Field(default=None, max_length=80)
     definition_id: str | None = None
     x: StrictInt | None = None
@@ -22,6 +22,8 @@ class Command(BaseModel):
     paused: StrictBool | None = None
     speed: float | None = None
     seed: StrictInt | None = None
+    housing_mode: Literal["public","for_sale"] | None = None
+    building_id: StrictInt | None = None
 
 
 @router.get("/state")

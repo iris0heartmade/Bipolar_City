@@ -28,6 +28,7 @@ export class MapControls {
     this.renderer.render();if(this.ui.state)this.ui.update(this.ui.state);
   }
   rotate(){if(!this.tool)return;this.rotation=(this.rotation+1)%4;this.renderer.tool.rotation=this.rotation;this.validateHover();}
+  setHousingMode(mode){this.ui.housingMode=mode;this.ui.showHousingTool();if(this.tool&&window.matchMedia('(max-width: 650px)').matches)this.renderer.canvas.scrollIntoView({block:'center',behavior:'instant'});}
   hover(event){const cell=this.renderer.cellAt(event.clientX,event.clientY);if(this.renderer.hover?.x===cell.x&&this.renderer.hover?.y===cell.y)return;this.renderer.hover=cell;if(this.tool)this.validateHover();else this.renderer.render();}
   validateHover(){
     clearTimeout(this.previewTimer);const sequence=++this.previewSequence;this.renderer.preview=null;this.renderer.render();
@@ -41,7 +42,10 @@ export class MapControls {
   }
   async click(event){
     const cell=this.renderer.cellAt(event.clientX,event.clientY);
-    if(this.tool){const ok=await this.command('place_blueprint',{definition_id:this.tool,x:cell.x,y:cell.y,rotation:this.rotation});if(ok)this.validateHover();}
-    else {const b=this.renderer.buildingAt(cell);this.renderer.selection=b?.id??null;this.ui.selectedId=b?.id??null;this.ui.showSelection();this.renderer.render();}
+    if(this.tool){const def=this.renderer.catalog[this.tool];const ok=await this.command('place_blueprint',{definition_id:this.tool,x:cell.x,y:cell.y,rotation:this.rotation,housing_mode:def.capacity?this.ui.housingMode:'public'});if(ok)this.validateHover();}
+    else {const b=this.renderer.buildingAt(cell);this.renderer.selection=b?.id??null;this.ui.selectedId=b?.id??null;
+      document.querySelector('[data-pane=overview]').click();this.ui.showSelection();this.renderer.render();
+      if(b&&!window.matchMedia('(max-width: 970px)').matches)$('selection-section').scrollIntoView({block:'nearest'});
+    }
   }
 }

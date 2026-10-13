@@ -30,7 +30,7 @@ async def lifespan(app):
             await task
 
 
-app = FastAPI(title="BIPOLE 城市模拟", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="BIPOLE 城市模拟", version="0.2.0", lifespan=lifespan)
 app.include_router(router)
 app.mount("/static", StaticFiles(directory=ROOT / "frontend"), name="static")
 

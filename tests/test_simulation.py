@@ -112,7 +112,9 @@ def test_120_months_accounting_and_capacity_without_ui():
     advance_days(world,120*BALANCE["days_per_month"])
     assert world.population==min(city_capacity(world),service.snapshot()["summary"]["jobs"])
     assert world.cash==BALANCE["starting_cash"]+sum(item["amount"] for item in world.ledger)
-    assert len(world.ledger)==240
+    assert sum(item["category"]=="tax" for item in world.ledger)==120
+    assert sum(item["category"]=="business_tax" for item in world.ledger)==120
+    assert sum(item["category"]=="commercial_rent" for item in world.ledger)==120
     assert len(world.history)==BALANCE["history_limit"]
     assert len(world.events)<=BALANCE["event_limit"]
 

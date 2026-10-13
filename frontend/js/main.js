@@ -32,7 +32,10 @@ $('load-btn').addEventListener('click',()=>{
 });
 document.querySelectorAll('[data-speed]').forEach(button=>button.addEventListener('click',()=>command('speed',{speed:Number(button.dataset.speed)})));
 document.querySelectorAll('[data-category]').forEach(button=>button.addEventListener('click',()=>{ui.category=button.dataset.category;document.querySelectorAll('[data-category]').forEach(b=>b.classList.toggle('active',b===button));ui.showCatalog();}));
-document.querySelectorAll('[data-pane]').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('[data-pane]').forEach(b=>b.classList.toggle('active',b===button));$('overview-pane').hidden=button.dataset.pane!=='overview';$('ledger-pane').hidden=button.dataset.pane!=='ledger';}));
+document.querySelectorAll('[data-pane]').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('[data-pane]').forEach(b=>b.classList.toggle('active',b===button));for(const pane of ['overview','economy','ledger'])$(`${pane}-pane`).hidden=button.dataset.pane!==pane;}));
+document.querySelectorAll('[data-housing-mode]').forEach(button=>button.addEventListener('click',()=>controls.setHousingMode(button.dataset.housingMode)));
+$('property-public').addEventListener('click',()=>command('set_housing_mode',{building_id:ui.selectedId,housing_mode:'public'},'未售住宅已改为公共出租。'));
+$('property-sale').addEventListener('click',()=>command('set_housing_mode',{building_id:ui.selectedId,housing_mode:'for_sale'},'未售住宅已进入待售方案，月度按资金与需求成交。'));
 $('clear-selection').addEventListener('click',()=>{ui.selectedId=null;renderer.selection=null;ui.showSelection();renderer.render();});
 $('queue-toggle').addEventListener('click',()=>{$('queue-drawer').hidden=!$('queue-drawer').hidden;});$('queue-close').addEventListener('click',()=>{$('queue-drawer').hidden=true;});
 $('help-btn').addEventListener('click',()=>$('help-dialog').showModal());$('new-btn').addEventListener('click',()=>$('new-dialog').showModal());

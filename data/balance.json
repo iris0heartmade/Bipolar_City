@@ -10,5 +10,17 @@
   "seconds_per_day": 5,
   "event_limit": 30,
   "history_limit": 24,
-  "starting_seed": 20261012
+  "starting_seed": 20261012,
+  "resident_savings_per_person": 80000,
+  "household_size": 4,
+  "resident_income_per_person": 6000,
+  "initial_buyer_demand": 10,
+  "housing_sales_per_month": 2,
+  "public_rent_per_person": 250,
+  "residents_per_merchant": 30,
+  "merchant_entries_per_month": 2,
+  "merchant_exits_per_month": 1,
+  "initial_merchants": 2,
+  "merchant_tax": 1800,
+  "merchant_lease": 1200
 }

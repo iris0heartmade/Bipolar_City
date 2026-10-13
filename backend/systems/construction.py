@@ -5,11 +5,13 @@ from backend.systems.finance import record
 from backend.systems.placement import validate_placement
 
 
-def place_blueprint(world, definition_id, x, y, rotation):
+def place_blueprint(world, definition_id, x, y, rotation, housing_mode="public"):
     if definition_id not in CATALOG or not CATALOG[definition_id]["buildable"]:
         raise GameError("这类建筑不能由玩家新建。")
     validate_placement(world, definition_id, x, y, rotation)
-    world.buildings.append(Building(world.next_id, definition_id, x, y, rotation))
+    if housing_mode not in ("public", "for_sale") or (housing_mode == "for_sale" and not CATALOG[definition_id]["capacity"]):
+        raise GameError("开发方案无效；只有住宅可设为待售。")
+    world.buildings.append(Building(world.next_id, definition_id, x, y, rotation, housing_mode=housing_mode))
     world.next_id += 1
 
 

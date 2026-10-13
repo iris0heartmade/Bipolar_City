@@ -1,0 +1,231 @@
+{
+  "config_hash": "ee09edece9aefd8b63e89bd644a618e5083a4b211e206ce8543c6e2ec76d2cad",
+  "balance": {
+    "note": "全部为初版测试参数；金额为银镑的百分之一，不属于正式经济平衡。",
+    "starting_cash": 4800000,
+    "initial_population": 168,
+    "tax_per_resident": 420,
+    "migration_per_month": 14,
+    "base_jobs": 200,
+    "days_per_month": 30,
+    "months_per_year": 12,
+    "seconds_per_day": 5,
+    "event_limit": 30,
+    "history_limit": 24,
+    "starting_seed": 20261012
+  },
+  "catalog": {
+    "row_house": {
+      "id": "row_house",
+      "name": "河岸联排住宅",
+      "category": "住宅",
+      "description": "温暖的砖墙与尖屋顶，为迁入居民提供安稳的家。初版采用市政持有。",
+      "width": 2,
+      "height": 2,
+      "entry": [
+        0,
+        2
+      ],
+      "cost": 420000,
+      "duration": 14,
+      "capacity": 28,
+      "jobs": 0,
+      "maintenance": 1800,
+      "color": "#a9654f",
+      "buildable": true
+    },
+    "apartment": {
+      "id": "apartment",
+      "name": "工人公寓",
+      "category": "住宅",
+      "description": "更紧凑的三层公寓，提供较多住房；需承担更高维护费用。",
+      "width": 2,
+      "height": 3,
+      "entry": [
+        0,
+        3
+      ],
+      "cost": 780000,
+      "duration": 24,
+      "capacity": 56,
+      "jobs": 0,
+      "maintenance": 3800,
+      "color": "#c1925d",
+      "buildable": true
+    },
+    "park": {
+      "id": "park",
+      "name": "街角花园",
+      "category": "公共",
+      "description": "为街区添一片绿意。初版计入维护，环境加成将在后续版本接入。",
+      "width": 2,
+      "height": 2,
+      "entry": [
+        0,
+        2
+      ],
+      "cost": 160000,
+      "duration": 7,
+      "capacity": 0,
+      "jobs": 0,
+      "maintenance": 900,
+      "color": "#6f9964",
+      "buildable": true
+    },
+    "market": {
+      "id": "market",
+      "name": "河湾集市",
+      "category": "商业",
+      "description": "提供基础就业空间。当前仅计算岗位和维护，商户入驻系统尚未接入。",
+      "width": 3,
+      "height": 2,
+      "entry": [
+        0,
+        2
+      ],
+      "cost": 560000,
+      "duration": 18,
+      "capacity": 0,
+      "jobs": 45,
+      "maintenance": 2400,
+      "color": "#c79d5c",
+      "buildable": true
+    },
+    "workshop": {
+      "id": "workshop",
+      "name": "蒸汽工坊",
+      "category": "产业",
+      "description": "传统工业街区的起点。当前提供基础岗位，生产与战略库存将在后续接入。",
+      "width": 3,
+      "height": 2,
+      "entry": [
+        0,
+        2
+      ],
+      "cost": 640000,
+      "duration": 21,
+      "capacity": 0,
+      "jobs": 60,
+      "maintenance": 3200,
+      "color": "#70818b",
+      "buildable": true
+    },
+    "town_hall": {
+      "id": "town_hall",
+      "name": "河湾市政厅",
+      "category": "市政",
+      "description": "市政管理的所在地，也是城镇道路网络的起点。",
+      "width": 3,
+      "height": 3,
+      "entry": [
+        0,
+        3
+      ],
+      "cost": 0,
+      "duration": 0,
+      "capacity": 0,
+      "jobs": 0,
+      "maintenance": 4500,
+      "color": "#9f8971",
+      "buildable": false
+    }
+  },
+  "template": {
+    "id": "river_town",
+    "name": "河湾镇",
+    "subtitle": "北方河岸 · 原型测试城市",
+    "width": 28,
+    "height": 28,
+    "river_start_x": 23,
+    "river_bend_y": 15,
+    "river_bend_offset": -1,
+    "road_columns": [
+      8,
+      15
+    ],
+    "road_rows": [
+      10,
+      17
+    ],
+    "bridge_rows": [
+      17
+    ],
+    "initial_houses": 10,
+    "house_candidates": [
+      [
+        2,
+        8
+      ],
+      [
+        5,
+        8
+      ],
+      [
+        9,
+        8
+      ],
+      [
+        12,
+        8
+      ],
+      [
+        16,
+        8
+      ],
+      [
+        19,
+        8
+      ],
+      [
+        2,
+        15
+      ],
+      [
+        5,
+        15
+      ],
+      [
+        9,
+        15
+      ],
+      [
+        12,
+        15
+      ],
+      [
+        16,
+        15
+      ],
+      [
+        19,
+        15
+      ]
+    ],
+    "landmarks": [
+      {
+        "definition_id": "town_hall",
+        "x": 9,
+        "y": 11,
+        "rotation": 2
+      },
+      {
+        "definition_id": "workshop",
+        "x": 16,
+        "y": 18,
+        "rotation": 2
+      },
+      {
+        "definition_id": "market",
+        "x": 5,
+        "y": 18,
+        "rotation": 2
+      },
+      {
+        "definition_id": "park",
+        "x": 12,
+        "y": 18,
+        "rotation": 2
+      }
+    ]
+  }
+}

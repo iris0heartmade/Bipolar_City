@@ -1,6 +1,6 @@
 [project]
 name = "bipole-city"
-version = "0.1.0"
+version = "0.2.0"
 description = "BIPOLE 城市经营游戏本地原型"
 requires-python = ">=3.11"
 dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1"]

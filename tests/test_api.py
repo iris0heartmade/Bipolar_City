@@ -32,3 +32,17 @@ def test_http_rejects_float_and_unknown_commands(tmp_path):
         assert client.post('/api/commands',json={"type":"unlimited_money"}).status_code==422
         assert client.post('/api/commands',json={"type":"commit"}).status_code==400
         assert client.get('/api/state').json()["world"]==before
+
+
+def test_http_for_sale_and_property_mode(tmp_path):
+    with TestClient(app) as client:
+        app.state.game=GameService(tmp_path);x,y=legal_position(app.state.game.world)
+        placed=client.post('/api/commands',json={"type":"place_blueprint","definition_id":"row_house","x":x,"y":y,"housing_mode":"for_sale"}).json()
+        building_id=placed["world"]["buildings"][-1]["id"]
+        client.post('/api/commands',json={"type":"commit"})
+        sold=client.post('/api/commands',json={"type":"advance_month"}).json()
+        assert sold["housing"]["unsold_units"]==5 and sold["world"]["history"][-1]["housing_sales"]==2
+        assert sold["building_info"][str(building_id)]["capacity"]==8
+        before=sold["world"]
+        assert client.post('/api/commands',json={"type":"set_housing_mode","building_id":building_id,"housing_mode":"public"}).status_code==400
+        assert client.get('/api/state').json()["world"]==before

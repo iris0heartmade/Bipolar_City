@@ -6,7 +6,7 @@ const count=value=>new Intl.NumberFormat('zh-CN').format(value);
 const statuses={blueprint:'规划蓝图',queued:'待施工',constructing:'施工中',completed:'已竣工'};
 
 export class GameUI {
-  constructor(onTool){this.onTool=onTool;this.category='全部';this.tool=null;this.selectedId=null;this.catalog=[];this.toastTimer=null;}
+  constructor(onTool){this.onTool=onTool;this.category='全部';this.tool=null;this.housingMode='public';this.selectedId=null;this.catalog=[];this.toastTimer=null;}
   notify(message,error=false){const toast=$('toast');toast.textContent=message;toast.classList.toggle('error',error);toast.hidden=false;clearTimeout(this.toastTimer);this.toastTimer=setTimeout(()=>toast.hidden=true,error?6000:3000);}
   showCatalog(){
     const container=$('building-catalog');container.replaceChildren();
@@ -16,12 +16,17 @@ export class GameUI {
       button.setAttribute('aria-label',`建造${def.name}`);button.setAttribute('aria-pressed',String(this.tool===def.id));button.classList.toggle('selected',this.tool===def.id);
       const canvas=document.createElement('canvas');canvas.setAttribute('aria-hidden','true');
       const info=document.createElement('div'),name=document.createElement('strong'),meta=document.createElement('div'),cost=document.createElement('div'),duration=document.createElement('small');
-      name.textContent=def.name;meta.className='card-info';meta.textContent=`${def.width}×${def.height} 格 · ${def.capacity?`${def.capacity} 人容量`:def.jobs?`${def.jobs} 个岗位`:'公共绿地'}`;
+      name.textContent=def.name;meta.className='card-info';meta.textContent=`${def.width}×${def.height} 格 · ${def.capacity?`${def.capacity} 人容量`:def.jobs?`${def.merchant_slots?'最多 ':''}${def.jobs} 个岗位`:'公共绿地'}`;
       cost.className='card-cost';cost.textContent=`◈ ${money(def.cost)}`;duration.textContent=`${def.duration} 日`;
       cost.append(duration);info.append(name,meta,cost);button.append(canvas,info);button.addEventListener('click',()=>this.onTool(def.id));container.append(button);drawThumbnail(canvas,def);
     }
   }
   setTool(id){this.tool=id;this.showCatalog();$('inspect-btn').classList.toggle('active',!id);}
+  showHousingTool(){
+    const def=this.catalog.find(d=>d.id===this.tool);$('housing-tool').hidden=!def?.capacity;
+    document.querySelectorAll('[data-housing-mode]').forEach(button=>{const active=button.dataset.housingMode===this.housingMode;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});
+    if(def?.capacity)$('housing-mode-note').textContent=this.housingMode==='public'?'市政持有：竣工开放容量，按实际入住收租并承担维护。':`待售 ${def.units} 户，指导价 ${money(def.sale_price_per_unit)} 银镑/户；成交后开放容量，私人部分停止市政收租。`;
+  }
   dateLabel(day){const {days_per_month:days,months_per_year:months}=this.state.calendar;return `第 ${Math.floor(day/days/months)+1} 年 · ${Math.floor(day/days)%months+1} 月`;}
   update(state){
     const first=!this.catalog.length;this.state=state;this.catalog=state.catalog;const {world,summary}=state;
@@ -29,6 +34,7 @@ export class GameUI {
     $('cash').textContent=money(world.cash);$('population').textContent=count(world.population);$('capacity').textContent=count(summary.capacity);$('jobs').textContent=count(summary.jobs);
     $('cash-change').textContent=`预计月结余 ${summary.net>=0?'+':''}${money(summary.net)}`;
     $('vacancy').textContent=`剩余 ${Math.max(0,summary.capacity-world.population)} 人容量`;
+    $('merchant-metric').textContent=`集市 ${state.commerce.merchants}/${state.commerce.slots} 家商户营业`;
     const last=world.history.at(-1);$('migration').textContent=last?`上月${last.migration>=0?'迁入':'迁出'} ${Math.abs(last.migration)} 人`:'已有居民 · 等待首份月报';
     const percentage=summary.capacity?Math.round(world.population/summary.capacity*100):0;
     $('housing-percent').textContent=`${percentage}%`;$('housing-progress').style.width=`${Math.min(100,percentage)}%`;$('housing-ratio').textContent=`${world.population} / ${summary.capacity} 人`;
@@ -44,7 +50,16 @@ export class GameUI {
     $('rotate-btn').disabled=!this.tool;
     $('queue-count').textContent=summary.construction?`${summary.construction} 项施工中`:'没有施工项目';
     $('load-btn').disabled=!state.save_exists;
-    this.showEvents();this.showChart();this.showLedger();this.showQueue();this.showSelection();
+    this.showHousingTool();this.showEconomy();this.showEvents();this.showChart();this.showLedger();this.showQueue();this.showSelection();
+  }
+  showEconomy(){
+    const {housing,commerce,world}=this.state,last=world.history.at(-1);
+    const fields={'unsold-units':housing.unsold_units,'unsold-value':money(housing.unsold_asset_value),'monthly-sales':last?.housing_sales??0,
+      'monthly-sale-value':money(last?.sales_revenue??0),'public-residents':housing.public_residents,'buyer-demand':housing.buyer_demand,
+      'merchant-ratio':`${commerce.merchants} / ${commerce.slots}`,'merchant-demand':commerce.demand};
+    for(const [id,value] of Object.entries(fields))$(id).textContent=value;
+    $('resident-budget').textContent=`居民合计购房与生活余款 ${money(housing.resident_funds)} 银镑。尚无按揭，现金不足时不成交。`;
+    $('commerce-advice').textContent=commerce.merchants<commerce.slots?'空余铺位按消费需求逐月招商；实际入驻才提供岗位和税收。':commerce.demand>commerce.slots?'居民需求超过铺位供给，可以规划新的集市。':'现有铺位已入驻；人口减少时商户可能逐月退出。';
   }
   showEvents(){
     const container=$('events');container.replaceChildren();
@@ -68,7 +83,8 @@ export class GameUI {
   }
   showLedger(){
     const {summary,world}=this.state;$('finance-summary').replaceChildren();
-    for(const [label,value] of [['预计月税收',summary.revenue],['预计月维护',-summary.upkeep],['预计月结余',summary.net]]){
+    const f=this.state.finance;
+    for(const [label,value] of [['预计居民税',f.resident_tax],['预计商户税',f.business_tax],['预计公共房租',f.public_rent],['预计集市铺位租金',f.commercial_rent],['预计月维护',-summary.upkeep],['预计常规结余（不含售房）',summary.net]]){
       const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=`${value>=0?'+':''}${money(value)}`;$('finance-summary').append(dt,dd);
     }
     const list=$('ledger-list');list.replaceChildren();
@@ -90,10 +106,17 @@ export class GameUI {
   showSelection(){
     const b=this.state.world.buildings.find(b=>b.id===this.selectedId);$('selection-section').hidden=!b;if(!b)return;
     const def=this.catalog.find(d=>d.id===b.definition_id);$('selected-name').textContent=def.name;$('selected-description').textContent=def.description;$('selected-stats').replaceChildren();
-    const rows=[['状态',statuses[b.status]],['位置',`(${b.x}, ${b.y})`],['朝向',`${b.rotation*90}°`],['产权','市政持有'],['维护 / 月',`${money(def.maintenance)} 银镑`]];
-    if(def.capacity)rows.push(['住房容量',`${b.status==='completed'?def.capacity:0} 人`]);if(def.jobs)rows.push(['就业岗位',`${b.status==='completed'?def.jobs:0} 个`]);
+    const info=this.state.building_info[b.id];
+    const rows=[['状态',statuses[b.status]],['位置',`(${b.x}, ${b.y})`],['朝向',`${b.rotation*90}°`],['产权',{municipal:'市政持有',private:'私人持有',mixed:'部分已售 · 混合产权'}[b.owner_mode]],['市政维护 / 月',`${money(info.maintenance)} 银镑`]];
+    if(def.capacity)rows.push(['开发方案',{public:'公共出租',for_sale:'建成待售',private:'既有私人住房'}[b.housing_mode]],['入住 / 开放容量',`${b.occupancy} / ${info.capacity} 人`],['已售 / 总户数',`${b.sold_units} / ${def.units} 户`]);
+    if(def.jobs)rows.push(['实际就业岗位',`${info.jobs} 个`]);
+    if(def.merchant_slots)rows.push(['入驻 / 铺位',`${b.merchants} / ${def.merchant_slots} 家`]);
     if(['queued','constructing'].includes(b.status))rows.push(['施工进度',`${b.progress} / ${def.duration} 日`]);
     for(const [name,value] of rows){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=name;dd.textContent=value;$('selected-stats').append(dt,dd);}
+    $('property-actions').hidden=!def.capacity;
+    $('property-public').disabled=Boolean(b.sold_units)||b.housing_mode==='public';
+    $('property-sale').disabled=Boolean(b.sold_units)||b.housing_mode==='for_sale';
+    $('property-note').textContent=def.capacity?(b.sold_units?'已售户不可收回，市政只承担未售部分维护。':'未售住宅可变更方案；已有住户须有替代住房才能转待售。'):def.merchant_slots?'铺位由商户自主入驻，市长不能手动指定每家商店。':'';
   }
   connected(ok){$('connection-status').textContent=ok?'本地模拟已连接':'连接中断 · 请检查后端';document.querySelector('.connection-dot').style.background=ok?'#7b9471':'#b77865';}
 }

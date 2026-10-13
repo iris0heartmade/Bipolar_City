@@ -1,5 +1,6 @@
 /** 全部城市素材由几何图形绘制，不依赖图片下载或外部字体。 */
 import {project} from './isometric.js';
+import {BUILDING_COLORS,MAP_THEME} from './theme.js';
 
 export function polygon(ctx, points, fill, stroke) {
   ctx.beginPath(); points.forEach((p,i)=>i ? ctx.lineTo(p.x,p.y) : ctx.moveTo(p.x,p.y)); ctx.closePath();
@@ -20,11 +21,11 @@ export function tree(ctx, px, py, variant=0, small=false) {
   ctx.fillStyle='#455c3530';ctx.beginPath();ctx.ellipse(5,2,14,6,0,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#8e8060';ctx.fillRect(-2,-22,4,22);
   if(variant%3===0){
-    polygon(ctx,[{x:0,y:-52},{x:16,y:-22},{x:-16,y:-22}],'#668757');
-    polygon(ctx,[{x:0,y:-43},{x:19,y:-12},{x:-19,y:-12}],'#719061');
-    polygon(ctx,[{x:0,y:-52},{x:0,y:-12},{x:-19,y:-12}],'#88a06a');
+    polygon(ctx,[{x:0,y:-52},{x:16,y:-22},{x:-16,y:-22}],'#3e5b55');
+    polygon(ctx,[{x:0,y:-43},{x:19,y:-12},{x:-19,y:-12}],'#527366');
+    polygon(ctx,[{x:0,y:-52},{x:0,y:-12},{x:-19,y:-12}],'#6c8871');
   }else{
-    ctx.fillStyle=variant%3===1?'#8fa36e':'#a6b276';
+    ctx.fillStyle=variant%3===1?'#627c63':'#7c8865';
     ctx.beginPath();ctx.arc(-7,-27,12,0,Math.PI*2);ctx.arc(6,-30,14,0,Math.PI*2);ctx.arc(0,-40,12,0,Math.PI*2);ctx.fill();
     ctx.fillStyle='#bdd09266';ctx.fillRect(-8,-42,8,5);ctx.fillRect(2,-36,8,5);
   }ctx.restore();
@@ -43,7 +44,7 @@ export function drawBuilding(ctx, def, b, options={}) {
   if(constructing)ctx.globalAlpha=.62;
   polygon(ctx,ground.map(p=>({x:p.x+8,y:p.y+6})),'#384c3026');
   if(def.id==='park') {
-    polygon(ctx,ground,'#a6b481','#748e5f');
+    polygon(ctx,ground,'#7d8968','#a7a16d');
     polygon(ctx,[project(x+.15,y+.3),project(x+bw,y+.6),project(x+bw,y+.85),project(x+.15,y+.55)],'#dfd4af');
     for(const [dx,dy] of [[.45,.45],[1.45,.45],[.45,1.45]]){const p=project(b.x+dx,b.y+dy);tree(ctx,p.x,p.y,1,true);}
     ctx.fillStyle='#b9a27b';ctx.fillRect(center.x+7,center.y-2,12,3);
@@ -52,22 +53,20 @@ export function drawBuilding(ctx, def, b, options={}) {
   }
   const height=def.id==='apartment'?63:def.id==='town_hall'?48:def.id==='workshop'?31:32;
   const top=ground.map(p=>lift(p,height));
-  const palette={row_house:['#dbc9a3','#c2af8b','#a76451'],apartment:['#dcc9a3','#baa27e','#7a8074'],
-    market:['#e3cf9e','#b5aa83','#a87b56'],workshop:['#aab0a5','#879285','#727d75'],town_hall:['#e2d4b6','#c1b08e','#6a7971']};
-  const [light,dark,roof]=palette[def.id]||palette.row_house;
+  const [light,dark,roof]=BUILDING_COLORS[def.id]||BUILDING_COLORS.row_house;
   polygon(ctx,[ground[1],ground[2],top[2],top[1]],dark,'#64705360');
   polygon(ctx,[ground[2],ground[3],top[3],top[2]],light,'#64705360');
   line(ctx,lift(ground[2],4),lift(ground[3],4),'#c1b28e',3);
   line(ctx,lift(ground[1],4),lift(ground[2],4),'#aa9b7d',3);
   const rows=def.id==='apartment'?3:1, cols=def.id==='town_hall'?3:2;
-  for(const [a,c,shade] of [[ground[1],ground[2],'#647b73'],[ground[2],ground[3],'#7f9383']]){
+  for(const [a,c,shade] of [[ground[1],ground[2],MAP_THEME.window],[ground[2],ground[3],'#e3b264']]){
     for(let floor=0;floor<rows;floor++)for(let col=0;col<cols;col++){
       const p=lerp(a,c,(col+.55)/cols), winH=def.id==='town_hall'?13:9;
       const altitude=14+floor*17;
       const along={x:(c.x-a.x)/Math.hypot(c.x-a.x,c.y-a.y)*4,y:(c.y-a.y)/Math.hypot(c.x-a.x,c.y-a.y)*4};
       const pts=[{x:p.x-along.x,y:p.y-altitude-along.y},{x:p.x+along.x,y:p.y-altitude+along.y},
         {x:p.x+along.x,y:p.y-altitude+along.y+winH},{x:p.x-along.x,y:p.y-altitude-along.y+winH}];
-      polygon(ctx,pts,shade,'#e7dcb0');
+      ctx.save();if(!blueprint&&!constructing){ctx.shadowColor=MAP_THEME.window;ctx.shadowBlur=5;}polygon(ctx,pts,shade,'#d7bd81');ctx.restore();
       line(ctx,{x:p.x,y:p.y-altitude},{x:p.x,y:p.y-altitude+winH},'#dfd2a6',.9);
       line(ctx,lift(pts[3],-1),lift(pts[2],-1),'#b8a77d',1.5);
     }
@@ -75,7 +74,7 @@ export function drawBuilding(ctx, def, b, options={}) {
   const door=lerp(ground[2],ground[3],.5);
   polygon(ctx,[{x:door.x-4,y:door.y-12},{x:door.x+4,y:door.y-16},{x:door.x+4,y:door.y-2},{x:door.x-4,y:door.y+2}],'#8e785b','#b09a75');
   if(def.id==='workshop'){
-    polygon(ctx,top,'#869284','#626e61');
+    polygon(ctx,top,'#6d8190','#435b67');
     for(let i=0;i<3;i++){const p=project(x+.3+i*.7,y+.3);polygon(ctx,[lift(p,height+5),lift({x:p.x+15,y:p.y+7},height+5),lift({x:p.x+15,y:p.y+15},height+5)],'#aeb7a3');}
     const chimney=project(x+bw-.3,y+.3);ctx.fillStyle='#7d7e6c';ctx.fillRect(chimney.x-5,chimney.y-height-34,10,36);ctx.fillStyle='#aea68a';ctx.fillRect(chimney.x-7,chimney.y-height-36,14,5);
     if(!blueprint&&!constructing){ctx.fillStyle='#f5f3e68a';for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(chimney.x+i*5,chimney.y-height-45-i*10,6+i*2,0,Math.PI*2);ctx.fill();}}
@@ -84,7 +83,7 @@ export function drawBuilding(ctx, def, b, options={}) {
     polygon(ctx,[top[0],top[1],ridgeA],light);
     polygon(ctx,[top[3],top[2],ridgeB],light);
     polygon(ctx,[top[1],top[2],ridgeB,ridgeA],roof,'#64705360');
-    polygon(ctx,[top[0],top[3],ridgeB,ridgeA],def.id==='row_house'?'#bb8062':def.id==='apartment'?'#929686':'#8e9b86','#64705360');
+    polygon(ctx,[top[0],top[3],ridgeB,ridgeA],def.id==='row_house'?'#9c7d77':def.id==='apartment'?'#718692':'#829396','#b4b39150');
     for(let i=1;i<5;i++){line(ctx,lerp(top[1],ridgeA,i/5),lerp(top[2],ridgeB,i/5),'#eee4bf28');line(ctx,lerp(top[0],ridgeA,i/5),lerp(top[3],ridgeB,i/5),'#e6d1a32e');}
     if(def.id==='row_house'||def.id==='apartment'){const p=lerp(top[0],ridgeA,.65);ctx.fillStyle='#bbac8e';ctx.fillRect(p.x-3,p.y-11,6,13);ctx.fillStyle='#c5b79b';ctx.fillRect(p.x-4,p.y-13,8,3);}
     if(def.id==='town_hall'){
@@ -94,6 +93,8 @@ export function drawBuilding(ctx, def, b, options={}) {
       polygon(ctx,[{x:p.x-13,y:p.y-26},{x:p.x+7,y:p.y-48},{x:p.x+23,y:p.y-29},{x:p.x+9,y:p.y-23}],'#657e6c');
       ctx.fillStyle='#f0e6c8';ctx.beginPath();ctx.arc(p.x+1,p.y-19,6,0,Math.PI*2);ctx.fill();line(ctx,{x:p.x+1,y:p.y-19},{x:p.x+1,y:p.y-23},'#76816c');line(ctx,{x:p.x+1,y:p.y-19},{x:p.x+4,y:p.y-18},'#76816c');
       ctx.fillStyle='#9b987d';ctx.fillRect(p.x+7,p.y-62,1,17);polygon(ctx,[{x:p.x+8,y:p.y-62},{x:p.x+24,y:p.y-58},{x:p.x+8,y:p.y-54}],'#b89d63');
+      ctx.save();ctx.shadowColor=MAP_THEME.lamp;ctx.shadowBlur=18;
+      polygon(ctx,[{x:p.x+7,y:p.y-69},{x:p.x+13,y:p.y-61},{x:p.x+7,y:p.y-52},{x:p.x+1,y:p.y-61}],MAP_THEME.lamp,'#e0e9c0');ctx.restore();
     }
     if(def.id==='market'){
       const a=lift(ground[2],19),c=lift(ground[3],19);
@@ -110,6 +111,15 @@ export function drawBuilding(ctx, def, b, options={}) {
     ctx.restore();
   }
   if(options.selected){ctx.save();polygon(ctx,ground,null,'#f8ecc0');ctx.restore();}
+}
+
+export function lantern(ctx,x,y){
+  const p=project(x,y);ctx.save();
+  const halo=ctx.createRadialGradient(p.x,p.y-19,1,p.x,p.y-19,28);halo.addColorStop(0,'#97e8eb3c');halo.addColorStop(1,'#8fdbe000');ctx.fillStyle=halo;ctx.fillRect(p.x-30,p.y-49,60,60);
+  ctx.fillStyle='#546066';ctx.fillRect(p.x-1,p.y-24,2,24);ctx.fillStyle=MAP_THEME.gold;ctx.fillRect(p.x-4,p.y-25,8,2);ctx.fillRect(p.x-4,p.y-16,8,2);
+  ctx.shadowColor=MAP_THEME.lamp;ctx.shadowBlur=9;
+  polygon(ctx,[{x:p.x,y:p.y-24},{x:p.x+3,y:p.y-20},{x:p.x,y:p.y-16},{x:p.x-3,y:p.y-20}],MAP_THEME.lamp);
+  ctx.restore();
 }
 
 export function drawThumbnail(canvas,def) {

@@ -10,6 +10,9 @@ from backend.core.errors import GameError
 from backend.model.world import SCHEMA_VERSION, World
 from backend.systems.placement import validate_placement
 from backend.systems.population import city_capacity
+from backend.systems.housing import assign_occupancy
+from backend.persistence.migrations import migrate_v1
+from backend.persistence.property_validation import validate_property
 
 
 def config_hash():
@@ -38,10 +41,11 @@ def validate_world(world):
         raise GameError("存档的世界版本或地图不兼容。")
     if type(world.generator_version) is not int or world.generator_version != 1:
         raise GameError("存档生成版本不兼容。")
-    for value in (world.seed, world.day, world.cash, world.population, world.next_id, world.revision):
+    for value in (world.seed, world.day, world.cash, world.population, world.next_id, world.revision,
+                  world.opening_cash, world.resident_funds, world.buyer_demand):
         if type(value) is not int:
             raise GameError("存档包含非法数值。")
-    if world.day < 0 or world.population < 0 or world.revision < 0:
+    if min(world.day,world.population,world.revision,world.resident_funds,world.buyer_demand) < 0:
         raise GameError("存档时间或人口无效。")
     if type(world.paused) is not bool or world.speed not in (0.5, 1, 2):
         raise GameError("存档时间控制无效。")
@@ -56,9 +60,10 @@ def validate_world(world):
             raise GameError("存档建筑编号重复或无效。")
         if building.status not in ("blueprint", "queued", "constructing", "completed"):
             raise GameError("存档施工状态无效。")
-        if type(building.progress) is not int or building.progress < 0 or building.owner_mode != "municipal":
+        if type(building.progress) is not int or building.progress < 0:
             raise GameError("存档建筑进度或产权无效。")
         validate_placement(empty, building.definition_id, building.x, building.y, building.rotation)
+        validate_property(building)
         duration = CATALOG[building.definition_id]["duration"]
         if (building.status in ("blueprint", "queued") and building.progress != 0
                 or building.status == "constructing" and not 0 < building.progress < duration
@@ -68,11 +73,13 @@ def validate_world(world):
         ids.add(building.id)
     if world.next_id <= max(ids, default=0) or world.population > city_capacity(world):
         raise GameError("存档建筑编号或住房人口不一致。")
+    if sum(b.occupancy for b in world.buildings) != world.population:
+        raise GameError("存档各住宅入住人数与总人口不一致。")
     if not all(isinstance(items, list) for items in (world.ledger,world.events,world.history)):
         raise GameError("存档账目或历史格式无效。")
     if any(not isinstance(item,dict) or type(item.get("amount")) is not int
            or type(item.get("day")) is not int or not 0 <= item["day"] <= world.day
-           or item.get("category") not in ("construction","tax","maintenance")
+           or item.get("category") not in ("construction","tax","maintenance","housing_sale","public_rent","business_tax","commercial_rent")
            or not isinstance(item.get("label"),str) for item in world.ledger):
         raise GameError("存档账目无效。")
     if any(not isinstance(item,dict) or type(item.get("day")) is not int
@@ -84,7 +91,7 @@ def validate_world(world):
            or not 0 <= item["day"] <= world.day or item["population"]<0
            or item["net"] != item["revenue"]-item["upkeep"] for item in world.history):
         raise GameError("存档月报无效。")
-    if world.cash != BALANCE["starting_cash"] + sum(item["amount"] for item in world.ledger):
+    if world.cash != world.opening_cash + sum(item["amount"] for item in world.ledger):
         raise GameError("存档现金与账目不一致。")
 
 
@@ -94,10 +101,18 @@ def load_world(directory: Path):
         raise GameError("还没有存档，请先保存城市。")
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-        if payload["schema_version"] != SCHEMA_VERSION or payload["config_hash"] != config_hash():
-            raise GameError("存档版本或配置已变化；请恢复原配置后读取。")
-        world = World.from_dict(payload["world"])
+        if payload["schema_version"] == 1:
+            world = World.from_dict(migrate_v1(payload))
+            assign_occupancy(world)
+        else:
+            if payload["schema_version"] != SCHEMA_VERSION or payload["config_hash"] != config_hash():
+                raise GameError("存档版本或配置已变化；请恢复原配置后读取。")
+            world = World.from_dict(payload["world"])
         validate_world(world)
+        if payload["schema_version"] == 1:
+            world.events.append({"day":world.day,"title":"旧城市印册已迁移",
+                                 "text":"保留旧版时间、现金、施工与市政住房产权；居民购房余款及商户字段已初始化。原存档未覆盖。"})
+            world.events = world.events[-BALANCE["event_limit"]:]
         return world
     except (KeyError, TypeError, ValueError, AttributeError) as exc:
         if isinstance(exc, GameError):

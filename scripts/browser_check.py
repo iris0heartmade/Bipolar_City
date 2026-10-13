@@ -52,6 +52,15 @@ def click_cell(page,x,y):
     page.mouse.click(p["x"],p["y"])
 
 
+def advance_month(page,url):
+    before=read_state(url)
+    page.get_by_role('button',name='推进一个月 →').click()
+    state=wait_state(url,lambda s:s['world']['day']>=before['world']['day']+30)
+    date='第 %d 年 · %d 月' % (state['world']['day']//360+1,state['world']['day']//30%12+1)
+    page.wait_for_function('(date)=>document.getElementById("date").textContent===date',arg=date)
+    return state
+
+
 def run():
     artifacts=ROOT/"artifacts";artifacts.mkdir(exist_ok=True)
     results=[];errors=[]
@@ -78,7 +87,9 @@ def run():
                     page.screenshot(path=str(artifacts/"desktop.png"),full_page=True)
                     assert page.get_by_role("button",name="建造工人公寓").is_visible()
                     assert not page.evaluate("document.documentElement.scrollWidth>innerWidth")
-                    results.append("1440×1000 桌面页面加载，已有城镇可见，无横向溢出")
+                    assert page.evaluate("getComputedStyle(document.body).colorScheme")=='dark'
+                    assert page.locator('.city-title').inner_text().find('魔导市政')>=0
+                    results.append("1440×1000 魔导工业风页面加载，已有城镇可见，无横向溢出")
 
                     page.get_by_role("button",name="建造工人公寓").click();page.keyboard.press("r")
                     click_cell(page,23,7)
@@ -142,6 +153,62 @@ def run():
                     page.get_by_role("button",name="操作指南").click();assert page.locator('#help-dialog').is_visible();page.get_by_role('button',name='开始书写城市故事 →').click()
                     page.get_by_role('button',name='住宅',exact=True).click();assert page.locator('.building-card').count()==2
                     page.get_by_role('button',name='全部',exact=True).click();assert page.locator('.building-card').count()==5
+
+                    # Turn the first, still-unsold public apartment into a sale development through UI.
+                    click_cell(page,x,y)
+                    page.get_by_role('button',name='改为建成待售',exact=True).click()
+                    for_sale=wait_state(url,lambda s:s['world']['buildings'][-1]['housing_mode']=='for_sale')
+                    assert for_sale['housing']['unsold_units']==14 and for_sale['summary']['capacity']==280
+                    cash_before=for_sale['world']['cash']
+                    sold=advance_month(page,url)
+                    assert sold['world']['buildings'][-1]['sold_units']==2
+                    assert sold['housing']['unsold_units']==12 and sold['summary']['capacity']==288
+                    assert sold['world']['history'][-1]['sales_revenue']==200000
+                    assert sold['world']['cash']-cash_before==sold['world']['history'][-1]['net']
+                    page.locator('[data-pane=economy]').click()
+                    assert page.locator('#monthly-sales').inner_text()=='2'
+                    assert page.locator('#monthly-sale-value').inner_text()=='2,000'
+                    assert page.locator('#unsold-units').inner_text()=='12'
+                    page.screenshot(path=str(artifacts/'m1-economy.png'),full_page=True)
+                    page.locator('[data-pane=ledger]').click()
+                    assert '工人公寓 成交 2 户' in page.locator('#ledger-list').inner_text()
+                    click_cell(page,x,y)
+                    assert page.locator('#property-public').is_disabled()
+                    results.append('真实产权切换→月度成交 2 户→房款 2,000→可入住容量 280→288；库存减少，已售产权不可收回')
+
+                    # Build another public home via UI, then fill old private capacity to test actual rent.
+                    page.get_by_role('button',name='建造河岸联排住宅').click()
+                    page.locator('[data-housing-mode=public]').click()
+                    px,py=choose_position(sold,'row_house',0);click_cell(page,px,py)
+                    wait_state(url,lambda s:s['summary']['blueprints']==1)
+                    page.get_by_role('button',name='确认施工 →').click();wait_state(url,lambda s:s['summary']['construction']==1)
+                    for _ in range(9):current=advance_month(page,url)
+                    assert current['world']['population']==current['summary']['jobs']==305
+                    page.get_by_role('button',name='建造蒸汽工坊').click();page.keyboard.press('r')
+                    wx,wy=choose_position(current,'workshop',1);click_cell(page,wx,wy)
+                    wait_state(url,lambda s:s['summary']['blueprints']==1)
+                    page.get_by_role('button',name='确认施工 →').click();wait_state(url,lambda s:s['summary']['construction']==1)
+                    for _ in range(3):current=advance_month(page,url)
+                    assert current['housing']['public_residents']>0
+                    assert current['finance']['public_rent']>0
+                    assert current['commerce']['merchants']==current['commerce']['slots']==5
+                    assert current['world']['history'][-1]['business_tax']>0
+                    assert current['world']['cash']==current['world']['opening_cash']+sum(e['amount'] for e in current['world']['ledger'])
+                    assert current['world']['resident_funds']>=0
+                    page.locator('[data-pane=economy]').click()
+                    assert page.locator('#merchant-ratio').inner_text()=='5 / 5'
+                    page.screenshot(path=str(artifacts/'m1-economy-full.png'),full_page=True)
+                    results.append('人口受 305 个岗位限制；真实扩建工坊后公房入住并收租；商户逐月入驻至 5/5，产生税收与铺位租金；全账目守恒')
+
+                    # Save and restore the complete M1 data, not only the old construction fields.
+                    page.get_by_role('button',name='▣ 保存城市').click();wait_state(url,lambda s:s['save_exists'])
+                    page.wait_for_function("document.getElementById('toast').textContent.includes('已保存')")
+                    final_saved=read_state(url)['world'];advance_month(page,url)
+                    page.once('dialog',lambda dialog:dialog.accept());page.get_by_role('button',name='读取',exact=True).click()
+                    recovered=wait_state(url,lambda s:s['world']['day']==final_saved['day'])
+                    assert recovered['world']==final_saved
+                    results.append('M1 存档恢复后产权、已售户数、入住、居民余款、商户数与政府账目逐字段一致')
+                    page.locator('[data-pane=overview]').click()
                     page.screenshot(path=str(artifacts/"desktop-played.png"),full_page=True)
 
                     mobile=browser.new_page(viewport={"width":390,"height":844},device_scale_factor=1,is_mobile=True,has_touch=True)
@@ -153,9 +220,24 @@ def run():
                     mx,my=choose_position(recovered,'row_house',0);point=mobile.evaluate('([x,y])=>window.bipoleView.screenAt(x,y)',[mx,my]);mobile.touchscreen.tap(point['x'],point['y'])
                     wait_state(url,lambda s:s['summary']['blueprints']==1)
                     mobile.get_by_role('button',name='取消蓝图',exact=True).tap();canceled=wait_state(url,lambda s:s['summary']['blueprints']==0)
-                    assert canceled['world']['cash']==complete['world']['cash']
+                    assert canceled['world']['cash']==recovered['world']['cash']
+                    mobile.locator('[data-housing-mode=for_sale]').tap()
+                    assert mobile.locator('[data-housing-mode=for_sale]').get_attribute('aria-pressed')=='true'
+                    mobile.get_by_role('button',name='↖ 查看城市 / 选择建筑').tap()
+                    mobile.locator('[data-pane=economy]').tap()
+                    assert mobile.locator('#merchant-ratio').inner_text()=='5 / 5'
+                    mobile.locator('[data-pane=overview]').tap()
                     mobile.screenshot(path=str(artifacts/'mobile.png'),full_page=True)
                     results.append('390×844 手机页面无横向溢出；触摸放置和取消蓝图，资金未变')
+                    tablet=browser.new_page(viewport={"width":800,"height":900},device_scale_factor=1)
+                    tablet.on('pageerror',lambda error:errors.append(str(error)))
+                    tablet.goto(url);tablet.wait_for_function('window.bipoleView')
+                    assert not tablet.evaluate('document.documentElement.scrollWidth>innerWidth')
+                    tablet.locator('[data-pane=economy]').click()
+                    assert tablet.locator('#merchant-ratio').is_visible()
+                    assert tablet.locator('#merchant-ratio').inner_text()=='5 / 5'
+                    tablet.screenshot(path=str(artifacts/'tablet.png'),full_page=True)
+                    results.append('800×900 平板页面无横向溢出，经营面板可访问')
                     assert not errors, errors
                     results.append('桌面/手机未捕获到 JavaScript 运行异常')
                     browser.close()
