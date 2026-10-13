@@ -22,3 +22,4 @@ ECONOMY_DIR = ROOT / "data/economy"
 REFERENCE_CITY = read_json(ECONOMY_DIR / "reference_city_v1.json")
 INPUT_OUTPUT = read_json(ECONOMY_DIR / "input_output_v1.json")
 CALIBRATION = read_json(ECONOMY_DIR / "calibration_overrides.json")
+CALENDAR = read_json(ECONOMY_DIR / "calendar_v1.json")

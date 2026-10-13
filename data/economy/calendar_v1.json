@@ -1,0 +1,104 @@
+{
+  "config_id": "calendar_v1",
+  "config_version": "1.0.0",
+  "schema_version": 1,
+  "description": "BIPOLE 的月/季/年三层时间尺度事件节律。经济按月结算，政策按季度可议，报表与目标按年校准。",
+  "source": [
+    "原设计稿 Q24（NPC 月度经营决策、年度目标调整）",
+    "原设计稿 Q30（月度经济结算、季度日常议会、年度报告）",
+    "原设计稿 §9.2（按月计算经济人口贸易税收；季度议会更新日常政策；年度报表/目标调整）",
+    "原设计稿 §9.1（标准 20 年约 10 现实小时）",
+    "经济输入 V1.0 §7.3（新借款上限＝过去 12 个月平均月税收×6）",
+    "模块设计 M01 时钟 / M09 市政财政 / M18 国家议会"
+  ],
+
+  "note": "原始输入未提出春夏秋冬等季节变化，本配置不凭空发明季节。若将来要加，须单独校准产能、燃料需求与消费篮子，并重新验证首月基准。",
+
+  "time_scales": {
+    "month": {"days": 30, "months_per_scale": 1},
+    "quarter": {"months": 3},
+    "year": {"months": 12},
+    "term": {"years": 4, "note": "约四年任期考核，见 M18；为约数，实际考核年由议会决议登记。"}
+  },
+
+  "monthly_cycle": {
+    "settlement_day": 30,
+    "note": "每月第 30 日触发唯一一次经济结算。月内施工按日推进，不产生经济收入。",
+    "events": [
+      {"seq": 1,  "id": "advance_state",      "name": "克隆上期状态、完工、迁徙、已生效政策、外部报价", "module": "M01/M04", "cash": false},
+      {"seq": 2,  "id": "spatial_cache",      "name": "道路最短路、设施覆盖、魔物风险缓存",           "module": "M08/M12/M13", "cash": false},
+      {"seq": 3,  "id": "labor_match",        "name": "岗位匹配与当期合同工资确认",                     "module": "M03/M06", "cash": false},
+      {"seq": 4,  "id": "budget_cap",         "name": "由上期收入与储蓄设消费上限，预留必要支出",       "module": "M03/M07", "cash": false},
+      {"seq": 5,  "id": "procurement",        "name": "采购、库存预留、战略物资消耗",                   "module": "M02/M06/M11", "cash": true},
+      {"seq": 6,  "id": "capacity_check",     "name": "有效产能与服务容量约束校验",                     "module": "M06/M12", "cash": false},
+      {"seq": 7,  "id": "order_allocation",   "name": "分配家庭、企业、资本、市政、旅游与贸易订单",     "module": "M07/M11", "cash": false},
+      {"seq": 8,  "id": "settle_trades",      "name": "清算已接受买卖，扣库存，记收入与成本",           "module": "M02/M07/M11", "cash": true},
+      {"seq": 9,  "id": "wages_rent",         "name": "工资、租金、规费清算",                           "module": "M02/M05/M06", "cash": true},
+      {"seq": 10, "id": "tax_dividend",       "name": "企业税、分红、房东维修",                         "module": "M02/M09", "cash": true},
+      {"seq": 11, "id": "public_spending",    "name": "公共工资、所得税、房产税、救济",                 "module": "M02/M09", "cash": true},
+      {"seq": 12, "id": "church_loan",        "name": "教会收付、市政结转、贷款利息",                   "module": "M02/M10/M14", "cash": true},
+      {"seq": 13, "id": "reprice",            "name": "下期收入、价格、工资、投资与退出决策",           "module": "M06/M07/M10", "cash": false},
+      {"seq": 14, "id": "demographics",       "name": "信仰、教育队列、自然人口与稳定冲击",             "module": "M03/M12/M14", "cash": false},
+      {"seq": 15, "id": "commit",             "name": "会计断言、生成月报、提交新月状态",               "module": "M02/M22", "cash": false}
+    ],
+    "monthly_evaluations": {
+      "migration": {"module": "M03", "rule": "净迁徙≤当前人口 1%，按真实收入、住房、通勤与服务约束"},
+      "price_adjust": {"module": "M07", "limit": 0.05, "formula": "P_next=P*(1+clamp(0.08*log(D/S),-0.05,0.05))"},
+      "wage_adjust": {"module": "M06", "limit": 0.03, "note": "工资目标每月收敛 25%，普通月涨跌不超过 ±3%，不低于法定最低工资"},
+      "rent_adjust": {"module": "M05", "limit": 0.03, "formula": "rent_next=rent_now*(1+clamp(0.20*(occupancy-0.93),-0.03,+0.03))"},
+      "exit_check": {"module": "M06", "unpayable_months": 3, "loss_months": 6},
+      "dilemma": {"module": "M11", "rule": "战略库存 期末=期初+产+进-本地消耗-出-损耗"}
+    }
+  },
+
+  "quarterly_cycle": {
+    "months": 3,
+    "note": "季度是日常议事的节拍，不改变月度经济结算的频率。",
+    "events": [
+      {"id": "council_meeting", "name": "日常议会召开", "module": "M18", "player_controllable": true,
+       "detail": "季度议会可更新日常政策；提案、游说与合作进入表决。标准模式下不轻易剥夺玩家城市。"},
+      {"id": "policy_window", "name": "市政政策调整窗口", "module": "M09/M14", "player_controllable": true,
+       "detail": "税率、规费、传教政策、贷款额度在此窗口提出申请。"}
+    ],
+    "policy_cooldown": {
+      "months": 6,
+      "quarters": 2,
+      "note": "实际生效仍受冷却限制：每 6 月才能改一次，等于每 2 个季度一次。季度开会不等于可任意改政策。",
+      "limits": [
+        {"policy": "所得税", "range": [0.0, 0.20], "step_pp": 0.02},
+        {"policy": "正利润税", "range": [0.0, 0.25], "step_pp": 0.03},
+        {"policy": "房产税月率", "range": [0.0003, 0.0025], "step_pp": null},
+        {"policy": "宗教政策档位", "range": [-2, 2], "step_pp": 1}
+      ]
+    }
+  },
+
+  "yearly_cycle": {
+    "months": 12,
+    "note": "年度是校准与外部核算的节拍。首月不触发任何年度事件，因此不影响 P02 参考月基准。",
+    "events": [
+      {"id": "annual_report", "name": "年度报告与目标调整", "module": "M18/M19", "detail": "经济、民生、科技教育、建设、政治贡献五维年度记录，作为下一年度目标基准。"},
+      {"id": "npc_targets", "name": "NPC 城市年度目标调整", "module": "M11/M18", "detail": "对应 Q24：NPC 城市按年度调整发展目标，月度经营决策不变。"},
+      {"id": "borrowing_cap", "name": "新借款上限重估", "module": "M10",
+       "formula": "过去 12 个月平均月税收 × 6",
+       "fallback": "历史不足 12 个月时用当前税基估算",
+       "detail": "这一条决定了为什么需要整整一年的月度历史，年度是它的天然校准点。"},
+      {"id": "debt_review", "name": "债务与信用年度审查", "module": "M10", "detail": "审查既有债务、偿债记录与资产，决定下一年授信与利率。"},
+      {"id": "tax_trend", "name": "税基趋势校准", "module": "M09", "detail": "观察税收是否随经济活动变化，提示税率是否需要调整。"}
+    ]
+  },
+
+  "long_cycles": [
+    {"id": "term_review", "name": "任期考核", "years": 4, "module": "M18", "note": "约四年一次，独立于终局评分，挑战可恢复。"},
+    {"id": "final_review", "name": "二十年评价", "years": 20, "module": "M19", "note": "评分后继续沙盒，不终止历史，不必然导致丢城。"}
+  ],
+
+  "reference_month_guard": {
+    "note": "保证 P02 首月基准不被周期事件污染的约束",
+    "rules": [
+      "第 1 月不触发任何季度或年度事件，年度与季度事件只在对应周期首次到达时触发",
+      "月度结算在第 30 日执行一次，月内不产生第二次经济结算",
+      "日时钟只推进施工，不进入经济循环"
+    ]
+  }
+}
