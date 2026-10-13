@@ -79,10 +79,16 @@ class HouseholdCohort:
 
 
 class HouseholdRegistry:
-    """三个收入层的集合，提供总量汇总与分群查询。"""
+    """三个收入层的集合，提供总量汇总与分群查询。
 
-    def __init__(self, cohorts=None):
-        self.cohorts = list(cohorts or build_cohorts())
+    config 可注入：默认读参考城的 labor_consumption_v1.json；
+    接入可玩运行时时由 live_economy 传入按实际人口缩放后的一份，
+    否则 3000 人的分群会被硬套到 168 人的小镇上。
+    """
+
+    def __init__(self, cohorts=None, config=None):
+        self.config = config
+        self.cohorts = list(cohorts or build_cohorts(config))
 
     def __iter__(self):
         return iter(self.cohorts)

@@ -23,6 +23,10 @@ class FiscalPolicy:
         self.relief_rate = to_rate(fiscal["property_relief_religion_factor"])
         self.central_grant_cents = cr_to_cents(fiscal["central_grant"])
         self.relief_payments_cents = cr_to_cents(fiscal["relief_payments"])
+        # 教会向市政捐赠的基数随城市规模缩放；参考城为 1200。
+        # 不跟着缩放的话，小城的教会会把信众的钱捐光。
+        self.church_donation_base_cents = cr_to_cents(
+            religion.get("donation_to_city_base_cr", CHURCH_DONATION_BASE_CR))
         loan = config["finance"]
         self.loan_principal_cents = cr_to_cents(loan["government_loan_principal"])
         self.loan_interest_rate = to_rate(loan["monthly_interest_rate"])
@@ -49,8 +53,9 @@ class FiscalPolicy:
     # --- 教会 ---------------------------------------------------------
 
     def church_donation(self, church_cash_cents: int, faith: Fraction) -> int:
-        """教会捐市政＝min(教会可用现金, 1200 × 信仰)；没钱不捐。"""
-        return min(church_cash_cents, apply_rate(cr_to_cents(CHURCH_DONATION_BASE_CR), faith))
+        """教会捐市政＝min(教会可用现金, 基数 × 信仰)；没钱不捐。"""
+        return min(church_cash_cents,
+                   apply_rate(self.church_donation_base_cents, faith))
 
     def official_subsidy(self, policy_tier: int) -> int:
         """官方传教扶持由市政实际转给教会；中立档为 0。"""

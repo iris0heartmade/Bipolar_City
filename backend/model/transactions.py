@@ -27,6 +27,8 @@ PRINCIPAL = "principal"            # 融资现金流，不是收入也不是费�
 EXPORT = "export"
 IMPORT = "import"
 TRANSFER = "transfer"              # 账户间划转，不改变全城现金
+HOUSING_SALE = "housing_sale"       # 居民购屋：家庭付款给市政，产权转移
+CONSTRUCTION = "construction"       # 市政付工程款给施工方
 
 PENDING = "pending"
 SETTLED = "settled"

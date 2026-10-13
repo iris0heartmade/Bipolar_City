@@ -8,11 +8,16 @@ from pathlib import Path
 from backend.config import BALANCE, CATALOG, TEMPLATE
 from backend.core.errors import GameError
 from backend.model.world import SCHEMA_VERSION, World
+from backend.model.economy import ReferenceCity
 from backend.systems.placement import validate_placement
 from backend.systems.population import city_capacity
 from backend.systems.housing import assign_occupancy
-from backend.persistence.migrations import migrate_v1
+from backend.persistence.migrations import migrate_v1, migrate_v2
 from backend.persistence.property_validation import validate_property
+
+GOV, CHURCH = ReferenceCity.GOVERNMENT, ReferenceCity.CHURCH
+HOUSEHOLDS, LANDLORDS = ReferenceCity.HOUSEHOLDS, ReferenceCity.LANDLORDS
+FIRMS, OUTSIDE = ReferenceCity.FIRMS, ReferenceCity.OUTSIDE
 
 
 def config_hash():
@@ -36,6 +41,41 @@ def save_world(world, directory: Path):
         temp.unlink(missing_ok=True)
 
 
+def _validate_economy(world):
+    """账户簿自洽性：余额非负、账户齐全、展示口径与账本对得上。"""
+    economy = world.economy
+    if type(world.economy_month) is not int or world.economy_month < 0:
+        raise GameError("存档的经济结算月份无效。")
+    if type(world.pending_construction_cents) is not int \
+            or world.pending_construction_cents < 0:
+        raise GameError("存档的待付施工款无效。")
+    if economy is None:
+        if world.economy_month:
+            raise GameError("存档缺少账户簿却记录了结算月份。")
+        return
+    if world.economy_month != economy.get("month"):
+        raise GameError("存档的账户簿与结算月份不一致。")
+    accounts = economy.get("accounts")
+    if not isinstance(accounts, list) or not accounts:
+        raise GameError("存档账户簿格式无效。")
+    ids = set()
+    for account in accounts:
+        if not isinstance(account, dict) or type(account.get("cash_cents")) is not int \
+                or type(account.get("reserved_cents")) is not int:
+            raise GameError("存档账户余额无效。")
+        if account["cash_cents"] < 0 and account.get("city_id") is not None:
+            raise GameError("存档中的本地账户出现负余额。")
+        ids.add(account.get("account_id"))
+    for required in (GOV, CHURCH, HOUSEHOLDS, LANDLORDS, FIRMS, OUTSIDE):
+        if required not in ids:
+            raise GameError("存档账户簿缺少必要账户。")
+    balances = {a["account_id"]: a["cash_cents"] for a in accounts}
+    if world.cash != balances[GOV]:
+        raise GameError("存档的市政现金与账户簿不一致。")
+    if world.resident_funds != balances[HOUSEHOLDS] + balances[LANDLORDS]:
+        raise GameError("存档的居民资金与账户簿不一致。")
+
+
 def validate_world(world):
     if world.schema_version != SCHEMA_VERSION or world.template_id != TEMPLATE["id"]:
         raise GameError("存档的世界版本或地图不兼容。")
@@ -47,6 +87,7 @@ def validate_world(world):
             raise GameError("存档包含非法数值。")
     if min(world.day,world.population,world.revision,world.resident_funds,world.buyer_demand) < 0:
         raise GameError("存档时间或人口无效。")
+    _validate_economy(world)
     if type(world.paused) is not bool or world.speed not in (0.5, 1, 2):
         raise GameError("存档时间控制无效。")
     if len(world.terrain) != TEMPLATE["height"] or any(len(row) != TEMPLATE["width"] for row in world.terrain):
@@ -91,8 +132,11 @@ def validate_world(world):
            or not 0 <= item["day"] <= world.day or item["population"]<0
            or item["net"] != item["revenue"]-item["upkeep"] for item in world.history):
         raise GameError("存档月报无效。")
-    if world.cash != world.opening_cash + sum(item["amount"] for item in world.ledger):
-        raise GameError("存档现金与账目不一致。")
+    if world.economy is None:
+        # 尚未结算过任何月份（新建城市或刚迁移的老存档）：
+        # 现金仍由旧账目线性推得，这条关系必须成立，否则说明账目被改过。
+        if world.cash != world.opening_cash + sum(item["amount"] for item in world.ledger):
+            raise GameError("存档现金与账目不一致。")
 
 
 def load_world(directory: Path):
@@ -101,17 +145,28 @@ def load_world(directory: Path):
         raise GameError("还没有存档，请先保存城市。")
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-        if payload["schema_version"] == 1:
+        version = payload["schema_version"]
+        migrated = None
+        if version == 1:
             world = World.from_dict(migrate_v1(payload))
+            migrated = 1
             assign_occupancy(world)
+        elif version == 2:
+            world = World.from_dict(migrate_v2(payload["world"]))
+            migrated = 2
         else:
-            if payload["schema_version"] != SCHEMA_VERSION or payload["config_hash"] != config_hash():
+            if version != SCHEMA_VERSION or payload["config_hash"] != config_hash():
                 raise GameError("存档版本或配置已变化；请恢复原配置后读取。")
             world = World.from_dict(payload["world"])
         validate_world(world)
-        if payload["schema_version"] == 1:
+        if migrated == 1:
             world.events.append({"day":world.day,"title":"旧城市印册已迁移",
                                  "text":"保留旧版时间、现金、施工与市政住房产权；居民购房余款及商户字段已初始化。原存档未覆盖。"})
+            world.events = world.events[-BALANCE["event_limit"]:]
+        elif migrated == 2:
+            world.events.append({"day":world.day,"title":"经济账本已接入",
+                                 "text":"居民收入改为企业与市政真实转付，不再按人口自动加钱；"
+                                        "原有市政现金与居民资金原样并入账户。原存档未覆盖。"})
             world.events = world.events[-BALANCE["event_limit"]:]
         return world
     except (KeyError, TypeError, ValueError, AttributeError) as exc:

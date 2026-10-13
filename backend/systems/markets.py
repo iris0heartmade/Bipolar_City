@@ -35,8 +35,9 @@ class MarketFlows:
         return self.private_capital_cents + self.exports_cents + self.tourist_spend_cents
 
 
-def market_flows() -> MarketFlows:
-    sources = INPUT_OUTPUT["firm_revenue_sources"]
+def market_flows(input_output=None) -> MarketFlows:
+    """企业本月收到的全部款项。input_output 可注入缩放后的投入产出表。"""
+    sources = (input_output or INPUT_OUTPUT)["firm_revenue_sources"]
     return MarketFlows(
         household_consumption_cents=cr_to_cents(sources["household_consumption"]),
         owner_repair_cents=cr_to_cents(sources["owner_repair_spend"]),
@@ -49,11 +50,12 @@ def market_flows() -> MarketFlows:
     )
 
 
-def trade_flows() -> dict[str, int]:
+def trade_flows(input_output=None) -> dict[str, int]:
     """进出口与外部往来。战略品金额已含在明细内，不得再加一笔付款。"""
-    trade = INPUT_OUTPUT["trade"]
+    io = input_output or INPUT_OUTPUT
+    trade = io["trade"]
     return {
-        "imports": cr_to_cents(INPUT_OUTPUT["firm_input_split"]["imports"]),
+        "imports": cr_to_cents(io["firm_input_split"]["imports"]),
         "exports": cr_to_cents(sum(line["value"] for line in trade["exports"])),
         "imports_detail": cr_to_cents(sum(line["value"] for line in trade["imports"])),
         "tourist_spend": cr_to_cents(trade["tourist_spend"]),
@@ -62,7 +64,7 @@ def trade_flows() -> dict[str, int]:
     }
 
 
-def strategic_trade_lines() -> dict[str, list[dict]]:
+def strategic_trade_lines(input_output=None) -> dict[str, list[dict]]:
     """战略品进出口明细，供库存系统（P06）绑定实际库存与路线容量。"""
-    trade = INPUT_OUTPUT["trade"]
+    trade = (input_output or INPUT_OUTPUT)["trade"]
     return {"imports": trade["imports"], "exports": trade["exports"]}

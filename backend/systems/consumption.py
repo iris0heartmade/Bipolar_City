@@ -156,9 +156,13 @@ def build_plan(registry: HouseholdRegistry, month: int, *,
     第 1 个月：对齐 P00 校准总额 119000，各层按原始意愿缩放到该总额；
     第 2 个月起：各层消费 = min(上期可支配收入 × spend_ratio, 可动用容量)，不再缩放，
     形成真实的收入—消费反馈。
+
+    消费口径读自 registry.config（默认为参考城配置）。接入可玩运行时传入的是
+    按实际人口缩放后的一份，直接读全局常量会让 3000 人的校准总额压在小镇上。
     """
-    config = LABOR_CONSUMPTION["consumption"]
-    categories = LABOR_CONSUMPTION["basket_categories"]
+    labor = registry.config or LABOR_CONSUMPTION
+    config = labor["consumption"]
+    categories = labor["basket_categories"]
     cohorts = list(registry)
     plan = ConsumptionPlan(month=month, calibrated=(month == 1))
 

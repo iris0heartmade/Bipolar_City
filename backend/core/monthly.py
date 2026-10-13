@@ -94,7 +94,8 @@ def _carry_over(registry, plan, band_tax: dict, relief: int) -> None:
 def _enqueue_cash_flows(settlement: Settlement, city: ReferenceCity, ledger, flows,
                         trade: dict, prop, policy: FiscalPolicy, faith: Fraction,
                         taxes: dict, month: int, consumption_cents: int,
-                        landlord_distribution: int) -> None:
+                        landlord_distribution: int, settlement_io: dict,
+                        extra_transactions=()) -> None:
     """步骤 08—12：把本月的每一笔收付变成交易入队。
 
     每笔都有明确付款方与收款方；source_ref 标明业务来源，便于开发诊断页展开追溯。
@@ -115,7 +116,7 @@ def _enqueue_cash_flows(settlement: Settlement, city: ReferenceCity, ledger, flo
 
     # 08 企业收到货款：八来源逐笔对应付款账户
     pay(households, firms, consumption_cents, SALE, "household-consumption")
-    pay(landlords, firms, flows.owner_repair_cents, MAINTENANCE, "owner-repair")
+    pay(landlords, firms, prop.landlord_repair_cents, MAINTENANCE, "owner-repair")
     pay(gov, firms, flows.municipal_procurement_cents, PROCUREMENT, "municipal-procurement")
     pay(gov, firms, flows.municipal_capital_cents, CAPITAL, "municipal-capital")
     pay(outside, firms, flows.exports_cents, EXPORT, "exports")
@@ -125,7 +126,7 @@ def _enqueue_cash_flows(settlement: Settlement, city: ReferenceCity, ledger, flo
     pay(outside, firms, capital_inflow_cents(), CAPITAL, "private-capital-inflow")
 
     # 09 企业支出：采购（含进口）、工资、商业租金、规费
-    _local_intermediate, import_cents = trade_split()
+    _local_intermediate, import_cents = trade_split(settlement_io)
     pay(firms, outside, import_cents, IMPORT, "imports")
     pay(firms, households, ledger.wage_cents, WAGE, "private-wages")
     pay(firms, landlords, ledger.commercial_rent_cents, COMMERCIAL_RENT, "commercial-rent")
@@ -151,20 +152,31 @@ def _enqueue_cash_flows(settlement: Settlement, city: ReferenceCity, ledger, flo
     pay(households, landlords, prop.residential_rent_cents,
         RESIDENTIAL_RENT, "residential-rent")
     pay(households, church, taxes["donation"], DONATION, "church-donation-residents")
+    # 自住房没有租户、维修却真实存在，由房主本人直接付给维修企业。
+    # 参考城的住宅全部有租赁市场，这笔为 0；接入可玩世界后才会出现。
+    pay(households, firms, prop.household_repair_cents, MAINTENANCE, "owner-self-repair")
 
     # 12b 房东净房产收入分配回家庭主钱包：房东是家庭财产身份，本阶段不另设消费行为。
     # 这一步只把子账户里的钱挪回同一个家庭的主钱包，不创造也不销毁现金。
     pay(landlords, households, landlord_distribution, TRANSFER, "landlord-property-income")
 
+    # 接入运行时才有的交易（例如居民购屋）。它们同样是账户之间的真实收付，
+    # 不是绕过账本直接改余额；参考月没有这些交易，因此基准不受影响。
+    for tx in extra_transactions or ():
+        pay(tx.from_account, tx.to_account, tx.amount_cents, tx.category,
+            f"{tx.source_ref}")
+
 
 def simulate_month(city: ReferenceCity, month: int = 1, policy: FiscalPolicy = None,
                    faith: Fraction = None, settled=(),
-                   registry: HouseholdRegistry = None) -> MonthReport:
+                   registry: HouseholdRegistry = None,
+                   extra_transactions=()) -> MonthReport:
     """跑完一个月的经济结算，返回月报。
 
     步骤编号对应 calendar_v1.json 的 monthly_cycle.events 序列。
     传入 settled（通常是存档里的已清流水）后，同一月份重复调用不会二次付款。
     传入 registry 可延续上月的收入层现金与可支配收入，实现跨月消费反馈。
+    传入 extra_transactions 可加入接入运行时特有的账户间交易（如居民购屋）。
     """
     book = city.book
     opening = book.snapshot()                       # 步骤 01 前保存开账余额
@@ -174,8 +186,9 @@ def simulate_month(city: ReferenceCity, month: int = 1, policy: FiscalPolicy = N
     registry = registry if registry is not None else city.household_registry
 
     ledger = corporate_ledger(city, policy, faith)        # 步骤 03—07 的输入
-    flows = market_flows()
-    trade = trade_flows()
+    io = city.input_output
+    flows = market_flows(io)
+    trade = trade_flows(io)
     prop = property_flows(city)
 
     assessed = cr_to_cents(city.config["housing"]["assessed_value"])
@@ -204,12 +217,13 @@ def simulate_month(city: ReferenceCity, month: int = 1, policy: FiscalPolicy = N
         "donation": donation,
     }
 
-    distribution_ratio = to_rate(LABOR_CONSUMPTION["cash_rules"]["landlord_distribution_ratio"])
+    distribution_ratio = to_rate(city.labor_config["cash_rules"]["landlord_distribution_ratio"])
     landlord_distribution = _landlord_distribution_cents(book, prop, distribution_ratio)
 
     settlement = Settlement(book, month=month, opening=opening, settled=settled)
     _enqueue_cash_flows(settlement, city, ledger, flows, trade, prop, policy, faith,
-                        taxes, month, consumption_cents, landlord_distribution)
+                        taxes, month, consumption_cents, landlord_distribution, io,
+                        extra_transactions)
     settlement.settle()                            # 步骤 08—12：一次清算
     city.last_journal = settlement.journal         # 供读档后恢复幂等
 

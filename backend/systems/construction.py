@@ -1,7 +1,11 @@
+"""蓝图、开工与竣工。
+
+施工款不在这里扣钱：月结会用账户簿覆盖 world.cash，直接扣的金额会被抹掉。
+commit_construction 记录待付金额，月结时由市政账户真实付给施工方。
+"""
 from backend.config import CATALOG
 from backend.core.errors import GameError
 from backend.model.world import Building
-from backend.systems.finance import record
 from backend.systems.placement import validate_placement
 
 
@@ -16,13 +20,14 @@ def place_blueprint(world, definition_id, x, y, rotation, housing_mode="public")
 
 
 def commit_construction(world):
+    """批准开工。钱先记成待付，实际付款在月底随账户结算一起完成。"""
     blueprints = [b for b in world.buildings if b.status == "blueprint"]
     if not blueprints:
         raise GameError("请先在地图上放置蓝图。")
     cost = sum(CATALOG[b.definition_id]["cost"] for b in blueprints)
     if world.cash < cost:
         raise GameError("市政资金不足；取消部分蓝图或等待税收。")
-    record(world, "construction", -cost, "确认 %d 座建筑施工" % len(blueprints))
+    world.pending_construction_cents = world.pending_construction_cents + cost
     for building in blueprints:
         building.status = "queued"
 

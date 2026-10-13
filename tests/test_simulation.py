@@ -76,14 +76,22 @@ def test_blueprint_overlap_rejected_and_free():
 
 
 def test_commit_atomic_and_no_double_charge():
+    """施工款先记成待付，月底由市政账户真实支付；重复提交不得收两次。"""
     service=GameService();place(service);place(service,"apartment",1);cash=service.world.cash
     cost=CATALOG["row_house"]["cost"]+CATALOG["apartment"]["cost"]
     service.command({"type":"commit","request_id":"unique-commit"})
-    assert service.world.cash==cash-cost
+    assert service.world.pending_construction_cents==cost
+    assert service.world.cash==cash, "批准开工本身不扣钱，付款在月底随账户结算完成"
     service.command({"type":"commit","request_id":"unique-commit"})
-    assert service.world.cash==cash-cost
+    assert service.world.pending_construction_cents==cost, "重复提交不得二次计入待付款"
     with pytest.raises(GameError):service.command({"type":"commit"})
-    assert service.world.cash==cash-cost
+    assert service.world.pending_construction_cents==cost
+
+    advance_days(service.world,30,manual=True)
+    assert service.world.pending_construction_cents==0
+    report=service.world.economy["report"]
+    assert service.world.cash==cash+report["municipal_surplus_cents"]-cost, \
+        "市政账户＝期初现金＋本月财政结余−已付施工款"
 
 
 def test_insufficient_funds_keeps_all_blueprints():
@@ -108,13 +116,17 @@ def test_pause_construction_completion_once_and_housing_growth():
 
 
 def test_120_months_accounting_and_capacity_without_ui():
+    """连跑 120 个月：月结全部由账户引擎完成，旧账目不再被写入。"""
     service=GameService();world=service.world;world.paused=False
     advance_days(world,120*BALANCE["days_per_month"])
     assert world.population==min(city_capacity(world),service.snapshot()["summary"]["jobs"])
-    assert world.cash==BALANCE["starting_cash"]+sum(item["amount"] for item in world.ledger)
-    assert sum(item["category"]=="tax" for item in world.ledger)==120
-    assert sum(item["category"]=="business_tax" for item in world.ledger)==120
-    assert sum(item["category"]=="commercial_rent" for item in world.ledger)==120
+    assert world.economy_month==120
+    accounts={a["account_id"]:a["cash_cents"] for a in world.economy["accounts"]}
+    assert world.cash==accounts["gov"], "市政现金必须等于账户簿里的市政余额"
+    assert world.resident_funds==accounts["households"]+accounts["landlord"]
+    for name in ("gov","church","households","firms"):
+        assert accounts[name]>=0, f"{name} 账户不得透支"
+    assert world.ledger==[], "结算已由账户引擎承担，旧账目不再重复记录"
     assert len(world.history)==BALANCE["history_limit"]
     assert len(world.events)<=BALANCE["event_limit"]
 

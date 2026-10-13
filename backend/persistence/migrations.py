@@ -1,4 +1,10 @@
-"""只迁移已知 0.1.0 格式，不猜测未知配置的财务语义。"""
+"""只迁移已知格式，不猜测未知配置的财务语义。
+
+v1 → v2 补齐购房与商户字段；v2 → v3 接入账户清算引擎。
+v2→v3 的迁移最关键：旧存档里居民的钱是「按人口自动加钱」攒出来的，
+没有账户结构。迁移时按当前人口与住房重算一次期初余额建账，
+原有市政现金与居民资金原样搬进对应账户，一分不改。
+"""
 from copy import deepcopy
 
 from backend.config import BALANCE, ROOT, read_json
@@ -21,5 +27,16 @@ def migrate_v1(payload):
         building.update(housing_mode="public",sold_units=0,occupancy=0,merchants=0)
     data.update(schema_version=SCHEMA_VERSION,opening_cash=LEGACY["balance"]["starting_cash"],
                 resident_funds=data["population"]*BALANCE["resident_savings_per_person"],
-                buyer_demand=BALANCE["initial_buyer_demand"])
+                buyer_demand=BALANCE["initial_buyer_demand"],
+                economy=None,economy_month=0,pending_construction_cents=0)
+    return data
+
+
+def migrate_v2(data):
+    """2.x → 3：接入账户引擎，尚未结算过任何月份。"""
+    data = deepcopy(data)
+    if data.get("schema_version") != 2:
+        raise GameError("存档内外版本不一致。")
+    data.update(schema_version=SCHEMA_VERSION, economy=None, economy_month=0,
+                pending_construction_cents=0)
     return data

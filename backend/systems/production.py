@@ -33,11 +33,14 @@ class CorporateLedger:
                 + self.profit_tax_cents + self.dividend_cents + self.capital_purchase_cents)
 
 
-def dividend_payout_rate() -> Fraction:
+def dividend_payout_rate(input_output=None) -> Fraction:
     """参考月用有理数表达派息比例，保证首月恰好 16000 分毫不差。
 
     比例来自 P00 校准配置而非硬编码；普通演化配置可换成 0.4288，但须相应重算预期。
     """
+    calibration = (input_output or {}).get("dividend_payout_value")
+    if calibration:
+        return Fraction(str(calibration))
     return rate_from_text(CALIBRATION["algorithm_conventions"]["dividend_payout"]["value"])
 
 
@@ -48,10 +51,10 @@ def corporate_ledger(city: ReferenceCity, policy, faith: Fraction) -> CorporateL
     profit_after_tax = profit_before_tax - profit_tax
 
     # 分红从正税后利润中按基准比例取；亏损或零利润时为 0
-    dividend = apply_rate(max(0, profit_after_tax), dividend_payout_rate())
+    dividend = apply_rate(max(0, profit_after_tax), dividend_payout_rate(city.input_output))
     dividend = min(dividend, max(0, profit_after_tax))
 
-    firm_out = INPUT_OUTPUT["firm_flows"]["outflows"]
+    firm_out = city.input_output["firm_flows"]["outflows"]
     return CorporateLedger(
         wage_cents=city.private_wage_bill_cents,
         input_cents=city.input_cost_cents,
@@ -67,12 +70,12 @@ def corporate_ledger(city: ReferenceCity, policy, faith: Fraction) -> CorporateL
     )
 
 
-def trade_split() -> tuple[int, int]:
+def trade_split(input_output=None) -> tuple[int, int]:
     """采购分解为本地互购与进口。本地互购在聚合层是企业付给企业自己，现金净影响为零。"""
-    split = INPUT_OUTPUT["firm_input_split"]
+    split = (input_output or INPUT_OUTPUT)["firm_input_split"]
     return cr_to_cents(split["local_intermediate"]), cr_to_cents(split["imports"])
 
 
-def capital_inflow_cents() -> int:
+def capital_inflow_cents(input_output=None) -> int:
     """私人资本投入：由外部投资者付给企业，与企业资本采购等额进出，故不影响对外净流量。"""
-    return cr_to_cents(INPUT_OUTPUT["firm_revenue_sources"]["private_capital"])
+    return cr_to_cents((input_output or INPUT_OUTPUT)["firm_revenue_sources"]["private_capital"])

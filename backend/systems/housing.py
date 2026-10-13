@@ -54,13 +54,19 @@ def set_housing_mode(world, building_id, mode):
 
 
 def sell_homes(world):
-    from backend.systems.finance import record
+    """按购房需求成交待售住宅。
 
+    返回 (成交户数, 成交总额, 成交明细)。**只判断买得起多少，不在这里扣钱**：
+    付款由账本里的 housing_sale 交易完成。直接改 world.resident_funds 会让钱
+    凭空消失——月结时账户簿会覆盖这个字段，那笔钱既没进家庭账户也没进市政账户，
+    全城现金就平不上了。是否付得起仍读 world.resident_funds，它此刻就是账本快照。
+    """
     remaining = min(BALANCE["housing_sales_per_month"], world.buyer_demand,
                     world.population // BALANCE["household_size"])
-    sold, revenue = 0, 0
+    sold, revenue, sales = 0, 0, []
     for building in world.buildings:
-        if building.status != "completed" or building.housing_mode != "for_sale" or not is_housing(building):
+        if building.status != "completed" or building.housing_mode != "for_sale" \
+                or not is_housing(building):
             continue
         definition = CATALOG[building.definition_id]
         quantity = min(remaining, definition["units"]-building.sold_units,
@@ -68,15 +74,15 @@ def sell_homes(world):
         if not quantity:
             continue
         payment = quantity * definition["sale_price_per_unit"]
-        world.resident_funds -= payment
         world.buyer_demand -= quantity
         building.sold_units += quantity
         remaining -= quantity
         sold += quantity
         revenue += payment
+        sales.append({"building_id":building.id, "definition_id":building.definition_id,
+                      "name":definition["name"], "quantity":quantity, "payment_cents":payment})
         building.owner_mode = "private" if building.sold_units == definition["units"] else "mixed"
-        record(world, "housing_sale", payment, "%s 成交 %d 户" % (definition["name"], quantity))
-    return sold, revenue
+    return sold, revenue, sales
 
 
 def housing_summary(world):

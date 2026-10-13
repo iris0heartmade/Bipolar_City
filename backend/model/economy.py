@@ -7,7 +7,7 @@
 from dataclasses import dataclass
 from fractions import Fraction
 
-from backend.config import CALIBRATION, REFERENCE_CITY
+from backend.config import CALIBRATION, INPUT_OUTPUT, LABOR_CONSUMPTION, REFERENCE_CITY
 from backend.model.accounts import (CHURCH, EXTERNAL, FIRM, HOUSEHOLD, LANDLORD,
                                    MUNICIPAL, AccountBook)
 
@@ -66,7 +66,12 @@ class SectorAggregate:
 
 
 class ReferenceCity:
-    """由 P00 配置构造的 3000 人参考城，含企业、家庭、市政、教会与外部边界账户。"""
+    """由 P00 配置构造的 3000 人参考城，含企业、家庭、市政、教会与外部边界账户。
+
+    五份标定配置都可注入。默认读 data/economy 下的参考值，P02/P03 的基准测试
+    因此完全不受影响；接入可玩运行时时由 live_economy 按实际城市规模注入一份
+    缩放后的配置，同一套引擎既能跑基准也能跑真实存档。
+    """
 
     GOVERNMENT = "gov"
     CHURCH = "church"
@@ -75,10 +80,18 @@ class ReferenceCity:
     FIRMS = "firms"
     OUTSIDE = "world"
 
-    def __init__(self, city_id: str = "reference_city", config=None, book=None):
+    def __init__(self, city_id: str = "reference_city", config=None, book=None,
+                 input_output=None, labor=None, opening_balances=None,
+                 opening_in_cents=False):
         self.city_id = city_id
         self.config = config or REFERENCE_CITY
+        self.input_output = input_output or INPUT_OUTPUT
+        self.labor_config = labor or LABOR_CONSUMPTION
         self.calibration = CALIBRATION
+        self.opening_balances = opening_balances or self.calibration["opening_balances"]
+        # 期初余额来源有两种口径：参考城配置以 CR 计价，需要换算；
+        # 接入可玩运行时直接搬运存档里的分值，换算一次就会凭空放大 100 倍。
+        self.opening_in_cents = opening_in_cents
         self.last_journal = []
         # P03 收入层登记表挂在城上：跨月延续消费反馈的唯一载体。
         # 放在城上而不是每次调用现造，是为了杜绝「忘记传 registry 导致反馈静默归零」。
@@ -96,24 +109,28 @@ class ReferenceCity:
         """惰性装配收入层登记表；此处局部导入以避开 economy↔households 的循环依赖。"""
         if self._registry is None:
             from backend.model.households import HouseholdRegistry
-            self._registry = HouseholdRegistry()
+            self._registry = HouseholdRegistry(config=self.labor_config)
         return self._registry
 
     # --- 场景装配 -----------------------------------------------------
 
     def _open_accounts(self) -> None:
-        opening = self.calibration["opening_balances"]
-        firm_opening = sum(row["opening_cash"] for row in opening["firms"])
+        opening = self.opening_balances
+
+        def amount(value):
+            return int(value) if self.opening_in_cents else cr_to_cents(value)
+
+        firm_opening = sum(amount(row["opening_cash"]) for row in opening["firms"])
         self.book.open(self.GOVERNMENT, MUNICIPAL, "city_government", self.city_id,
-                       cr_to_cents(opening["city_government"]))
+                       amount(opening["city_government"]))
         self.book.open(self.CHURCH, CHURCH, "city_church", self.city_id,
-                       cr_to_cents(opening["church"]))
+                       amount(opening["church"]))
         self.book.open(self.HOUSEHOLDS, HOUSEHOLD, "all_households", self.city_id,
-                       cr_to_cents(opening["households_total"]))
+                       amount(opening["households_total"]))
         # 房东是家庭的财产身份，不是独立人口；期初归零，现金全部来自本月实际租金与维修收付
         self.book.open(self.LANDLORDS, LANDLORD, "household_landlords", self.city_id, 0,
                        parent_account_id=self.HOUSEHOLDS)
-        self.book.open(self.FIRMS, FIRM, "all_firms", self.city_id, cr_to_cents(firm_opening))
+        self.book.open(self.FIRMS, FIRM, "all_firms", self.city_id, firm_opening)
         self.book.open(self.OUTSIDE, EXTERNAL, "rest_of_world", None, 0)
 
     def _build_sectors(self) -> list[SectorAggregate]:
