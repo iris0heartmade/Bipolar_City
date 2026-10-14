@@ -21,11 +21,12 @@ def v1_payload():
 def test_known_v1_migrates_without_changing_cash_time_or_source(tmp_path):
     payload=v1_payload();path=tmp_path/"slot1.json";path.write_text(json.dumps(payload),encoding="utf-8")
     original=path.read_bytes();world=load_world(tmp_path)
-    assert world.schema_version==3 and world.cash==payload["world"]["cash"] and world.day==0
+    assert world.schema_version==4 and world.cash==payload["world"]["cash"] and world.day==0
     assert all(b.owner_mode=="municipal" for b in world.buildings)
     assert sum(b.occupancy for b in world.buildings)==world.population
     assert world.resident_funds>0
     assert world.economy is None and world.economy_month==0, "旧存档没有账户簿，首次月结才建账"
+    assert world.development_enabled, "迁移到 v4 后产能层默认开启"
     assert path.read_bytes()==original
 
 
@@ -39,11 +40,31 @@ def test_known_v2_migrates_and_keeps_cash_and_funds(tmp_path):
     path.write_text(json.dumps(payload),encoding="utf-8")
 
     world=load_world(tmp_path)
-    assert world.schema_version==3
+    assert world.schema_version==4
     assert world.cash==payload["world"]["cash"]
     assert world.resident_funds==payload["world"]["resident_funds"]
     assert world.economy is None and world.economy_month==0
+    assert world.development_enabled
     assert world.events[-1]["title"]=="经济账本已接入"
+
+
+def test_known_v3_gains_firm_history_and_development_flag(tmp_path):
+    """3.x 已接入账户引擎但还没有产能层：迁移必须补上行业历史。"""
+    service=GameService(tmp_path);service.command({"type":"save"})
+    path=tmp_path/"slot1.json";payload=json.loads(path.read_text(encoding="utf-8"))
+    payload["schema_version"]=3
+    payload["world"]["schema_version"]=3
+    payload["world"].pop("development_enabled",None)
+    economy=payload["world"].get("economy")
+    if isinstance(economy,dict):economy.pop("firm_history",None)
+    path.write_text(json.dumps(payload),encoding="utf-8")
+
+    world=load_world(tmp_path)
+    assert world.schema_version==4
+    assert world.development_enabled, "迁移到 v4 后产能层默认开启"
+    assert world.cash==payload["world"]["cash"], "现金一分不改"
+    if isinstance(world.economy,dict):
+        assert world.economy.get("firm_history")=={}, "没有历史就从空开始，第一个月维持现状"
 
 
 def test_unknown_v1_configuration_is_rejected(tmp_path):

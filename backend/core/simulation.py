@@ -13,6 +13,7 @@ from backend.model.accounts import AccountBook
 from backend.model.economy import ReferenceCity
 from backend.model.transactions import (CONSTRUCTION, HOUSING_SALE, MIGRATION_IN,
                                        MIGRATION_OUT, Transaction)
+from backend.systems.capacity import baseline_capacity
 from backend.systems.commerce import update_merchants
 from backend.systems.construction import advance_construction
 from backend.systems.housing import assign_occupancy, sell_homes
@@ -85,20 +86,33 @@ def run_economy_settlement(world, month: int, sales, migration_delta: int = 0) -
     """跑一次真实收付的月结，把账户余额写回世界。
 
     幂等由 economy_month 保证：同一个月只结算一次，读档重放不会再付第二遍钱。
+
+    世界配置 ``development_enabled`` 打开时启用产能层（设计稿 §4.1 Qcap
+    与 §9.1 企业进退）：企业规模按经营历史决定，营业额随产能利用率浮动，
+    城市因此能随玩家建设真正发展起来。关闭时行为与接入前逐分一致。
     """
     if world.economy_month >= month:
         raise GameError("本月经济结算已经完成，请等待下一个月。")
 
     book = AccountBook.from_dict(world.economy["accounts"]) if world.economy else None
+    enabled = bool(world.development_enabled)
     city = live_city(world, book=book,
-                     cohorts_state=world.economy.get("cohorts") if world.economy else None)
+                     cohorts_state=world.economy.get("cohorts") if world.economy else None,
+                     history=world.economy.get("firm_history") if world.economy else None,
+                     capacity_enabled=enabled)
     extra = (housing_sales(sales, month)
              + construction_transaction(world, month)
              + migration_transactions(migration_delta, month))
     report = simulate_month(city, month=month, extra_transactions=extra)
 
+    # 产能层：把本月的利用率与盈亏记入行业历史，供下个月判断扩张或退出。
+    # 先决策后记录，所以这里记的是「已经发生」的结果，不是预知。
+    if enabled:
+        _advance_firm_history(city, report)
+
     world.economy = {"accounts": city.book.to_dict(), "month": month,
                      "cohorts": cohort_state(city.household_registry),
+                     "firm_history": _history_state(city),
                      "report": report.to_dict()}
     world.economy_month = month
     world.pending_construction_cents = 0
@@ -107,6 +121,34 @@ def run_economy_settlement(world, month: int, sales, migration_delta: int = 0) -
     world.resident_funds = (city.book[ReferenceCity.HOUSEHOLDS].cash_cents
                             + city.book[ReferenceCity.LANDLORDS].cash_cents)
     return report
+
+
+def _advance_firm_history(city, report) -> None:
+    """记录本月各行业的利用率与税前利润。
+
+    利用率取「实际营业额 / 满负荷营业额」——产能打了几折就是几折，
+    这正是下一月扩张判断（连续 3 月超 85%）要的输入。
+
+    这里读的是 ``city.sectors``（已换算成分的聚合对象），不是配置字典，
+    两者的字段名不同：配置里叫 revenue，聚合对象里叫 revenue_cents。
+    """
+    from fractions import Fraction
+
+    for sector in city.sectors:
+        record = city.firm_history.get(sector.sector_id)
+        if record is None or sector.revenue_cents <= 0:
+            continue
+        reference = baseline_capacity(sector.revenue_cents)
+        utilisation = Fraction(sector.revenue_cents, reference) if reference else Fraction(1)
+        record.record(min(Fraction(1), utilisation), 0)
+
+
+def _history_state(city) -> dict:
+    """把行业历史导出为可存档的字典。"""
+    return {sector_id: {"utilisation": [str(x) for x in record.utilisation],
+                        "pre_tax_profit": list(record.pre_tax_profit),
+                        "cash_shortfall": list(record.cash_shortfall)}
+            for sector_id, record in city.firm_history.items()}
 
 
 def advance_days(world, days, manual=False):

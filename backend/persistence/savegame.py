@@ -12,7 +12,7 @@ from backend.model.economy import ReferenceCity
 from backend.systems.placement import validate_placement
 from backend.systems.population import city_capacity
 from backend.systems.housing import assign_occupancy
-from backend.persistence.migrations import migrate_v1, migrate_v2
+from backend.persistence.migrations import migrate_v1, migrate_v2, migrate_v3
 from backend.persistence.property_validation import validate_property
 
 GOV, CHURCH = ReferenceCity.GOVERNMENT, ReferenceCity.CHURCH
@@ -154,6 +154,9 @@ def load_world(directory: Path):
         elif version == 2:
             world = World.from_dict(migrate_v2(payload["world"]))
             migrated = 2
+        elif version == 3:
+            world = World.from_dict(migrate_v3(payload["world"]))
+            migrated = 3
         else:
             if version != SCHEMA_VERSION or payload["config_hash"] != config_hash():
                 raise GameError("存档版本或配置已变化；请恢复原配置后读取。")

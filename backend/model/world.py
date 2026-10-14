@@ -7,7 +7,7 @@ economy_month 记录已结算到第几个月，读档后从下一个月继续。
 from dataclasses import asdict, dataclass, field
 from typing import Any, Optional
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 
 @dataclass
@@ -50,6 +50,9 @@ class World:
     economy: Optional[dict] = None      # 账户簿快照（AccountBook.to_dict 的结构）
     economy_month: int = 0              # 已结算到第几个月，读档后从 +1 继续
     pending_construction_cents: int = 0 # 本月已批准但尚未入账的施工款
+    # 产能层开关（设计稿 §4.1 Qcap 与 §9.1 企业进退）。
+    # False 时月结走定值口径，行为与接入前逐分一致；True 时企业规模按经营历史进退。
+    development_enabled: bool = True
 
     def to_dict(self):
         return asdict(self)

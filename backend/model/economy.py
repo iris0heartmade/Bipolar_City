@@ -93,6 +93,9 @@ class ReferenceCity:
         # 接入可玩运行时直接搬运存档里的分值，换算一次就会凭空放大 100 倍。
         self.opening_in_cents = opening_in_cents
         self.last_journal = []
+        # P04 发展层：各行业最近若干个月的经营轨迹，跨月延续才能判断进退。
+        # 参考城不启用产能层时保持为空，基准行为完全不变。
+        self.firm_history = {}
         # P03 收入层登记表挂在城上：跨月延续消费反馈的唯一载体。
         # 放在城上而不是每次调用现造，是为了杜绝「忘记传 registry 导致反馈静默归零」。
         self._registry = None

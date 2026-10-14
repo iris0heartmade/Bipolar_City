@@ -291,15 +291,80 @@ def restore_cohort_state(registry, states) -> None:
             cohort.last_disposable_cents = int(state.get("last_disposable_cents", 0))
 
 
-def live_city(world, book=None, cohorts_state=None) -> ReferenceCity:
+def live_city(world, book=None, cohorts_state=None, history=None,
+              capacity_enabled: bool = False) -> ReferenceCity:
     """按当前世界状态装配一个可跑月结的新引擎城市。
 
     opening_balances 一律按分传入；book 传入时不会重开账户，存档余额原样沿用。
+
+    capacity_enabled=True 时启用产能层（设计稿 §4.1 Qcap 公式）与企业进退（§9.1）：
+    企业规模不再由人口比直接决定，而是先按经营历史做进退判断，
+    再把产能利用率作用到对外收入上。False 时行为与接入前逐分一致。
     """
     bundle = build_live_config(world)
-    city = ReferenceCity(city_id="live_city", config=bundle["config"], book=book,
-                         input_output=bundle["input_output"], labor=bundle["labor"],
+    config, input_output = bundle["config"], bundle["input_output"]
+    labor = bundle["labor"]
+
+    if capacity_enabled:
+        from backend.systems.development import (apply_capacity_to_input_output,
+                                                 capacity_factors,
+                                                 firm_history_from_config,
+                                                 rebuild_config_for_targets,
+                                                 sector_employee_targets)
+        history = firm_history_from_config(config, _restore_history(history))
+        targets, _notes = sector_employee_targets(world, history)
+        config = rebuild_config_for_targets(config, targets)
+        # 先按人数补算口径，再叠产能因子：顺序反了会把产能折扣重复算进人数变化里
+        input_output = _rescale_io_to_sectors(config, input_output, bundle)
+        input_output = apply_capacity_to_input_output(input_output, capacity_factors())
+
+    city = ReferenceCity(city_id="live_city", config=config, book=book,
+                         input_output=input_output, labor=labor,
                          opening_balances=bundle["opening_balances"],
                          opening_in_cents=True)
     restore_cohort_state(city.household_registry, cohorts_state)
+    if capacity_enabled:
+        city.firm_history = firm_history_from_config(config, history)
     return city
+
+
+def _restore_history(state) -> dict:
+    """把存档里的行业历史还原成 FirmHistory 对象。
+
+    存档用字符串保存分数（JSON 没有分数类型），这里原样还原。
+    读档后行业判断必须接得上，否则每次读档都从零开始历史，
+    城市会反复经历「第一个月永远维持现状」。
+    """
+    from fractions import Fraction
+
+    from backend.systems.firm_decisions import FirmHistory
+
+    if not state:
+        return {}
+    restored = {}
+    for sector_id, row in state.items():
+        record = FirmHistory(sector_id)
+        record.utilisation = [Fraction(x) for x in row.get("utilisation", [])]
+        record.pre_tax_profit = list(row.get("pre_tax_profit", []))
+        record.cash_shortfall = list(row.get("cash_shortfall", []))
+        restored[sector_id] = record
+    return restored
+
+
+def _rescale_io_to_sectors(config, input_output, bundle):
+    """行业人数真的变了以后，把投入产出表按新旧人数比例补算一次。
+
+    这一步**只在人数变化时**执行。人数没变就原样返回——因为
+    ``build_live_config`` 已经按人口比缩放过一次，再叠一层会让月报口径
+    与账户里真实收付差一个数（接入期踩过这个坑）。
+
+    月报口径用的是投入产出表，实际付款用的是行业配置，两者必须逐分相等。
+    """
+    before = sum(s["employees"] for s in bundle["config"]["firms"]["sectors"])
+    after = sum(s["employees"] for s in config["firms"]["sectors"])
+    if before <= 0 or after == before:
+        return input_output
+
+    factor = after / before
+    io = _scale_input_output(config, config["_scale"] * factor)
+    return io

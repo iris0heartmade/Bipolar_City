@@ -28,15 +28,32 @@ def migrate_v1(payload):
     data.update(schema_version=SCHEMA_VERSION,opening_cash=LEGACY["balance"]["starting_cash"],
                 resident_funds=data["population"]*BALANCE["resident_savings_per_person"],
                 buyer_demand=BALANCE["initial_buyer_demand"],
-                economy=None,economy_month=0,pending_construction_cents=0)
+                economy=None,economy_month=0,pending_construction_cents=0,
+                development_enabled=True)
     return data
 
 
 def migrate_v2(data):
-    """2.x → 3：接入账户引擎，尚未结算过任何月份。"""
+    """2.x → 4：接入账户引擎，尚未结算过任何月份。"""
     data = deepcopy(data)
     if data.get("schema_version") != 2:
         raise GameError("存档内外版本不一致。")
     data.update(schema_version=SCHEMA_VERSION, economy=None, economy_month=0,
-                pending_construction_cents=0)
+                pending_construction_cents=0, development_enabled=True)
+    return data
+
+
+def migrate_v3(data):
+    """3.x → 4：启用产能层与行业经营历史。
+
+    旧存档没有行业历史，也没有产能层开关。这里补上空历史并打开开关：
+    第一个月因为没有历史可看会维持现状，从第二个月起才按产能与经营判断进退。
+    """
+    data = deepcopy(data)
+    if data.get("schema_version") != 3:
+        raise GameError("存档内外版本不一致。")
+    economy = data.get("economy")
+    if isinstance(economy, dict):
+        economy.setdefault("firm_history", {})
+    data.update(schema_version=SCHEMA_VERSION, development_enabled=True)
     return data
