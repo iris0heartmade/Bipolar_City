@@ -29,6 +29,8 @@ IMPORT = "import"
 TRANSFER = "transfer"              # 账户间划转，不改变全城现金
 HOUSING_SALE = "housing_sale"       # 居民购屋：家庭付款给市政，产权转移
 CONSTRUCTION = "construction"       # 市政付工程款给施工方
+MIGRATION_IN = "migration_in"       # 迁入居民自带积蓄：外部付款给家庭账户
+MIGRATION_OUT = "migration_out"     # 迁出居民带走积蓄：家庭付款给外部账户
 
 PENDING = "pending"
 SETTLED = "settled"

@@ -11,7 +11,8 @@ from backend.core.errors import GameError
 from backend.core.monthly import simulate_month
 from backend.model.accounts import AccountBook
 from backend.model.economy import ReferenceCity
-from backend.model.transactions import CONSTRUCTION, HOUSING_SALE, Transaction
+from backend.model.transactions import (CONSTRUCTION, HOUSING_SALE, MIGRATION_IN,
+                                       MIGRATION_OUT, Transaction)
 from backend.systems.commerce import update_merchants
 from backend.systems.construction import advance_construction
 from backend.systems.housing import assign_occupancy, sell_homes
@@ -54,7 +55,33 @@ def construction_transaction(world, month: int) -> list[Transaction]:
         if amount > 0 else []
 
 
-def run_economy_settlement(world, month: int, sales) -> dict:
+def migration_transactions(delta: int, month: int) -> list[Transaction]:
+    """本月人口变动的资金往来：迁入的人自带积蓄，迁出的人带走积蓄。
+
+    人口是**人数**，钱是**现金**，两者必须各自说清来历。
+    以前migrate() 只改 world.population 一个数字，于是新迁入的居民凭空出现、
+    迁出的居民凭空消失——人数动了，钱却一动不动，全城现金口径与人口口径从此对不上。
+
+    规则：每人按 resident_savings_per_person 计价（与开局储蓄同一口径）。
+    - 迁入：外部世界付钱给家庭账户（MIGRATION_IN），钱有出处。
+    - 迁出：家庭账户付钱给外部世界（MIGRATION_OUT），钱有去处，且受实际现金约束。
+    两条都是真实收付，因此全城现金总量不变，只是换了个主人。
+    """
+    if delta == 0:
+        return []
+    amount = abs(delta) * BALANCE["resident_savings_per_person"]
+    if delta > 0:
+        return [Transaction(from_account=ReferenceCity.OUTSIDE,
+                            to_account=ReferenceCity.HOUSEHOLDS,
+                            amount_cents=amount, category=MIGRATION_IN,
+                            source_ref="migration-in", month=month)]
+    return [Transaction(from_account=ReferenceCity.HOUSEHOLDS,
+                        to_account=ReferenceCity.OUTSIDE,
+                        amount_cents=amount, category=MIGRATION_OUT,
+                        source_ref="migration-out", month=month)]
+
+
+def run_economy_settlement(world, month: int, sales, migration_delta: int = 0) -> dict:
     """跑一次真实收付的月结，把账户余额写回世界。
 
     幂等由 economy_month 保证：同一个月只结算一次，读档重放不会再付第二遍钱。
@@ -65,7 +92,9 @@ def run_economy_settlement(world, month: int, sales) -> dict:
     book = AccountBook.from_dict(world.economy["accounts"]) if world.economy else None
     city = live_city(world, book=book,
                      cohorts_state=world.economy.get("cohorts") if world.economy else None)
-    extra = housing_sales(sales, month) + construction_transaction(world, month)
+    extra = (housing_sales(sales, month)
+             + construction_transaction(world, month)
+             + migration_transactions(migration_delta, month))
     report = simulate_month(city, month=month, extra_transactions=extra)
 
     world.economy = {"accounts": city.book.to_dict(), "month": month,
@@ -94,7 +123,7 @@ def advance_days(world, days, manual=False):
             world.buyer_demand += ceil(max(0, delta) / BALANCE["household_size"])
             sold, sales_revenue, sales = sell_homes(world)
             assign_occupancy(world)
-            report = run_economy_settlement(world, economy_month(world), sales)
+            report = run_economy_settlement(world, economy_month(world), sales, delta)
             world.history.append({
                 "day":world.day, "population":world.population, "cash":world.cash,
                 "migration":delta, "revenue":report.municipal_income_cents,

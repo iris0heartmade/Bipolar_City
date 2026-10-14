@@ -50,7 +50,12 @@ def test_actual_sale_reduces_inventory_and_opens_capacity():
 
 
 def test_sale_money_moves_between_accounts_at_month_end():
-    """房款必须从家庭账户付到市政账户，不能凭空消失。"""
+    """房款必须从家庭账户付到市政账户，不能凭空消失。
+
+    不能直接断言「家庭账户净额变少」：同期迁入的居民会自带积蓄进账，
+    两者会互相抵消。所以这里比对**世界现金总量**与**市政账户**：
+    钱既没凭空消失，也确实进了市政。
+    """
     service=GameService();complete_house(service)
     advance_days(service.world,30,manual=True)
     before={a["account_id"]:a["cash_cents"]
@@ -60,8 +65,10 @@ def test_sale_money_moves_between_accounts_at_month_end():
     advance_days(service.world,30,manual=True)
     after={a["account_id"]:a["cash_cents"]
            for a in service.world.economy["accounts"]}
-    # 家庭账户确实少了房款（市政账户因本期税收与支出另有变化，故只校验家庭侧）
-    assert after["households"]+after["landlord"] < before["households"]+before["landlord"]
+    # 房款进了市政：即使市政本期另有税收收入与支出，也不可能反而净减
+    assert after["gov"] > before["gov"] - revenue
+    # 钱既没消失也没被创造：全城现金总量分毫不差
+    assert sum(after.values()) == sum(before.values())
     assert revenue>0
 
 

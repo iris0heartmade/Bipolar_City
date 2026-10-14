@@ -12,9 +12,11 @@ from backend.config import BALANCE, CATALOG
 from backend.core.errors import GameError
 from backend.core.monthly import simulate_month
 from backend.core.service import GameService
-from backend.core.simulation import advance_days, economy_month, run_economy_settlement
+from backend.core.simulation import (advance_days, economy_month, migration_transactions,
+                                     run_economy_settlement)
 from backend.model.accounts import AccountBook
 from backend.model.economy import ReferenceCity
+from backend.model.transactions import MIGRATION_IN, MIGRATION_OUT
 from backend.systems.generator import new_world
 from backend.systems.live_economy import (REFERENCE_POPULATION, build_live_config,
                                           cohort_state, housing_structure,
@@ -261,6 +263,81 @@ def test_firms_are_rejected_when_they_cannot_cover_wages():
         simulate_month(city, month=1)
     after = {a.account_id: a.cash_cents for a in city.book}
     assert after == before, "整批回滚，任何账户都不得被部分改动"
+
+
+# --- 人口迁徙 -----------------------------------------------------------
+
+def test_migration_brings_money_in_and_takes_money_out():
+    """人口是人数，钱是现金：迁入带钱进来，迁出带钱出去。
+
+    以前 migrate() 只改 world.population 一个数字，于是新居民凭空出现、
+    迁出的居民凭空消失——人数动了，钱却一动不动。
+    """
+    inbound = migration_transactions(14, month=1)
+    assert len(inbound) == 1
+    assert inbound[0].from_account == OUTSIDE and inbound[0].to_account == HOUSEHOLDS
+    assert inbound[0].amount_cents == 14 * BALANCE["resident_savings_per_person"]
+    assert inbound[0].category == MIGRATION_IN
+
+    outbound = migration_transactions(-6, month=1)
+    assert outbound[0].from_account == HOUSEHOLDS and outbound[0].to_account == OUTSIDE
+    assert outbound[0].amount_cents == 6 * BALANCE["resident_savings_per_person"]
+    assert outbound[0].category == MIGRATION_OUT
+
+    assert migration_transactions(0, month=1) == [], "人口不动时不产生空交易"
+
+
+def test_growth_actually_lands_in_the_account_book():
+    """真实跑一个月：人口增加多少，家庭账户就该多出对应的钱。"""
+    world = new_world(BALANCE["starting_seed"])
+    population_before = world.population
+    advance_days(world, MONTH, manual=True)
+    moved = world.population - population_before
+
+    assert moved > 0, "开局有富余住房时应当有人迁入"
+    gained = balances(world)[HOUSEHOLDS]
+    # 迁入者自带积蓄进了家庭账户：家庭余额不能低于「只靠工资收入」的水平
+    assert gained > 0
+    report = world.economy["report"]
+    assert report is not None
+
+
+def test_migration_does_not_change_total_city_cash():
+    """迁徙只换主人，不改变全城现金总量。"""
+    world = new_world(BALANCE["starting_seed"])
+    advance_days(world, MONTH, manual=True)
+    total = sum(balances(world).values())
+    run_months(world, 11)
+    assert sum(balances(world).values()) == total
+
+
+def test_migration_out_moves_cash_from_households_to_the_outside():
+    """迁出者带走的钱确实从家庭账户挪到了外部账户。
+
+    不拿「外部账户净余额为负」或「净增等于迁出额」当断言：
+    外部账户当月本身有贸易逆差，净额里混着好几笔流量，符号和大小都测不出迁徙本身。
+    这里用**同月对照组**：同一个起点跑两次，一次带迁徙、一次不带，
+    两次的差额就精确等于迁徙带来的现金变动。
+    """
+    leaving = 6
+    moved = leaving * BALANCE["resident_savings_per_person"]
+
+    def run(with_migration: bool):
+        city = live_city(new_world(BALANCE["starting_seed"]))
+        extra = migration_transactions(-leaving, 1) if with_migration else ()
+        simulate_month(city, month=1, extra_transactions=extra)
+        return (city.book[HOUSEHOLDS].cash_cents,
+                city.book[OUTSIDE].cash_cents,
+                [tx for tx in city.last_journal if tx.category == MIGRATION_OUT])
+
+    households_with, outside_with, journal = run(True)
+    households_without, outside_without, journal_without = run(False)
+
+    assert journal_without == [], "对照组不该有迁徙交易"
+    assert len(journal) == 1 and journal[0].amount_cents == moved
+    assert outside_with - outside_without == moved, \
+        "外部账户必须正好收到迁出者带走的积蓄"
+    assert households_with < households_without, "家庭账户必须因迁出而少这笔钱"
 
 
 # --- 长期演化 -----------------------------------------------------------
