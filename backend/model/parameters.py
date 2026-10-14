@@ -14,6 +14,7 @@ GUI 调参工具改的就是这份参数的副本，跑的是同一套模型。
 """
 from copy import deepcopy
 from dataclasses import dataclass
+import math
 from typing import Any
 
 from backend.config import ROOT, read_json
@@ -24,6 +25,19 @@ _RAW = read_json(PARAMETER_FILE)
 
 #: 参数表中带 ``*_range`` 的键，载入时按范围校验
 RANGE_SUFFIX = "_range"
+# 组内声明「必须取整」的参数清单，见 model_parameters_v1.json 的 _integer_keys
+INTEGER_SUFFIX = "_integer_keys"
+
+
+def _floor(value: Any) -> Any:
+    """整数参数的有效值：向下取整。
+
+    向下取整而不是四舍五入——拖出 2999.9 时四舍五入会变成 3000，
+    等于凭空给城市多生 0.1 个人；向下取整只会少，不会凭空多。
+    """
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return value
+    return int(math.floor(value))
 
 
 def _path_of(key_path: str) -> Any:
@@ -38,17 +52,43 @@ def _path_of(key_path: str) -> Any:
 
 @dataclass(frozen=True)
 class ParameterMeta:
-    """一个参数的元信息：取值、允许范围、单位、出处。"""
+    """一个参数的元信息：取值、允许范围、单位、整数性、出处。
+
+    ``integral`` 表示这个参数的业务值**必须取整**：人数、户数、套房数、
+    企业数，以及金额（CR 是最小货币单位，1 CR = 100 分）。
+    滑块按像素取整时可能拖出 3000.37 这种值，
+    对「总人口」来说它没有业务含义，必须折算成有效值再进入模型。
+    """
 
     key: str
     value: Any
     low: float | None
     high: float | None
     unit: str
+    integral: bool = False
 
     @property
     def has_range(self) -> bool:
         return self.low is not None and self.high is not None
+
+    @property
+    def effective(self) -> Any:
+        """当前取值的有效值（整数参数向下取整）。"""
+        return self.effective_of(self.value)
+
+    def effective_of(self, raw: Any) -> Any:
+        """把任意取值折算成有效值。
+
+        整数参数一律**向下取整**，而不是四舍五入：
+        拖出 3000.37 个人时，按 3000 人开算才不会凭空多出 0.37 个居民；
+        四舍五入到 3000 也对，但拖出 2999.9 时会变成 3000，
+        比实际凭空多出 0.1 个人——向上取整会让人口凭空增长。
+        """
+        if not self.integral or not isinstance(raw, (int, float)):
+            return raw
+        if isinstance(raw, bool):
+            return raw
+        return int(math.floor(raw))
 
     def clamp(self) -> Any:
         """把值夹回允许范围。GUI 拖过头时用这个兜底。"""
@@ -69,7 +109,7 @@ class ParameterMeta:
 
     def to_dict(self) -> dict[str, Any]:
         return {"key": self.key, "value": self.value, "low": self.low,
-                "high": self.high, "unit": self.unit}
+                "high": self.high, "unit": self.unit, "integral": self.integral}
 
 
 def _unit_of(group: str, key: str) -> str:
@@ -128,7 +168,12 @@ class EconomyParameters:
     # --- 修改 ---------------------------------------------------------
 
     def set(self, key: str, value: Any, validate: bool = True) -> None:
-        """写入一个参数并（可选）校验范围。"""
+        """写入一个参数并（可选）校验范围。
+
+        整数参数会先折算成**有效值**再写入：传 3000.37 人进来，
+        存进去的是 3000。这样模型里永远不会出现半个人，
+        界面显示的值和实际生效的值也必然一致。
+        """
         parts = key.split(".")
         node = self._values
         for part in parts[:-1]:
@@ -137,6 +182,11 @@ class EconomyParameters:
             node = node[part]
         if parts[-1] not in node:
             raise GameError(f"参数 {key} 不存在，无法设置。")
+        group = parts[0]
+        if len(parts) == 2:
+            integer_keys = node.get(INTEGER_SUFFIX)
+            if isinstance(integer_keys, list) and parts[-1] in integer_keys:
+                value = _floor(value)
         node[parts[-1]] = value
         if validate:
             self._validate_key(key)
@@ -224,9 +274,11 @@ class EconomyParameters:
         for group, values in self._values.items():
             if not isinstance(values, dict) or group in ("config_id", "description", "source"):
                 continue
+            integer_keys = values.get(INTEGER_SUFFIX)
+            integer_keys = set(integer_keys) if isinstance(integer_keys, list) else set()
             for name, value in values.items():
-                if name.endswith(RANGE_SUFFIX) or name.endswith("_note") \
-                        or name.endswith("_notes"):
+                if name.startswith("_") or name.endswith(RANGE_SUFFIX) \
+                        or name.endswith("_note") or name.endswith("_notes"):
                     continue
                 if not isinstance(value, (int, float)) or isinstance(value, bool):
                     continue
@@ -236,8 +288,23 @@ class EconomyParameters:
                     low, high = range_value
                 metas.append(ParameterMeta(key=f"{group}.{name}", value=value,
                                            low=low, high=high,
-                                           unit=_unit_of(group, name)))
+                                           unit=_unit_of(group, name),
+                                           integral=name in integer_keys))
         return sorted(metas, key=lambda m: m.key)
+
+    def meta(self, key: str) -> ParameterMeta:
+        """按 key 取单个参数的元信息（含整数性）。"""
+        for item in self.adjustable():
+            if item.key == key:
+                return item
+        raise GameError(f"参数 {key} 不是可调参数。")
+
+    def effective_of(self, key: str, raw: Any) -> Any:
+        """把某个取值折算成该参数的有效值（整数参数向下取整）。"""
+        try:
+            return self.meta(key).effective_of(raw)
+        except GameError:
+            return raw
 
     def to_dict(self) -> dict:
         return deepcopy(self._values)

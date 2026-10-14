@@ -531,3 +531,66 @@ def test_every_adjustable_parameter_has_a_range():
     missing = [meta.key for meta in EconomyParameters().adjustable()
                if not meta.has_range]
     assert missing == []
+
+
+def test_integer_parameters_declare_themselves():
+    """整数参数必须显式声明，不能靠 key 后缀猜。
+
+    `population.start` 是总人口，可它的 key 不以任何计数后缀结尾；
+    `trade.exports_base` 是金额（CR 是最小货币单位），同样推不出来。
+    猜的结果就是漏标和误标，所以整数性必须是配置里的一等公民。
+    """
+    metas = {m.key: m for m in EconomyParameters().adjustable()}
+    for key in ("population.start", "population.households",
+                "housing.units", "city.start_cash", "trade.exports_base"):
+        assert metas[key].integral, f"{key} 应当声明为整数参数"
+    for key in ("tax.income_flat_rate", "capacity.labour_exponent",
+                "labour.wage_cpi_exponent", "religion.worktime_loss_at_full_faith"):
+        assert not metas[key].integral, f"{key} 是比例，不该被当成整数"
+
+
+def test_integer_parameters_floor_on_write():
+    """整数参数写入小数时按**向下取整**折算成有效值。
+
+    向下而不是四舍五入：拖出 2999.9 时四舍五入会变成 3000，
+    等于凭空给城市多生 0.1 个人；向下取整只会少，不会凭空多。
+    """
+    params = EconomyParameters()
+    params.set("population.households", 900.87)
+    assert params.get("population.households") == 900
+    params.set("population.households", 899.99)
+    assert params.get("population.households") == 899
+    params.set("city.start_cash", 100000.99)
+    assert params.get("city.start_cash") == 100000
+
+
+def test_ratio_parameters_keep_their_decimals():
+    """比例参数不能被取整：0.0855 就是 0.0855。"""
+    params = EconomyParameters()
+    params.set("tax.income_flat_rate", 0.0855)
+    assert params.get("tax.income_flat_rate") == 0.0855
+
+
+def test_every_integer_parameter_has_an_integer_default():
+    """出厂值就必须是整数，不能靠运行时的取整来兜底。"""
+    bad = [m.key for m in EconomyParameters().adjustable()
+           if m.integral and isinstance(m.value, float) and m.value != int(m.value)]
+    assert bad == []
+
+
+def test_indicator_effective_value_floors_but_keeps_ratios():
+    """指标分两类：人数金额取整，比率与「月」保留精度。
+
+    「还能撑 0.2 个月」是真实信息，抹成 0 等于把最要命的信号抹掉了。
+    """
+    population = BY_KEY["population"]
+    assert population.integral
+    assert population.effective_of(3000.87) == 3000
+
+    rate = BY_KEY["unemployment_rate"]
+    assert not rate.integral
+    assert rate.effective_of(0.09035) == 0.09035
+
+    runway = BY_KEY["firm_cash_runway_months"]
+    assert not runway.integral
+    assert runway.effective_of(0.2) == 0.2

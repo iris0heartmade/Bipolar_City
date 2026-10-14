@@ -12,6 +12,7 @@
 - 合理区间，超出就在 GUI 里标黄
 """
 from dataclasses import dataclass
+import math
 from typing import Callable
 
 
@@ -27,10 +28,29 @@ class Indicator:
     description: str      # 一句话说明
     healthy: tuple = ()   # (低, 高) 健康区间；留空表示不判断
     higher_is_better: bool = True
+    integral: bool = False   # True 表示业务值必须取整（人数、金额等）
+
+    def effective_of(self, value):
+        """把计算值折算成**有效值**。
+
+        有些数值在业务上不能带小数：人数不能是 3000.37 个人，
+        金额不能是 100000.99 CR（CR 是最小货币单位）。
+        这些指标标了 ``integral``，显示时按**向下取整**折算。
+
+        向下取整而不是四舍五入：人均税前收入 5835.66 CR 显示 5835，
+        是「少算一点」，而四舍五入到 5836 是「凭空多给市民一块钱」。
+        比率与百分比不取整——91.0% 就该显示 91.0%，抹成 91% 反而丢了精度。
+        """
+        if value is None or not self.integral:
+            return value
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return value
+        return int(math.floor(value))
 
     def format(self, value) -> str:
         if value is None:
             return "—"
+        value = self.effective_of(value)
         if self.unit == "CR":
             return f"{value / 100:,.{self.decimals}f}"
         if self.unit == "%":
@@ -65,12 +85,25 @@ class Indicator:
         return "warn"
 
 
+# 计数单位：人数、套房数、企业数，业务上不可能带小数
+COUNT_UNITS = {"人", "套", "家", "户"}
+# 货币单位：CR 已是最小货币单位（1 CR = 100 分），不可能出现 81.27 CR
+MONEY_UNITS = {"CR", "分"}
+
+
 def _ind(key, label, unit, decimals, category, desc,
-         healthy=(), higher_is_better=True):
-    """构造一个指标。顺序按「标识、名称、单位、精度、分类、说明」排列。"""
+         healthy=(), higher_is_better=True, integral=None):
+    """构造一个指标。顺序按「标识、名称、单位、精度、分类、说明」排列。
+
+    ``integral`` 不传时按单位自动判断：计数单位与货币单位取整，
+    比率、百分比和「月」不取整——「还能撑 0.2 个月」是真实信息，
+    抹成 0 反而把最要命的信号抹掉了。
+    """
+    if integral is None:
+        integral = unit in COUNT_UNITS or unit in MONEY_UNITS
     return Indicator(key=key, label=label, unit=unit, decimals=decimals,
                      category=category, description=desc, healthy=healthy,
-                     higher_is_better=higher_is_better)
+                     higher_is_better=higher_is_better, integral=integral)
 
 
 INDICATORS: list[Indicator] = [
