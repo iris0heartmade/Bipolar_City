@@ -7,6 +7,7 @@
   "amount_unit": "CR",
   "amount_note": "本文件所有金额单位为 CR；引擎内部一律换算成整数分存储，禁止二进制浮点累计现金。",
   "simulation": {
+    "_label_note": "本组参数的中文显示名。代码里用的 key 保持英文不变，中文名只是给人看的一层皮——改中文名不会波及引擎与测试。",
     "_integer_note": "本组内必须取整的参数名。人数、户数、套房数、企业数、金额（CR 是最小货币单位，1 CR = 100 分）都不能带小数；比例、比率、指数、系数则可以保留小数。滑块拖动产生的浮点数会按向下取整折算成有效值，界面显示有效值。",
     "_integer_keys": [
       "currency_scale",
@@ -14,6 +15,12 @@
       "months_per_year",
       "tick_months"
     ],
+    "_labels": {
+      "currency_scale": "币值换算比例",
+      "days_per_month": "每月天数",
+      "months_per_year": "每年月数",
+      "tick_months": "月结间隔（月）"
+    },
     "tick_months": 1,
     "tick_months_range": [
       1,
@@ -37,6 +44,7 @@
     "note": "SIM_TICK = 1 month；月结每月第 30 日唯一结算一次。"
   },
   "population": {
+    "_label_note": "本组参数的中文显示名。代码里用的 key 保持英文不变，中文名只是给人看的一层皮——改中文名不会波及引擎与测试。",
     "_integer_note": "本组内必须取整的参数名。人数、户数、套房数、企业数、金额（CR 是最小货币单位，1 CR = 100 分）都不能带小数；比例、比率、指数、系数则可以保留小数。滑块拖动产生的浮点数会按向下取整折算成有效值，界面显示有效值。",
     "_integer_keys": [
       "start",
@@ -50,6 +58,20 @@
       "migration_savings_per_person",
       "opening_disposable_base"
     ],
+    "_labels": {
+      "start": "总人口",
+      "labour_force": "劳动力总数",
+      "employed": "就业人数",
+      "unemployed": "失业人数",
+      "out_of_labour_force": "非劳动力人数",
+      "households": "家庭户数",
+      "household_size": "每户人数",
+      "migration_max_per_month": "单月迁入上限（人）",
+      "migration_monthly_cap_rate": "单月迁徙比例上限",
+      "natural_growth_rate": "自然增长率",
+      "migration_savings_per_person": "每人迁入积蓄（CR）",
+      "opening_disposable_base": "开局可支配收入（CR）"
+    },
     "start": 3000,
     "start_range": [
       500,
@@ -115,6 +137,7 @@
     "note": "人口恒等式：employed + unemployed + out_of_labour_force == population。单月净迁徙不超过当前人口的 1%（§5.2）。"
   },
   "housing": {
+    "_label_note": "本组参数的中文显示名。代码里用的 key 保持英文不变，中文名只是给人看的一层皮——改中文名不会波及引擎与测试。",
     "_integer_note": "本组内必须取整的参数名。人数、户数、套房数、企业数、金额（CR 是最小货币单位，1 CR = 100 分）都不能带小数；比例、比率、指数、系数则可以保留小数。滑块拖动产生的浮点数会按向下取整折算成有效值，界面显示有效值。",
     "_integer_keys": [
       "units",
@@ -127,6 +150,19 @@
       "asset_income_base",
       "rent_per_renter_month"
     ],
+    "_labels": {
+      "units": "住房总套数",
+      "occupied": "已入住套数",
+      "vacant_units": "空置套数",
+      "target_vacancy_rate": "目标空置率",
+      "household_size": "每户人数",
+      "renter_households": "租房户数",
+      "owner_occupied_households": "自住业主户数",
+      "rent_per_renter_month": "租户月租金（CR）",
+      "rent_monthly_change_cap": "租金单月涨幅上限",
+      "assessed_value": "房产评估总值（CR）",
+      "asset_income_base": "居民资产收入基准（CR）"
+    },
     "units": 800,
     "units_range": [
       100,
@@ -187,11 +223,20 @@
     "note": "租金按空置率浮动：rent_next = rent_now × (1 + clamp(0.20×(occupancy_rate−0.93), −0.03, +0.03))（§5.1）。目标健康空置率 5%~8%。"
   },
   "labour": {
+    "_label_note": "本组参数的中文显示名。代码里用的 key 保持英文不变，中文名只是给人看的一层皮——改中文名不会波及引擎与测试。",
     "_integer_note": "本组内必须取整的参数名。人数、户数、套房数、企业数、金额（CR 是最小货币单位，1 CR = 100 分）都不能带小数；比例、比率、指数、系数则可以保留小数。滑块拖动产生的浮点数会按向下取整折算成有效值，界面显示有效值。",
     "_integer_keys": [
       "min_wage",
       "employment_match_window"
     ],
+    "_labels": {
+      "min_wage": "法定最低工资（CR）",
+      "wage_target_adjustment": "工资向目标收敛比例",
+      "wage_change_monthly_cap": "工资单月涨跌上限",
+      "wage_cpi_exponent": "工资物价指数弹性",
+      "wage_tightness_exponent": "工资紧张度弹性",
+      "employment_match_window": "招工匹配窗口（月）"
+    },
     "skill_levels": [
       "basic",
       "skilled",
@@ -244,6 +289,7 @@
     "note": "工资目标 Wtarget = Wbase × (CPI/CPI_ref)^0.70 × (θ_s/θ_ref)^0.12 × (1−α_s·f)/(1−α_s·0.55)；每月向目标收敛 25%，单月涨跌不超过 ±3%（§4.6）。"
   },
   "business": {
+    "_label_note": "本组参数的中文显示名。代码里用的 key 保持英文不变，中文名只是给人看的一层皮——改中文名不会波及引擎与测试。",
     "_integer_note": "本组内必须取整的参数名。人数、户数、套房数、企业数、金额（CR 是最小货币单位，1 CR = 100 分）都不能带小数；比例、比率、指数、系数则可以保留小数。滑块拖动产生的浮点数会按向下取整折算成有效值，界面显示有效值。",
     "_integer_keys": [
       "firm_capex_monthly",
@@ -251,6 +297,21 @@
       "exit_cash_streak_months",
       "exit_loss_streak_months"
     ],
+    "_labels": {
+      "profit_tax_rate": "企业所得税率",
+      "profit_tax_step_pp": "所得税调整步长",
+      "default_payout_ratio": "默认分红比例",
+      "firm_capex_monthly": "企业资本支出（CR）",
+      "intermediate_sales_share": "企业间中间品占比",
+      "entry_expected_margin_min": "开业最低预期利润率",
+      "entry_liquidity_months": "开业流动资金月数",
+      "expansion_utilisation_min": "扩张最低产能利用率",
+      "contraction_utilisation_max": "收缩最高产能利用率",
+      "price_change_monthly_cap": "售价单月涨跌上限",
+      "forecast_window_months": "经营预测窗口（月）",
+      "exit_cash_streak_months": "欠费退出月数",
+      "exit_loss_streak_months": "亏损退出月数"
+    },
     "profit_tax_rate": 0.12,
     "profit_tax_rate_range": [
       0.0,
@@ -321,8 +382,17 @@
     "note": "开业需利润率>6% 且流动资金覆盖 1.5 个月固定支出；扩张需前 3 月平均利用率>85%；退出需连续 3 月付不出现金或连续 6 月亏损（§4.7、§9.1）。"
   },
   "capacity": {
+    "_label_note": "本组参数的中文显示名。代码里用的 key 保持英文不变，中文名只是给人看的一层皮——改中文名不会波及引擎与测试。",
     "_integer_note": "本组内必须取整的参数名。人数、户数、套房数、企业数、金额（CR 是最小货币单位，1 CR = 100 分）都不能带小数；比例、比率、指数、系数则可以保留小数。滑块拖动产生的浮点数会按向下取整折算成有效值，界面显示有效值。",
     "_integer_keys": [],
+    "_labels": {
+      "reference_utilisation": "基准产能利用率",
+      "labour_exponent": "人力因子指数",
+      "skill_exponent": "技能因子指数",
+      "skill_factor_floor": "技能因子下限",
+      "safety_factor_floor": "安全因子下限",
+      "reference_faith_share": "基准信徒比例"
+    },
     "labour_exponent": 0.8,
     "labour_exponent_range": [
       0.3,
@@ -356,10 +426,19 @@
     "note": "Qcap = K × F_labor × F_skill × F_resource × F_service × F_safety × F_worktime（§4.1）。K 按 §4.2 的 80% 利用率反推。"
   },
   "market": {
+    "_label_note": "本组参数的中文显示名。代码里用的 key 保持英文不变，中文名只是给人看的一层皮——改中文名不会波及引擎与测试。",
     "_integer_note": "本组内必须取整的参数名。人数、户数、套房数、企业数、金额（CR 是最小货币单位，1 CR = 100 分）都不能带小数；比例、比率、指数、系数则可以保留小数。滑块拖动产生的浮点数会按向下取整折算成有效值，界面显示有效值。",
     "_integer_keys": [
       "max_budget_redistribution_rounds"
     ],
+    "_labels": {
+      "choice_beta_quality": "品质偏好系数",
+      "choice_beta_price": "价格敏感系数",
+      "choice_beta_time_per_min": "时间成本系数",
+      "price_adapt_k": "价格调整速度",
+      "local_capture_min": "本地最低留存率",
+      "max_budget_redistribution_rounds": "预算再分配轮数"
+    },
     "choice_beta_quality": 0.4,
     "choice_beta_quality_range": [
       0.0,
@@ -395,11 +474,20 @@
     "note": "消费预算先产生，企业再争夺：V_zi = 0.40×quality − 1.10×(p/p_ref) − 0.07×t（§4.4）。"
   },
   "tax": {
+    "_label_note": "本组参数的中文显示名。代码里用的 key 保持英文不变，中文名只是给人看的一层皮——改中文名不会波及引擎与测试。",
     "_integer_note": "本组内必须取整的参数名。人数、户数、套房数、企业数、金额（CR 是最小货币单位，1 CR = 100 分）都不能带小数；比例、比率、指数、系数则可以保留小数。滑块拖动产生的浮点数会按向下取整折算成有效值，界面显示有效值。",
     "_integer_keys": [
       "license_fee_total",
       "tax_revenue_policy_cooldown_months"
     ],
+    "_labels": {
+      "income_flat_rate": "居民所得税率",
+      "property_monthly_rate": "房产税月税率",
+      "collection_efficiency": "税收征管效率",
+      "license_fee_total": "营业许可规费总额（CR）",
+      "income_tax_step_pp": "个税调整步长",
+      "tax_revenue_policy_cooldown_months": "税收政策冷却月数"
+    },
     "income_flat_rate": 0.08,
     "income_flat_rate_range": [
       0.0,
@@ -433,6 +521,7 @@
     "note": "个税初始 8%（0%~20%，每次 ±2pp）；企税 12%（0%~25%，每次 ±3pp）；房产 0.12%/月（0.03%~0.25%）（§7.1）。"
   },
   "city": {
+    "_label_note": "本组参数的中文显示名。代码里用的 key 保持英文不变，中文名只是给人看的一层皮——改中文名不会波及引擎与测试。",
     "_integer_note": "本组内必须取整的参数名。人数、户数、套房数、企业数、金额（CR 是最小货币单位，1 CR = 100 分）都不能带小数；比例、比率、指数、系数则可以保留小数。滑块拖动产生的浮点数会按向下取整折算成有效值，界面显示有效值。",
     "_integer_keys": [
       "start_cash",
@@ -444,6 +533,18 @@
       "loan_initial_grace_months",
       "new_borrowing_cap_months_of_tax"
     ],
+    "_labels": {
+      "start_cash": "期初市政现金（CR）",
+      "start_debt": "期初债务本金（CR）",
+      "loan_interest_rate_monthly": "贷款月利率",
+      "loan_initial_grace_months": "贷款初始宽限月数",
+      "amortization_months": "债务摊还月数",
+      "welfare_monthly_initial": "社会救济月支出（CR）",
+      "public_capex_monthly_initial": "公共资本建设月支出（CR）",
+      "central_transfer_monthly": "中央转移支付月额（CR）",
+      "new_borrowing_cap_months_of_tax": "新增借款上限（月税收）",
+      "credit_interest_spread": "信用利差"
+    },
     "start_cash": 100000,
     "start_cash_range": [
       0,
@@ -522,12 +623,20 @@
     "note": "信用分不等于现金余额。信用影响利率与额度：信用越好，利率越低（§5.4）。curve 为信用分(-1~1)到利差加成的分段线性映射。"
   },
   "education": {
+    "_label_note": "本组参数的中文显示名。代码里用的 key 保持英文不变，中文名只是给人看的一层皮——改中文名不会波及引擎与测试。",
     "_integer_note": "本组内必须取整的参数名。人数、户数、套房数、企业数、金额（CR 是最小货币单位，1 CR = 100 分）都不能带小数；比例、比率、指数、系数则可以保留小数。滑块拖动产生的浮点数会按向下取整折算成有效值，界面显示有效值。",
     "_integer_keys": [
       "school_age_population",
       "seats_per_teacher",
       "training_months"
     ],
+    "_labels": {
+      "school_age_population": "学龄人口",
+      "seats_per_teacher": "每名教师席位",
+      "completion_rate": "学位完成率",
+      "skill_transition_rate": "技能转化率",
+      "training_months": "培训周期（月）"
+    },
     "seats_per_teacher": 24,
     "seats_per_teacher_range": [
       5,
@@ -556,8 +665,15 @@
     "note": "每 12 个月新增 skilled = floor(培训年龄人口 × 完成率 × 技能转化率)。当期学校只消耗资金，技能提升有延迟（§5.3）。"
   },
   "security": {
+    "_label_note": "本组参数的中文显示名。代码里用的 key 保持英文不变，中文名只是给人看的一层皮——改中文名不会波及引擎与测试。",
     "_integer_note": "本组内必须取整的参数名。人数、户数、套房数、企业数、金额（CR 是最小货币单位，1 CR = 100 分）都不能带小数；比例、比率、指数、系数则可以保留小数。滑块拖动产生的浮点数会按向下取整折算成有效值，界面显示有效值。",
     "_integer_keys": [],
+    "_labels": {
+      "base_threat_intensity": "基础威胁强度",
+      "mage_coverage_per_mage": "每名魔法师覆盖率",
+      "default_kappa": "防御衰减系数",
+      "default_downtime_share": "袭击停工损失比例"
+    },
     "default_kappa": 1.0,
     "default_kappa_range": [
       0.0,
@@ -581,6 +697,7 @@
     "note": "F_safety = clamp(1 − expected_attacks × downtime_share, 0.65, 1.0)；expected_attacks = H_z/(1+kappa×D_z)（§5.4）。安全城市堆魔法师不会无限赚钱。"
   },
   "religion": {
+    "_label_note": "本组参数的中文显示名。代码里用的 key 保持英文不变，中文名只是给人看的一层皮——改中文名不会波及引擎与测试。",
     "_integer_note": "本组内必须取整的参数名。人数、户数、套房数、企业数、金额（CR 是最小货币单位，1 CR = 100 分）都不能带小数；比例、比率、指数、系数则可以保留小数。滑块拖动产生的浮点数会按向下取整折算成有效值，界面显示有效值。",
     "_integer_keys": [
       "policy",
@@ -589,6 +706,20 @@
       "start_church_cash",
       "grant_ceiling_at_full_faith"
     ],
+    "_labels": {
+      "start_faith_ratio": "初始信徒比例",
+      "policy": "传教政策档位",
+      "policy_cooldown_months": "政策切换冷却月数",
+      "property_exemption_strength": "房产税减免强度",
+      "worktime_loss_at_full_faith": "全信徒工时损失",
+      "wage_reserve_alpha_basic": "基础劳动工资容忍",
+      "wage_reserve_alpha_skilled": "技术工工资容忍",
+      "wage_reserve_alpha_professional": "高技能工资容忍",
+      "wage_reserve_alpha_mage": "魔法师工资容忍",
+      "grant_ceiling_at_full_faith": "全信徒时教会捐赠上限（CR）",
+      "start_church_cash": "教会期初储备（CR）",
+      "shock_decay_months": "冲击衰减月数"
+    },
     "start_faith_ratio": 0.55,
     "start_faith_ratio_range": [
       0.0,
@@ -689,8 +820,12 @@
     "note": "只设 4 种常规效果：教会捐市政、低工资容忍、宗教免税、宗教义务工时（§6.1）。传教政策改变传播速率，不直接改信徒比例。"
   },
   "resources": {
+    "_label_note": "本组参数的中文显示名。代码里用的 key 保持英文不变，中文名只是给人看的一层皮——改中文名不会波及引擎与测试。",
     "_integer_note": "本组内必须取整的参数名。人数、户数、套房数、企业数、金额（CR 是最小货币单位，1 CR = 100 分）都不能带小数；比例、比率、指数、系数则可以保留小数。滑块拖动产生的浮点数会按向下取整折算成有效值，界面显示有效值。",
     "_integer_keys": [],
+    "_labels": {
+      "wastage_rate": "战略品损耗率"
+    },
     "enforce_stock": true,
     "items": [
       {
@@ -764,12 +899,20 @@
     "dependency_note": "每个行业每月按 reference_revenue × share 消耗战略品；库存不足则 F_resource 按比例下调（§4.1）。"
   },
   "trade": {
+    "_label_note": "本组参数的中文显示名。代码里用的 key 保持英文不变，中文名只是给人看的一层皮——改中文名不会波及引擎与测试。",
     "_integer_note": "本组内必须取整的参数名。人数、户数、套房数、企业数、金额（CR 是最小货币单位，1 CR = 100 分）都不能带小数；比例、比率、指数、系数则可以保留小数。滑块拖动产生的浮点数会按向下取整折算成有效值，界面显示有效值。",
     "_integer_keys": [
       "exports_base",
       "imports_base",
       "tourist_spend_base"
     ],
+    "_labels": {
+      "exports_base": "月出口额基准（CR）",
+      "imports_base": "月进口额基准（CR）",
+      "tourist_spend_base": "月游客消费基准（CR）",
+      "export_price_index": "出口价格指数",
+      "import_price_index": "进口价格指数"
+    },
     "exports_base": 88200,
     "exports_base_range": [
       0,

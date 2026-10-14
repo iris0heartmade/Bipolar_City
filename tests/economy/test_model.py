@@ -578,6 +578,46 @@ def test_every_integer_parameter_has_an_integer_default():
     assert bad == []
 
 
+def test_every_parameter_has_a_chinese_label():
+    """每个可调参数都必须有中文显示名。
+
+    少一个就会出现「一半中文一半英文」的界面，看着像没做完。
+    而且配置里的中文名清单会过期——参数加了名没加，测试立刻变红。
+    """
+    missing = [meta.key for meta in EconomyParameters().adjustable()
+               if not meta.label]
+    assert missing == []
+
+
+def test_chinese_labels_are_unique_per_group():
+    """同一分组里中文名不能重名。
+
+    重名会让搜索框一次命中好几行，用户分不清自己搜到的是哪条参数。
+    """
+    by_group: dict[str, list[str]] = {}
+    for meta in EconomyParameters().adjustable():
+        group = meta.key.split(".", 1)[0]
+        by_group.setdefault(group, []).append(meta.label)
+    clashes = {g: names for g, names in by_group.items()
+               if len(names) != len(set(names))}
+    assert clashes == {}
+
+
+def test_parameter_unit_is_not_guessed_from_a_decoy_suffix():
+    """系数类参数的单位不能被后缀骗了。
+
+    ``market.choice_beta_price`` 是「价格敏感系数」，只是名字里带 price，
+    按 ``_price`` 判成金额后，界面上一个系数旁边写着「CR·取整」，
+    会让人以为拖它会改成交价。
+    """
+    metas = {m.key: m for m in EconomyParameters().adjustable()}
+    assert metas["market.choice_beta_price"].unit == "系数"
+    assert metas["religion.wage_reserve_alpha_basic"].unit == "系数"
+    # 真正的金额仍然是 CR
+    assert metas["city.start_cash"].unit == "CR"
+    assert metas["trade.exports_base"].unit == "CR"
+
+
 def test_indicator_effective_value_floors_but_keeps_ratios():
     """指标分两类：人数金额取整，比率与「月」保留精度。
 

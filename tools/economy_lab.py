@@ -250,8 +250,8 @@ class EconomyLab(tk.Tk):
         search = ttk.Frame(self.left, style="Panel.TFrame")
         search.pack(fill="x", padx=10, pady=(10, 4))
         ttk.Label(search, text="搜索参数", style="PanelTitle.TLabel").pack(side="left")
-        ttk.Label(search, text="（人数/金额自动取整）", style="ParamUnit.TLabel"
-                  ).pack(side="left", padx=(8, 0))
+        ttk.Label(search, text="（中文名或英文均可，人数/金额自动取整）",
+                  style="ParamUnit.TLabel").pack(side="left", padx=(8, 0))
         self.search_var = tk.StringVar()
         entry = ttk.Entry(search, textvariable=self.search_var, width=20)
         entry.pack(side="right")
@@ -276,6 +276,7 @@ class EconomyLab(tk.Tk):
     # --- 参数面板 -----------------------------------------------------
 
     def _build_param_panel(self) -> None:
+        self._meta_cache = {m.key: m for m in self.params.adjustable()}
         for group in GROUP_ORDER:
             title = ttk.Label(self.param_frame, text=GROUP_TITLES.get(group, group),
                                style="GroupTitle.TLabel")
@@ -291,9 +292,11 @@ class EconomyLab(tk.Tk):
         row = ttk.Frame(self.param_frame, style="Panel.TFrame")
         row.pack(fill="x", padx=10, pady=2)
 
-        label = ttk.Label(row, text=name, width=30, anchor="w",
+        # 界面显示中文名；key 放进悬停提示，需要查代码时还能对上。
+        label = ttk.Label(row, text=meta.display_name, width=20, anchor="w",
                           style="Param.TLabel")
         label.pack(side="left")
+        Tooltip(label, lambda m=meta: f"{m.display_name}\n{m.key}\n{m.label}")
 
         var = tk.StringVar(value=_fmt(meta.value))
         self._vars[meta.key] = var
@@ -304,9 +307,9 @@ class EconomyLab(tk.Tk):
 
         unit_text = meta.unit if meta.unit else ""
         if meta.integral:
-            unit_text = (unit_text + "·整") if unit_text else "整数"
+            unit_text = (unit_text + "·取整") if unit_text else "取整"
         if unit_text:
-            ttk.Label(row, text=unit_text, width=6, anchor="w",
+            ttk.Label(row, text=unit_text, width=7, anchor="w",
                       style="ParamUnit.TLabel").pack(side="left", padx=(0, 6))
 
         if meta.has_range:
@@ -498,6 +501,7 @@ class EconomyLab(tk.Tk):
                 style="ParamEdited.TLabel" if key in changed else "Param.TLabel")
 
     def _apply_filter(self) -> None:
+        """搜索同时匹配中文名与英文 key，两种习惯都能用。"""
         needle = self.search_var.get().strip().lower()
         for row, key in self.param_rows:
             is_title = isinstance(row, ttk.Label)
@@ -505,8 +509,12 @@ class EconomyLab(tk.Tk):
                 row.pack(fill="x", padx=(12 if is_title else 10),
                          pady=((12, 4) if is_title else 2))
                 continue
+            meta = self._meta_cache.get(key)
             group = key.lower().split(".")[0]
-            hit = needle in key.lower() or \
+            haystack = key.lower()
+            if meta is not None:
+                haystack += " " + meta.label.lower()
+            hit = needle in haystack or \
                 GROUP_TITLES.get(group, "").lower().find(needle) >= 0
             if hit:
                 row.pack(fill="x", padx=(12 if is_title else 10),
