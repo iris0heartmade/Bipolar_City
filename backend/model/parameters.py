@@ -1,0 +1,268 @@
+"""经济模型参数与经济指标。
+
+这一层是「参数」与「代码」的边界：
+参数全部来自 ``data/economy/model_parameters_v1.json``，代码里不写死任何可调数值。
+GUI 调参工具改的就是这份参数的副本，跑的是同一套模型。
+
+为什么需要它
+------------
+此前数值分散在四五个配置文件里（参考城、投入产出表、劳动力、平衡表），
+要改一个税率得翻三处文件，且没有任何范围校验——填错一个 8.5 引擎照跑不误。
+
+这里把散落的参数收敛成一份带**取值范围、单位、设计稿出处**的参数表，
+载入时逐项校验，越界直接报错并说明设计稿允许的范围。
+"""
+from copy import deepcopy
+from dataclasses import dataclass
+from typing import Any
+
+from backend.config import ROOT, read_json
+from backend.core.errors import GameError
+
+PARAMETER_FILE = ROOT / "data/economy/model_parameters_v1.json"
+_RAW = read_json(PARAMETER_FILE)
+
+#: 参数表中带 ``*_range`` 的键，载入时按范围校验
+RANGE_SUFFIX = "_range"
+
+
+def _path_of(key_path: str) -> Any:
+    """按 ``a.b.c`` 取嵌套值；取不到就报错，不返回 None 让上层误用。"""
+    node: Any = _RAW
+    for part in key_path.split("."):
+        if not isinstance(node, dict) or part not in node:
+            raise GameError(f"参数 {key_path} 不存在，请检查参数表。")
+        node = node[part]
+    return node
+
+
+@dataclass(frozen=True)
+class ParameterMeta:
+    """一个参数的元信息：取值、允许范围、单位、出处。"""
+
+    key: str
+    value: Any
+    low: float | None
+    high: float | None
+    unit: str
+
+    @property
+    def has_range(self) -> bool:
+        return self.low is not None and self.high is not None
+
+    def clamp(self) -> Any:
+        """把值夹回允许范围。GUI 拖过头时用这个兜底。"""
+        if not self.has_range or not isinstance(self.value, (int, float)):
+            return self.value
+        return max(self.low, min(self.high, self.value))
+
+    def validate(self) -> None:
+        """越界直接报错。宁可启动失败，也不要静默跑出一个假城市。"""
+        if not self.has_range:
+            return
+        if not isinstance(self.value, (int, float)):
+            return
+        if not (self.low <= self.value <= self.high):
+            raise GameError(
+                f"参数 {self.key} = {self.value} 超出允许范围 "
+                f"[{self.low}, {self.high}]。请按设计稿的取值域调整。")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"key": self.key, "value": self.value, "low": self.low,
+                "high": self.high, "unit": self.unit}
+
+
+def _unit_of(group: str, key: str) -> str:
+    """从组名推断单位。金额是 CR，人数是「人」，比率无量纲。"""
+    if key.endswith(("_rate", "_ratio", "_share", "_efficiency", "_cap_rate",
+                     "_multiplier", "_strength", "_k", "_beta_", "_mean")):
+        return "比例"
+    if key.endswith(("_cents", "_price", "_cash", "_debt", "_value", "_income",
+                     "_revenue", "_spend", "_rent", "_transfer", "_payout",
+                     "_capex", "_welfare", "_grant", "_fees", "_interest",
+                     "_deposit", "_wage", "_cost")):
+        return "CR"
+    if key.endswith(("_months", "_month", "_people", "_staff", "_seats", "_firms",
+                     "_households", "_units", "_ticks", "_scale", "_points")):
+        return "个"
+    if key.endswith(("_days", "_years", "_seconds")):
+        return "天"
+    return ""
+
+
+class EconomyParameters:
+    """一份可改的参数集。
+
+    用法::
+
+        params = EconomyParameters()
+        params.set("tax.income_flat_rate", 0.12)      # 调税率
+        params.set("city.start_cash", 500000)          # 调初始资金
+        city = build_reference_city(params)            # 按参数装配城市
+    """
+
+    def __init__(self, overrides: dict | None = None):
+        self._values = deepcopy(_RAW)
+        self._original = deepcopy(_RAW)
+        self._overrides = dict(overrides or {})
+        for key, value in self._overrides.items():
+            self.set(key, value, validate=False)
+        self.validate_all()
+
+    # --- 读取 ---------------------------------------------------------
+
+    def get(self, key: str, default: Any = None) -> Any:
+        node: Any = self._values
+        for part in key.split("."):
+            if not isinstance(node, dict) or part not in node:
+                return default
+            node = node[part]
+        return node
+
+    def section(self, name: str) -> dict:
+        value = self.get(name)
+        if not isinstance(value, dict):
+            raise GameError(f"参数分组 {name} 不存在或不是字典。")
+        return value
+
+    # --- 修改 ---------------------------------------------------------
+
+    def set(self, key: str, value: Any, validate: bool = True) -> None:
+        """写入一个参数并（可选）校验范围。"""
+        parts = key.split(".")
+        node = self._values
+        for part in parts[:-1]:
+            if not isinstance(node.get(part), dict):
+                raise GameError(f"参数 {key} 的上级 {part} 不是分组。")
+            node = node[part]
+        if parts[-1] not in node:
+            raise GameError(f"参数 {key} 不存在，无法设置。")
+        node[parts[-1]] = value
+        if validate:
+            self._validate_key(key)
+
+    def reset(self) -> None:
+        """恢复出厂参数。GUI 的「重置」按钮走这里。"""
+        self._values = deepcopy(self._original)
+
+    def reset_key(self, key: str) -> None:
+        """只恢复一个参数，便于逐项对比。"""
+        original = self._original
+        for part in key.split("."):
+            original = original[part]
+        self.set(key, original)
+
+    # --- 校验 ---------------------------------------------------------
+
+    def _validate_key(self, key: str) -> None:
+        parts = key.split(".")
+        group = parts[0]
+        name = parts[-1]
+        # 范围写在同组的 ``name_range`` 上
+        if not isinstance(self._values.get(group), dict):
+            return
+        range_value = self._values[group].get(name + RANGE_SUFFIX)
+        if not isinstance(range_value, list) or len(range_value) != 2:
+            return
+        value = self._values[group][name]
+        if not isinstance(value, (int, float)):
+            return
+        low, high = range_value
+        if not (low <= value <= high):
+            raise GameError(
+                f"参数 {key} = {value} 超出设计稿允许范围 [{low}, {high}]。")
+
+    def validate_all(self) -> None:
+        """逐组校验所有带范围的参数。"""
+        for group, values in self._values.items():
+            if not isinstance(values, dict):
+                continue
+            for name, value in values.items():
+                if name.endswith(RANGE_SUFFIX):
+                    continue
+                range_value = values.get(name + RANGE_SUFFIX)
+                if not isinstance(range_value, list) or len(range_value) != 2:
+                    continue
+                if not isinstance(value, (int, float)):
+                    continue
+                low, high = range_value
+                if not (low <= value <= high):
+                    raise GameError(
+                        f"参数 {group}.{name} = {value} 超出设计稿允许范围 "
+                        f"[{low}, {high}]。")
+
+    def validate_identity(self) -> None:
+        """人口恒等式（设计稿 TEST-01）：就业＋失业＋非劳动力＝总人口。"""
+        demo = self.section("population")
+        total = (demo["employed"] + demo["unemployed"] + demo["out_of_labour_force"])
+        if total != demo["start"]:
+            raise GameError(
+                f"人口恒等式不成立：{demo['employed']}+{demo['unemployed']}"
+                f"+{demo['out_of_labour_force']} = {total}，应为 {demo['start']}。")
+
+    def validate_resource_balance(self) -> None:
+        """战略品期末库存必须非负（设计稿 TEST-19）。"""
+        for item in self.section("resources")["items"]:
+            closing = (item["opening"] + item["produced"] + item["imported"]
+                       - item["used"] - item["exported"])
+            if closing < 0:
+                raise GameError(
+                    f"战略品 {item['name']} 期末库存为 {closing}，不得为负。"
+                    f"请调整产出、进口或用量。")
+
+    def validate_all_deep(self) -> None:
+        """范围 + 恒等式 + 库存，一次性全查。"""
+        self.validate_all()
+        self.validate_identity()
+        self.validate_resource_balance()
+
+    # --- 元信息（GUI 用）----------------------------------------------
+
+    def adjustable(self) -> list[ParameterMeta]:
+        """列出所有可调参数及其范围，按分组排序。GUI 的滑块就是按这个生成的。"""
+        metas = []
+        for group, values in self._values.items():
+            if not isinstance(values, dict) or group in ("config_id", "description", "source"):
+                continue
+            for name, value in values.items():
+                if name.endswith(RANGE_SUFFIX) or name.endswith("_note") \
+                        or name.endswith("_notes"):
+                    continue
+                if not isinstance(value, (int, float)) or isinstance(value, bool):
+                    continue
+                range_value = values.get(name + RANGE_SUFFIX)
+                low = high = None
+                if isinstance(range_value, list) and len(range_value) == 2:
+                    low, high = range_value
+                metas.append(ParameterMeta(key=f"{group}.{name}", value=value,
+                                           low=low, high=high,
+                                           unit=_unit_of(group, name)))
+        return sorted(metas, key=lambda m: m.key)
+
+    def to_dict(self) -> dict:
+        return deepcopy(self._values)
+
+    def changed(self) -> dict[str, Any]:
+        """列出相对出厂参数被改过的项，GUI 用它标黄。"""
+        flat_original = _flatten(self._original)
+        flat_current = _flatten(self._values)
+        return {k: flat_current[k] for k in flat_current
+                if k in flat_original and flat_original[k] != flat_current[k]}
+
+
+def _flatten(node: Any, prefix: str = "") -> dict[str, Any]:
+    """把嵌套字典压平成 ``a.b.c`` 形式，便于比较差异。"""
+    out: dict[str, Any] = {}
+    if isinstance(node, dict):
+        for key, value in node.items():
+            out.update(_flatten(value, f"{prefix}{key}."))
+    elif isinstance(node, list):
+        out[prefix[:-1]] = repr(node)
+    else:
+        out[prefix[:-1]] = node
+    return out
+
+
+DEFAULT_PARAMETERS = EconomyParameters()
+
+__all__ = ["DEFAULT_PARAMETERS", "EconomyParameters", "ParameterMeta", "PARAMETER_FILE"]
