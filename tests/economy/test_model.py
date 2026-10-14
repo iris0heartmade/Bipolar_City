@@ -378,6 +378,37 @@ def test_single_sided_health_range_works():
     assert ind.status(-5) in ("warn", "bad")
 
 
+def test_health_range_is_compared_in_display_units():
+    """健康区间按显示单位书写，判断时必须先换算。
+
+    企业所得税显示 12,001 CR，原始值是 1,200,100 分。
+    拿原始值去撞「上限 20,000 CR」，一个完全正常的数会被标成红色告警，
+    玩家看到满屏红色却不知道出了什么事——告警一旦不可信就等于没有告警。
+    """
+    ind = BY_KEY["firm_profit_tax"]
+    assert ind.unit == "CR"
+    assert ind.status(1200092) == "ok"      # 12,001 CR，在 20,000 以内
+    assert ind.status(3000000) != "ok"      # 30,000 CR，超出上限
+    # 换算后格式化的数字与区间必须自洽
+    assert ind.format(1200092) == "12,001"
+
+
+def test_long_runway_is_not_flagged_as_risk():
+    """「还能撑多少个月」是越多越好的指标，不该有坏的上限。
+
+    财政有盈余时引擎用 999 表示「永远不会亏到破产」。
+    以前健康区间写的是 (3, 240)，于是一个结余的城市
+    反而被标成红色财政风险——这是最坏的一类假警报：
+    它让玩家对所有告警都失去信任。
+    """
+    for key in ("fiscal_runway_months", "firm_cash_runway_months"):
+        ind = BY_KEY[key]
+        assert ind.higher_is_better
+        assert ind.status(999) == "ok"
+        assert ind.status(240) == "ok"
+        assert ind.status(0.5) != "ok"      # 真的快撑不住了，仍然必须报警
+
+
 def test_status_detects_out_of_range():
     ind = Indicator(key="t", label="x", unit="%", decimals=1, category="core",
                     description="", healthy=(0.0, 0.10))

@@ -44,10 +44,18 @@ class Indicator:
 
         健康区间支持**单边**：``(0, None)`` 表示「不得为负」，
         ``(None, 0.10)`` 表示「不得高于 10%」。两边都不为空时是双侧区间。
+
+        区间一律按**显示单位**书写：百分比写 0.10 表示 10%，
+        CR 写 20000 表示 20,000 CR。引擎吐出来的金额却是「分」，
+        所以这里必须先换算再比——否则企业所得税 12,001 CR
+        会拿原始的 1,200,100 去撞 20000 的上限，
+        于是一个完全正常的数被标成红色告警。
         """
         if not self.healthy or value is None:
             return "ok"
         low, high = self.healthy
+        if self.unit == "CR":
+            value = value / 100
         if (low is None or value >= low) and (high is None or value <= high):
             return "ok"
         if high is not None and value > high:
@@ -107,7 +115,7 @@ INDICATORS: list[Indicator] = [
          "人力/技能/资源/服务/安全/工时六个因子的乘积，代表「产能能做到多少」；"
          "它不等于利用率——工厂具备满载能力不代表有人下单"),
     _ind("firm_cash_runway_months", "企业现金可撑", "月", 1, "risk",
-         "按当前月支出，企业还能发几个月工资", healthy=(1.0, 6.0),
+         "按当前月支出，企业还能发几个月工资", healthy=(1.0, None),
          higher_is_better=True),
 
     # --- 财政 ---
@@ -128,7 +136,8 @@ INDICATORS: list[Indicator] = [
     _ind("loan_interest_rate", "当前贷款利率", "%", 2, "structure",
          "信用越好利率越低", healthy=(0.0, 0.03), higher_is_better=False),
     _ind("fiscal_runway_months", "财政可撑", "月", 1, "risk",
-         "按当前赤字，市政还能撑几个月", healthy=(3.0, 240.0)),
+         "按当前赤字，市政还能撑几个月。财政有盈余时显示 999，表示「不会亏到破产」",
+         healthy=(3.0, None)),
 
     # --- 对外 ---
     _ind("total_exports", "出口", "CR", 0, "core", "卖给外地与其他城市的货"),
