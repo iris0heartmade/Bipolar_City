@@ -1,0 +1,44 @@
+{
+  "_meta": {
+    "version": "2.1.0",
+    "spec": "Bipole 城市聚合经济系统理论说明书 V2.1 §6 通胀、工资、生活篮子、实际需求",
+    "date": "2026-10-15",
+    "currency": "CR",
+    "minimum_unit": "分（1 CR = 100 分）",
+    "notes": [
+      "V2.1 §6.1 全球标准价格指数 I_0=1, 消费标准 C_0=50 CR/人/月",
+      "V2.1 §6.3 工资参数 alpha=0.40, gamma=0.02, cap_up=+0.03, cap_down=-0.02",
+      "V2.1 §6.2 篮子权重：食品45/工业20/住房20/服务13/金融教育2",
+      "V2.1 §6.4 PIT 税率 tau_P=0.08；农业工资免税"
+    ]
+  },
+  "world_initial": {
+    "month_days": 30,
+    "currency_scale": 100,
+    "inflation_pi": 0.003,
+    "global_I_0": 1.0,
+    "global_C_0_cr_per_person": 50.0,
+    "price_pressure_k": 0.08,
+    "price_relative_cap": 0.05,
+    "goods_rounding": 0.001
+  },
+  "basket_weights": {
+    "food": 0.45,
+    "industrial": 0.20,
+    "housing": 0.20,
+    "services": 0.13,
+    "fin_edu": 0.02
+  },
+  "wage_params": {
+    "alpha": 0.40,
+    "gamma": 0.02,
+    "cap_up": 0.03,
+    "cap_down": -0.02,
+    "default_policy_modifier": 1.0
+  },
+  "household": {
+    "pit_rate_tau_P": 0.08,
+    "savings_draw_limit": 0.10,
+    "agricultural_wage_pit_exempt": true
+  }
+}

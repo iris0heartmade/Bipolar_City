@@ -13,9 +13,9 @@ set "PYTHONIOENCODING=utf-8"
 
 echo.
 echo   ============================================
-echo     BIPOLE 经济模型调参实验室
+echo     BIPOLE V2.1 行业经济实验室
 echo   ============================================
-echo   左侧调参数，右侧看 46 项经济指标。
+echo   左侧中文调参，右侧查看七行业经营、基准对照与趋势。
 echo   关掉这个窗口即退出工具。
 echo.
 
@@ -23,9 +23,9 @@ rem --- 检查 Python 解释器 ---
 "%PY%" -c "import sys" >nul 2>&1
 if errorlevel 1 goto no_python
 
-rem --- 检查绘图库：缺了它曲线面板画不出来 ---
-"%PY%" -c "import matplotlib" >nul 2>&1
-if errorlevel 1 goto no_matplotlib
+rem --- 标准库 Tk 同时负责控件与曲线，不再依赖 matplotlib ---
+"%PY%" -c "import tkinter" >nul 2>&1
+if errorlevel 1 goto no_tk
 
 rem --- 检查工具模块本身 ---
 "%PY%" -c "import tools.economy_lab" >nul 2>&1
@@ -45,11 +45,10 @@ echo.
 pause
 goto done
 
-:no_matplotlib
-echo   [x] 缺少绘图库 matplotlib，曲线面板无法绘制。
+:no_tk
+echo   [x] 当前 Python 缺少 tkinter 图形界面组件。
 echo.
-echo       请在项目目录执行：
-echo           %PY% -m pip install -r requirements.txt
+echo       请在 Python 安装程序中启用 Tcl/Tk 组件后重试。
 echo.
 pause
 goto done

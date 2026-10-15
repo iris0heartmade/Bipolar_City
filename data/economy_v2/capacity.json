@@ -1,0 +1,41 @@
+{
+  "_meta": {
+    "version": "2.1.0",
+    "spec": "Bipole 城市聚合经济系统理论说明书 V2.1 §10 城市承载力 K + §11.1 宜居度 L",
+    "date": "2026-10-15",
+    "notes": [
+      "V2.1 §10.4 有效就业：lambda=0.55, e_target=0.90, job_use_exp=0.20",
+      "V2.1 §10.3 粮食：food_per_person=1.0 单位/人/月",
+      "V2.1 §10.5 安全：s_base=0.50, k_s=0.50",
+      "V2.1 §11.1 L 权重：h=0.35/a=0.35/v=0.20/s=0.10（总和=1.0）",
+      "V2.1 §11.1 h 分母 0.45 经开局城市校准选定",
+      "V2.1 §11.1 双重计量预防：安全在 K 及 L 中均出现，但 L 中权重仅 0.10",
+      "K/N 建议 1.08~1.30；L 目标 65~82"
+    ]
+  },
+  "K_params": {
+    "lambda": 0.55,
+    "e_target": 0.90,
+    "job_use_exp": 0.20,
+    "food_per_person": 1.0,
+    "s_base": 0.50,
+    "k_s": 0.50
+  },
+  "L_params": {
+    "weights": {
+      "h": 0.35,
+      "a": 0.35,
+      "v": 0.20,
+      "s": 0.10
+    },
+    "h_floor": 0.90,
+    "h_divisor": 0.45,
+    "cneed_multiplier": 1.20,
+    "target_range": {
+      "L_target_min": 65.0,
+      "L_target_max": 82.0,
+      "K_over_N_min": 1.08,
+      "K_over_N_max": 1.30
+    }
+  }
+}

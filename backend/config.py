@@ -1,4 +1,12 @@
-"""外部配置入口，不依赖执行时的工作目录。"""
+"""应用基础设施配置入口（不依赖执行时的工作目录）。
+
+【V2.1 阶段 0，2026-10-15】移除 V1.0 经济 JSON 引用（reference_city_v1.json、
+input_output_v1.json、calibration_overrides.json、calendar_v1.json、
+labor_consumption_v1.json）。这些 JSON 已封存到 `data/economy_v1_reference/`，
+V1.0 应用代码（`backend/*_v1_reference/`）如需引用应从封存目录加载。
+
+V2.1 重建后新增经济配置会走 `data/economy_v2/*.json`（阶段 1 行业体系完成后开始）。
+"""
 import json
 import os
 from pathlib import Path
@@ -16,11 +24,3 @@ BALANCE = read_json(ROOT / "data/balance.json")
 TEMPLATE = read_json(ROOT / "data/templates/river_town.json")
 SERVER = read_json(ROOT / "data/server.json")
 SAVE_DIR = Path(os.environ.get("BIPOLE_SAVE_DIR", ROOT / "saves"))
-
-# P00 经济参考场景：原始参数、投入产出流量与显式校准项分开存放。
-ECONOMY_DIR = ROOT / "data/economy"
-REFERENCE_CITY = read_json(ECONOMY_DIR / "reference_city_v1.json")
-INPUT_OUTPUT = read_json(ECONOMY_DIR / "input_output_v1.json")
-CALIBRATION = read_json(ECONOMY_DIR / "calibration_overrides.json")
-CALENDAR = read_json(ECONOMY_DIR / "calendar_v1.json")
-LABOR_CONSUMPTION = read_json(ECONOMY_DIR / "labor_consumption_v1.json")

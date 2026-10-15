@@ -1,0 +1,44 @@
+{
+  "_meta": {
+    "version": "2.1.0",
+    "spec": "Bipole 城市聚合经济系统理论说明书 V2.1 §1.4 + §14.2 + §6.4",
+    "date": "2026-10-15",
+    "archetype": "industrial_city",
+    "currency": "CR",
+    "notes": [
+      "V2.1 八群体配置（h=0..7 按行业归属）",
+      "h=0 未明确归属；h=1..7 与 IndustryId 1:1 对应",
+      "严禁 P_h == E_h：群体中可有失业居民（V2.1 §1.4）",
+      "失业总量 150，不要求 h=0 群体恰好 150",
+      "期初群体储蓄合计 300,000 CR，按收入等级/人数分配，务必逐群体非负"
+    ]
+  },
+  "demographics": {
+    "total_population_N": 3000,
+    "total_labor_force_F": 1650,
+    "total_employment_E": 1500,
+    "total_unemployed_U": 150,
+    "total_non_labor_force": 1350,
+    "labor_participation_lambda": 0.55,
+    "target_employment_rate": 0.90
+  },
+  "pit_rules": {
+    "personal_income_tax_rate": 0.08,
+    "agricultural_wage_pit_exempt": true,
+    "notes": "PIT 通用 8%；仅 AGR 行业工资免 PIT（V2.1 §6.4）"
+  },
+  "initial_savings": {
+    "total_cr": 300000,
+    "split_method": "max_remainder"
+  },
+  "cohorts": {
+    "NONE": {"name_cn": "未明确归属", "industry_id": null, "population_P_h": 70,   "employees_E_h": 0},
+    "AGR":  {"name_cn": "AGR 居民",   "industry_id": "AGR", "population_P_h": 480,  "employees_E_h": 240},
+    "IND":  {"name_cn": "IND 居民",   "industry_id": "IND", "population_P_h": 1120, "employees_E_h": 610},
+    "SRV":  {"name_cn": "SRV 居民",   "industry_id": "SRV", "population_P_h": 1050, "employees_E_h": 530},
+    "CHU":  {"name_cn": "CHU 居民",   "industry_id": "CHU", "population_P_h": 40,   "employees_E_h": 20},
+    "BNK":  {"name_cn": "BNK 居民",   "industry_id": "BNK", "population_P_h": 45,   "employees_E_h": 20},
+    "MAG":  {"name_cn": "MAG 居民",   "industry_id": "MAG", "population_P_h": 90,   "employees_E_h": 30},
+    "GOV":  {"name_cn": "GOV 居民",   "industry_id": "GOV", "population_P_h": 105,  "employees_E_h": 50}
+  }
+}

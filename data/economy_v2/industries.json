@@ -1,0 +1,82 @@
+{
+  "_meta": {
+    "version": "2.1.0",
+    "spec": "Bipole 城市聚合经济系统理论说明书 V2.1 §2.1",
+    "date": "2026-10-15",
+    "currency": "CR",
+    "minimum_unit": "分（1 CR = 100 分）",
+    "wage_tier_cr": {"A": 100, "B": 90, "C": 75, "D": 60},
+    "tax_tier_rate": {"A": 0.15, "B": 0.12, "C": 0.08, "none": 0.0},
+    "notes": [
+      "V2.1 七行业配置：AGR/IND/SRV/CHU/BNK/MAG/GOV",
+      "BNK 银行与 MAG 魔法学院是 V1.0 缺失的全新行业（V2.1 §2.1）",
+      "GOV 公务员行业税手稿为 C 但实际为 0%（V2.1 §2.1 注）",
+      "五城预设就业结构见 V2.1 §15.4；本表只承载工业新城基准"
+    ]
+  },
+  "industries": {
+    "AGR": {
+      "name_cn": "农业",
+      "name_en": "Agriculture",
+      "job_capacity_max": 300,
+      "wage_tier": "D",
+      "tax_tier": "none",
+      "initial_employees_industrial_city": 240,
+      "notes": "粮食与农业原料；低工资；行业税免征；农业工资税减免；农场附属住房"
+    },
+    "IND": {
+      "name_cn": "工业",
+      "name_en": "Industry",
+      "job_capacity_max": 1500,
+      "wage_tier": "B",
+      "tax_tier": "B",
+      "initial_employees_industrial_city": 610,
+      "notes": "材料及制造业商品；科技点数；少量市政点数；受原料与能源影响"
+    },
+    "SRV": {
+      "name_cn": "服务业/商业",
+      "name_en": "Services",
+      "job_capacity_max": 600,
+      "wage_tier": "A",
+      "tax_tier": "A",
+      "initial_employees_industrial_city": 530,
+      "notes": "零售、物流、生活服务的聚合；商业渠道；可销售多种居民服务"
+    },
+    "CHU": {
+      "name_cn": "教会",
+      "name_en": "Church",
+      "job_capacity_max": 100,
+      "wage_tier": "C",
+      "tax_tier": "none",
+      "initial_employees_industrial_city": 20,
+      "notes": "信徒捐助、宗教服务、信仰点数；保留信徒比例四种既定经济效应"
+    },
+    "BNK": {
+      "name_cn": "银行",
+      "name_en": "Banking",
+      "job_capacity_max": 100,
+      "wage_tier": "A",
+      "tax_tier": "B",
+      "initial_employees_industrial_city": 20,
+      "notes": "金融服务、贷款利息与费用；经营现金、债权/债务必须分开；最简贷款基金制"
+    },
+    "MAG": {
+      "name_cn": "魔法学院",
+      "name_en": "Magic Academy",
+      "job_capacity_max": 400,
+      "wage_tier": "B",
+      "tax_tier": "C",
+      "initial_employees_industrial_city": 30,
+      "notes": "教育/魔法服务、魔法点数、少量科技点数；可向本地/异地提供安全服务"
+    },
+    "GOV": {
+      "name_cn": "公务员",
+      "name_en": "Government",
+      "job_capacity_max": 50,
+      "wage_tier": "C",
+      "tax_tier": "C",
+      "initial_employees_industrial_city": 50,
+      "notes": "公共行政、市政点数；人员工资由政府支付，不作为盈利行业；实际行业税=0%"
+    }
+  }
+}

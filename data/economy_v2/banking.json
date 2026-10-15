@@ -1,0 +1,36 @@
+{
+  "_meta": {
+    "version": "2.1.0",
+    "spec": "Bipole 城市聚合经济系统理论说明书 V2.1 §8 银行与融资",
+    "date": "2026-10-15",
+    "currency": "CR",
+    "minimum_unit": "分（1 CR = 100 分）",
+    "notes": [
+      "V2.1 §8 银行参数：最简贷款基金制 + 债权可转让 + 禁止负债无限救援",
+      "新贷款本金不计入 GDP 和营业收入（V2.1 §13）",
+      "BNK 行业经营现金与 BNK 钱包是同一物理账户（V2.1 §1.5）",
+      "贷款不实现现代商业银行的存款创造/准备金/信用乘数（V2.1 §8.2）"
+    ]
+  },
+  "default_params": {
+    "max_loan_to_bank_cash_ratio": 1.0,
+    "max_loan_to_borrower_cash_ratio": 5.0,
+    "default_interest_rate_monthly": 0.01,
+    "max_interest_rate_monthly": 0.10,
+    "default_grace_period_months": 12
+  },
+  "prohibited_purposes": [
+    "emergency_relief"
+  ],
+  "allowed_purposes": [
+    "business_operating",
+    "business_expansion",
+    "government_deficit",
+    "personal"
+  ],
+  "initial_state": {
+    "bank_account": "firms:BNK",
+    "bank_opening_cash_cr": 60000,
+    "initial_loans": []
+  }
+}

@@ -11,3 +11,5 @@ dev = ["pytest>=8,<10", "httpx>=0.27,<1"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+# V1.0 时期封存目录（tests/_v1_reference/、tests/economy_v1_reference/）的
+# pytest 收集忽略在各自目录的 conftest.py 中用 collect_ignore_glob 实现。

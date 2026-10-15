@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BIPOLE · 行业经营</title>
+<link rel="stylesheet" href="/static/css/industry.css">
+</head>
+<body>
+<header><div><span class="eyebrow">BIPOLE / 城市经营观测</span><h1>让行业生长，让城市运转。</h1><p>行业经营测试版 · 固定人口、有限外部市场 · 与桌面实验室使用同一套经济规则</p></div><div class="actions"><button id="save">保存城市</button><button id="load">读取城市</button><button id="advance" class="primary">推进一个月 →</button></div></header>
+<main>
+<section class="metrics" aria-label="城市指标"><article><label>当前月份</label><strong id="month">0</strong></article><article><label>实际就业 / 劳动力</label><strong id="employment">—</strong></article><article><label>政府现金 · CR</label><strong id="government">—</strong></article><article><label>居民储蓄 · CR</label><strong id="households">—</strong></article><article><label>当月实际消费 · CR</label><strong id="consumption">—</strong></article></section>
+<div class="workspace"><section class="panel"><div class="section-heading"><h2>七行业经营</h2><span id="balance">尚未结算</span></div><div class="table-wrap"><table><thead><tr><th>行业</th><th>就业</th><th>容纳限度</th><th>吸引力</th><th>月薪 CR</th><th>营业额 CR</th><th>经营现金 CR</th></tr></thead><tbody id="sectors"></tbody></table></div><p class="hint">容纳限度决定能养得起多少员工；吸引力影响员工愿不愿意进入。没有真实空缺就不会凭评分增加就业。</p><h3>本月人员流动</h3><p id="flows">推进一个月后查看真实招聘、缩编与转行。</p><h3>经营观察</h3><p id="observations">每次推进均核对现金、库存与劳动力；未成交需求不会凭空变成收入。</p></section>
+<aside class="panel"><span class="eyebrow">经营安排</span><h2>调整下一月计划</h2><form id="policy"><label for="industry">选择行业</label><select id="industry"></select><label for="wage">工资倍率</label><input id="wage" type="number" min="0.5" max="2" step="0.05" value="1"><p class="hint">调高工资会实际占用行业资金；吸引力随实际发薪记录变化。</p><button class="primary" type="submit">应用工资计划</button></form><hr><form id="tax-policy"><label for="tax">行业利润税倍率</label><input id="tax" type="number" min="0" max="2" step="0.1" value="1"><button type="submit">应用税率</button></form><hr><p class="hint">桌面实验室可比较供货、需求、生活成本、岗位评价和流动速度。这里保留连续城市状态，调整后继续经营。</p><button id="new">新建基准城市</button></aside></div>
+<section class="panel"><h2>近期经营记录</h2><ol id="history"><li>等待第一次月度结算。</li></ol></section>
+</main><footer id="status" role="status">正在读取城市…</footer>
+<script type="module" src="/static/js/industry.js"></script>
+</body></html>

@@ -1,0 +1,34 @@
+{
+  "_meta": {
+    "version": "2.1.0",
+    "spec": "Bipole 城市聚合经济系统理论说明书 V2.1 §4.1 商品目录",
+    "date": "2026-10-15",
+    "currency": "CR",
+    "minimum_unit": "分（1 CR = 100 分）",
+    "notes": [
+      "V2.1 §4.1 商品目录：17 类商品全部定义",
+      "base_price_cents 是初始基准，由 §4.6 报价公式动态调整（阶段 5 不实现）",
+      "V2.1 §4.2 万物可交易技术含义：实物/可储点数/服务/产权/债权/本地建筑/货币/人口禁卖",
+      "V2.1 §4.2(h) 严禁人口/就业者/信徒作为可交易库存"
+    ]
+  },
+  "categories": [
+    {"id": "FOOD", "category": "food", "unit": "吨", "base_price_cents": 10000, "stockable": true, "shipment_mode": "transit", "deliverable_location": "either", "perish_rate": 0.05},
+    {"id": "FUEL", "category": "fuel", "unit": "吨", "base_price_cents": 15000, "stockable": true, "shipment_mode": "transit", "deliverable_location": "either", "perish_rate": 0.0},
+    {"id": "ORE", "category": "ore", "unit": "吨", "base_price_cents": 20000, "stockable": true, "shipment_mode": "transit", "deliverable_location": "either", "perish_rate": 0.0},
+    {"id": "STEEL", "category": "steel", "unit": "吨", "base_price_cents": 50000, "stockable": true, "shipment_mode": "transit", "deliverable_location": "either", "perish_rate": 0.0, "recipe_inputs": {"ORE": 1.5}},
+    {"id": "GOODS", "category": "goods", "unit": "吨", "base_price_cents": 80000, "stockable": true, "shipment_mode": "transit", "deliverable_location": "either", "perish_rate": 0.0, "recipe_inputs": {"STEEL": 0.4, "FUEL": 0.2}},
+    {"id": "LOGISTICS", "category": "logistics", "unit": "趟", "base_price_cents": 40000, "stockable": false, "shipment_mode": "deferrable", "deliverable_location": "either", "settlement_trigger": "on_delivery"},
+    {"id": "SERVICES", "category": "services", "unit": "次", "base_price_cents": 30000, "stockable": false, "shipment_mode": "instant", "deliverable_location": "either", "settlement_trigger": "on_use"},
+    {"id": "FINANCIAL_SERVICE", "category": "financial_service", "unit": "笔", "base_price_cents": 500000, "stockable": false, "shipment_mode": "instant", "deliverable_location": "either", "settlement_trigger": "on_payment"},
+    {"id": "EDUCATION", "category": "education", "unit": "人·月", "base_price_cents": 100000, "stockable": false, "shipment_mode": "instant", "deliverable_location": "either", "settlement_trigger": "on_use"},
+    {"id": "RESEARCH", "category": "research", "unit": "点", "base_price_cents": 50000, "stockable": false, "shipment_mode": "instant", "deliverable_location": "either", "settlement_trigger": "on_payment"},
+    {"id": "MAGIC", "category": "magic", "unit": "点", "base_price_cents": 200000, "stockable": false, "shipment_mode": "instant", "deliverable_location": "either", "settlement_trigger": "on_payment"},
+    {"id": "FAITH", "category": "faith", "unit": "点", "base_price_cents": 10000, "stockable": false, "shipment_mode": "instant", "deliverable_location": "either", "settlement_trigger": "on_payment"},
+    {"id": "CIVIC", "category": "civic", "unit": "点", "base_price_cents": 80000, "stockable": false, "shipment_mode": "instant", "deliverable_location": "either", "settlement_trigger": "on_payment"},
+    {"id": "MAGIC_MATERIAL", "category": "magic_material", "unit": "单位", "base_price_cents": 100000, "stockable": true, "shipment_mode": "transit", "deliverable_location": "either", "perish_rate": 0.0},
+    {"id": "PROPERTY_TITLE", "category": "property_title", "unit": "套", "base_price_cents": 10000000, "stockable": false, "shipment_mode": "deferrable", "deliverable_location": "either", "settlement_trigger": "on_payment", "contract_transfer_rule": "property_cross_city"},
+    {"id": "CONSTRUCTION", "category": "construction", "unit": "单位", "base_price_cents": 20000, "stockable": false, "shipment_mode": "deferrable", "deliverable_location": "local", "settlement_trigger": "on_delivery", "contract_transfer_rule": "local_only"},
+    {"id": "SECURITY_SERVICE", "category": "security_service", "unit": "月", "base_price_cents": 50000, "stockable": false, "shipment_mode": "instant", "deliverable_location": "local", "settlement_trigger": "on_use"}
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "_meta": {
+    "version": "2.1.0",
+    "spec": "Bipole 城市聚合经济系统理论说明书 V2.1 §11.2 + §11.3 + §11.4 跨城迁移",
+    "date": "2026-10-15",
+    "notes": [
+      "V2.1 §11.2 城对公式：rho × 调和平均 × exp(-d/d0) × tanh(beta×ΔL/2)",
+      "V2.1 §11.4 首月迁出上限：1% 来源人口",
+      "V2.1 §11.3 多城强制 9 步：同月快照/量化/1%上限/住房硬约束/竞争分配/同时过账/现金转移/保留结构/产权不动",
+      "V2.1 §11.3(f) 反对称保证 sum_c deltaN_c=0",
+      "V2.1 §11.4 初始城市 L 差异 ≤ 18；L 目标 65~82"
+    ]
+  },
+  "migration_params": {
+    "rho": 0.01,
+    "beta": 0.08,
+    "d0_km": 200.0,
+    "outflow_cap_rate": 0.01,
+    "default_faithful_ratio": 0.55,
+    "default_labor_participation": 0.55
+  },
+  "initial_protection": {
+    "first_month_outflow_max_rate": 0.01,
+    "L_initial_diff_max": 18.0,
+    "L_target_min": 65.0,
+    "L_target_max": 82.0
+  }
+}
