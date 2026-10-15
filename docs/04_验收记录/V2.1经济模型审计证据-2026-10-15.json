@@ -1,0 +1,155 @@
+{
+  "test_suite": "709 passed",
+  "funded_first_month": {
+    "wages_CR": 150.0,
+    "expected_wages_CR": 132250,
+    "PIT_CR": 9.0,
+    "industry_tax_counter_CR": 9.0,
+    "orders_created": 8,
+    "transaction_categories": [
+      "church_grant",
+      "pit",
+      "wage"
+    ],
+    "K": {
+      "industrial_city": 3257
+    },
+    "L": {
+      "industrial_city": 33.740740740740726
+    },
+    "conservation_passed": true,
+    "city_population": {
+      "industrial_city": 3000
+    }
+  },
+  "Jop_by_industry": {
+    "AGR": 1,
+    "IND": 1,
+    "SRV": 1,
+    "CHU": 1,
+    "BNK": 1,
+    "MAG": 1,
+    "GOV": 1
+  },
+  "injected_unbacked_cash": {
+    "amount_cents": 123456,
+    "conservation_passed": true,
+    "errors": []
+  },
+  "property_cleanup": {
+    "before_minus_after_cents": 10000
+  },
+  "calibration": {
+    "agricultural_town": {
+      "N": 2400,
+      "demand_CR": 150000.0,
+      "expected_nominal_need_CR": 120000.0,
+      "L": 35.25,
+      "industry_tax_CR": 0.0,
+      "PIT_CR": 7236.25,
+      "stability": [
+        true,
+        false,
+        false
+      ],
+      "reported_savings_cents": 30000000,
+      "actual_cohort_savings_cents": 0
+    },
+    "industrial_city": {
+      "N": 3000,
+      "demand_CR": 150000.0,
+      "expected_nominal_need_CR": 150000.0,
+      "L": 33.740740740740726,
+      "industry_tax_CR": 0.0,
+      "PIT_CR": 9257.5,
+      "stability": [
+        true,
+        false,
+        false
+      ],
+      "reported_savings_cents": 30000000,
+      "actual_cohort_savings_cents": 0
+    },
+    "commercial_port": {
+      "N": 3500,
+      "demand_CR": 150000.0,
+      "expected_nominal_need_CR": 175000.0,
+      "L": 43.05555555555555,
+      "industry_tax_CR": 0.0,
+      "PIT_CR": 11207.0,
+      "stability": [
+        true,
+        false,
+        false
+      ],
+      "reported_savings_cents": 30000000,
+      "actual_cohort_savings_cents": 0
+    },
+    "magic_academy": {
+      "N": 2200,
+      "demand_CR": 150000.0,
+      "expected_nominal_need_CR": 110000.0,
+      "L": 43.517171717171706,
+      "industry_tax_CR": 0.0,
+      "PIT_CR": 6777.75,
+      "stability": [
+        true,
+        false,
+        false
+      ],
+      "reported_savings_cents": 30000000,
+      "actual_cohort_savings_cents": 0
+    },
+    "mining_border": {
+      "N": 2800,
+      "demand_CR": 150000.0,
+      "expected_nominal_need_CR": 140000.0,
+      "L": 35.705555555555556,
+      "industry_tax_CR": 0.0,
+      "PIT_CR": 8702.75,
+      "stability": [
+        true,
+        false,
+        false
+      ],
+      "reported_savings_cents": 30000000,
+      "actual_cohort_savings_cents": 0
+    }
+  },
+  "app_import": "ModuleNotFoundError: No module named 'backend.api.routes'",
+  "order_probes": {
+    "half_unit_with_50_cents": {
+      "q": 0.0,
+      "amount_cents": 0,
+      "unit_price_cents": 100
+    },
+    "fee_exceeds_cash": {
+      "q": 1.0,
+      "amount_cents": 150,
+      "unit_price_cents": 100
+    },
+    "quote_above_limit": {
+      "q": 1.0,
+      "amount_cents": 80,
+      "unit_price_cents": 80
+    }
+  },
+  "food_first_history": {
+    "input": [
+      3300
+    ],
+    "actual": 1100.0,
+    "expected_equivalent_seed_history": 3300
+  },
+  "employment_underallocation": {
+    "F": 100,
+    "demands": [
+      1,
+      100
+    ],
+    "decisions": [
+      1,
+      50
+    ]
+  }
+}

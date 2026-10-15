@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-15",
+  "suite": "724 passed in 1.76s",
+  "model_checks": 33,
+  "gui_checks": 7,
+  "latest_runtime_checkpoints": [
+    {
+      "month": 1,
+      "employed": 1500,
+      "wages_CR": 132250.0,
+      "sales_CR": 356251.2,
+      "cash_residual_cents": 0
+    },
+    {
+      "month": 12,
+      "employed": 1349,
+      "wages_CR": 120459.24,
+      "sales_CR": 267783.44,
+      "cash_residual_cents": 0
+    },
+    {
+      "month": 36,
+      "employed": 477,
+      "wages_CR": 45629.43,
+      "sales_CR": 183683.97,
+      "cash_residual_cents": 0
+    },
+    {
+      "month": 120,
+      "employed": 548,
+      "wages_CR": 66514.3,
+      "sales_CR": 0.0,
+      "cash_residual_cents": 0
+    }
+  ],
+  "existing_demo_save": {
+    "exists": true,
+    "month": 2,
+    "has_demand_history": false,
+    "has_previous_demand_factor": false
+  },
+  "note": "当前运行的服务进程早于最后一次公式衔接修改；重新启动前不要将其页面结果等同于最新磁盘代码。"
+}

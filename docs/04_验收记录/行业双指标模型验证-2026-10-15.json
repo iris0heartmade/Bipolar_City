@@ -1,0 +1,1425 @@
+{
+  "model_version": "industry-labor-1.0.0",
+  "date": "2026-10-15",
+  "scope": "独立模型参考验证，不是现有游戏内核验收",
+  "passed_cases": 33,
+  "cases": [
+    {
+      "name": "configured_weights_are_valid",
+      "passed": true,
+      "evidence": {
+        "weights": {
+          "earnings": 0.6,
+          "security": 0.25,
+          "environment": 0.15
+        },
+        "security_weights": {
+          "timely_pay": 0.6,
+          "cash_runway": 0.4
+        },
+        "environment_weights": {
+          "safety": 0.6,
+          "working_time": 0.4
+        }
+      }
+    },
+    {
+      "name": "capacity_baseline",
+      "passed": true,
+      "evidence": {
+        "structural": 100,
+        "current_cash": 100,
+        "recurring_finance": 91,
+        "inputs": 100,
+        "hard_limit": 100,
+        "limit": 91,
+        "bottlenecks": [
+          "recurring_finance"
+        ]
+      }
+    },
+    {
+      "name": "current_cash_is_hard_bound",
+      "passed": true,
+      "evidence": {
+        "structural": 100,
+        "current_cash": 30,
+        "recurring_finance": 80,
+        "inputs": 100,
+        "hard_limit": 30,
+        "limit": 30,
+        "bottlenecks": [
+          "cash"
+        ]
+      }
+    },
+    {
+      "name": "input_inverse_matches_exponent",
+      "passed": true,
+      "evidence": {
+        "structural": 100,
+        "current_cash": 100,
+        "recurring_finance": 91,
+        "inputs": 42,
+        "hard_limit": 100,
+        "limit": 42,
+        "bottlenecks": [
+          "inputs"
+        ]
+      }
+    },
+    {
+      "name": "missing_input_stops_operational_capacity",
+      "passed": true,
+      "evidence": {
+        "structural": 100,
+        "current_cash": 100,
+        "recurring_finance": 91,
+        "inputs": 0,
+        "hard_limit": 100,
+        "limit": 0,
+        "bottlenecks": [
+          "inputs"
+        ]
+      }
+    },
+    {
+      "name": "no_material_recipe_does_not_mean_zero_jobs",
+      "passed": true,
+      "evidence": {
+        "structural": 100,
+        "current_cash": 100,
+        "recurring_finance": 91,
+        "inputs": 100,
+        "hard_limit": 100,
+        "limit": 91,
+        "bottlenecks": [
+          "recurring_finance"
+        ]
+      }
+    },
+    {
+      "name": "zero_operating_factor_stops_capacity",
+      "passed": true,
+      "evidence": {
+        "structural": 100,
+        "current_cash": 100,
+        "recurring_finance": 91,
+        "inputs": 0,
+        "hard_limit": 100,
+        "limit": 0,
+        "bottlenecks": [
+          "inputs"
+        ]
+      }
+    },
+    {
+      "name": "cash_cannot_create_building_jobs",
+      "passed": true,
+      "evidence": {
+        "structural": 20,
+        "current_cash": 100,
+        "recurring_finance": 91,
+        "inputs": 20,
+        "hard_limit": 20,
+        "limit": 20,
+        "bottlenecks": [
+          "building",
+          "inputs"
+        ]
+      }
+    },
+    {
+      "name": "no_support_means_no_sustainable_capacity",
+      "passed": true,
+      "evidence": {
+        "structural": 100,
+        "current_cash": 100,
+        "recurring_finance": 0,
+        "inputs": 100,
+        "hard_limit": 100,
+        "limit": 0,
+        "bottlenecks": [
+          "recurring_finance"
+        ]
+      }
+    },
+    {
+      "name": "nominal_scaling_preserves_capacity",
+      "passed": true,
+      "evidence": {
+        "structural": 100,
+        "current_cash": 100,
+        "recurring_finance": 91,
+        "inputs": 100,
+        "hard_limit": 100,
+        "limit": 91,
+        "bottlenecks": [
+          "recurring_finance"
+        ]
+      }
+    },
+    {
+      "name": "existing_industry_configuration_reused",
+      "passed": true,
+      "evidence": {
+        "AGR": 6000,
+        "IND": 8280,
+        "SRV": 9200,
+        "CHU": 6900,
+        "BNK": 9200,
+        "MAG": 8280,
+        "GOV": 6900
+      }
+    },
+    {
+      "name": "existing_taxed_wage_ranking",
+      "passed": true,
+      "evidence": {
+        "AGR": {
+          "score": 48.559951989896675,
+          "earnings": 0.26766586649827784,
+          "security": 1.0,
+          "environment": 0.5,
+          "environment_is_assumed": true
+        },
+        "IND": {
+          "score": 62.5,
+          "earnings": 0.5,
+          "security": 1.0,
+          "environment": 0.5,
+          "environment_is_assumed": true
+        },
+        "SRV": {
+          "score": 67.0600928033515,
+          "earnings": 0.576001546722525,
+          "security": 1.0,
+          "environment": 0.5,
+          "environment_is_assumed": true
+        },
+        "CHU": {
+          "score": 54.60896782498617,
+          "earnings": 0.36848279708310305,
+          "security": 1.0,
+          "environment": 0.5,
+          "environment_is_assumed": true
+        },
+        "BNK": {
+          "score": 67.0600928033515,
+          "earnings": 0.576001546722525,
+          "security": 1.0,
+          "environment": 0.5,
+          "environment_is_assumed": true
+        },
+        "MAG": {
+          "score": 62.5,
+          "earnings": 0.5,
+          "security": 1.0,
+          "environment": 0.5,
+          "environment_is_assumed": true
+        },
+        "GOV": {
+          "score": 54.60896782498617,
+          "earnings": 0.36848279708310305,
+          "security": 1.0,
+          "environment": 0.5,
+          "environment_is_assumed": true
+        }
+      }
+    },
+    {
+      "name": "no_invented_government_or_church_preference",
+      "passed": true,
+      "evidence": {
+        "score": 54.60896782498617,
+        "earnings": 0.36848279708310305,
+        "security": 1.0,
+        "environment": 0.5,
+        "environment_is_assumed": true
+      }
+    },
+    {
+      "name": "delivered_benefit_can_improve_low_wage_job",
+      "passed": true,
+      "evidence": {
+        "score": 61.01107696826198,
+        "earnings": 0.4751846161376998,
+        "security": 1.0,
+        "environment": 0.5,
+        "environment_is_assumed": true
+      }
+    },
+    {
+      "name": "unpaid_high_offer_not_high_quality",
+      "passed": true,
+      "evidence": {
+        "score": 0,
+        "earnings": 0.0,
+        "security": 0.4,
+        "environment": 0.5,
+        "environment_is_assumed": true
+      }
+    },
+    {
+      "name": "nominal_scaling_preserves_attractiveness",
+      "passed": true,
+      "evidence": {
+        "score": 62.5,
+        "earnings": 0.5,
+        "security": 1.0,
+        "environment": 0.5,
+        "environment_is_assumed": true
+      }
+    },
+    {
+      "name": "higher_local_cost_reduces_attractiveness",
+      "passed": true,
+      "evidence": {
+        "score": 44.95112497836532,
+        "earnings": 0.20751874963942196,
+        "security": 1.0,
+        "environment": 0.5,
+        "environment_is_assumed": true
+      }
+    },
+    {
+      "name": "working_environment_has_auditable_effect",
+      "passed": true,
+      "evidence": {
+        "safe": {
+          "score": 67.0,
+          "earnings": 0.5,
+          "security": 1.0,
+          "environment": 0.8,
+          "environment_is_assumed": true
+        },
+        "unsafe": {
+          "score": 58.00000000000001,
+          "earnings": 0.5,
+          "security": 1.0,
+          "environment": 0.2,
+          "environment_is_assumed": true
+        }
+      }
+    },
+    {
+      "name": "demand_inverse_recovers_employment",
+      "passed": true,
+      "evidence": {
+        "target": 60,
+        "K": 91
+      }
+    },
+    {
+      "name": "input_and_labor_constraint_is_applied_once",
+      "passed": true,
+      "evidence": {
+        "activity_with_60_workers": 0.5,
+        "activity_at_capacity": 0.4995735451652845,
+        "activity_one_worker_above_capacity": 0.5090667883351854
+      }
+    },
+    {
+      "name": "high_score_without_vacancy_cannot_pull_workers",
+      "passed": true,
+      "evidence": {
+        "AGR": 100,
+        "SRV": 100
+      }
+    },
+    {
+      "name": "offered_switch_is_limited_and_conserved",
+      "passed": true,
+      "evidence": {
+        "employed": {
+          "AGR": 95,
+          "SRV": 55
+        },
+        "switches": [
+          [
+            "AGR",
+            "SRV",
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "name": "unemployed_receive_offer_before_incumbent_switch",
+      "passed": true,
+      "evidence": {
+        "AGR": 0,
+        "SRV": 5
+      }
+    },
+    {
+      "name": "switch_deadband_stops_churn",
+      "passed": true,
+      "evidence": {
+        "AGR": 100,
+        "SRV": 50
+      }
+    },
+    {
+      "name": "hard_cash_loss_cannot_be_hidden_by_soft_exit",
+      "passed": true,
+      "evidence": {
+        "IND": 30
+      }
+    },
+    {
+      "name": "demand_drop_is_gradual_when_payroll_is_funded",
+      "passed": true,
+      "evidence": {
+        "IND": 90
+      }
+    },
+    {
+      "name": "new_industry_can_recruit_without_incumbents",
+      "passed": true,
+      "evidence": {
+        "MAG": 2
+      }
+    },
+    {
+      "name": "matching_does_not_waste_reachable_jobs",
+      "passed": true,
+      "evidence": [
+        [
+          "flexible",
+          "B",
+          1
+        ],
+        [
+          "restricted",
+          "A",
+          1
+        ]
+      ]
+    },
+    {
+      "name": "matching_100_cases_vs_exhaustive_optimum",
+      "passed": true,
+      "evidence": {
+        "cases": 100,
+        "seed": 20261015
+      }
+    },
+    {
+      "name": "labor_500_random_cases",
+      "passed": true,
+      "evidence": {
+        "cases": 500,
+        "seed": 20261015,
+        "checked": [
+          "labor_conservation",
+          "hard_limits",
+          "strict_switch_improvement",
+          "order_independence"
+        ]
+      }
+    },
+    {
+      "name": "120_steps_static_opportunity_converges_without_labor_loss",
+      "passed": true,
+      "evidence": {
+        "first": {
+          "month": 1,
+          "employed": {
+            "AGR": 95,
+            "SRV": 55
+          },
+          "unemployed": 0
+        },
+        "last": {
+          "month": 120,
+          "employed": {
+            "AGR": 50,
+            "SRV": 100
+          },
+          "unemployed": 0
+        },
+        "scope": "固定评分/容量/目标的劳动力子模型，不是世界经济模拟"
+      }
+    },
+    {
+      "name": "fractional_carry_allows_small_sector_mobility",
+      "passed": true,
+      "evidence": {
+        "BNK": 0,
+        "SRV": 11
+      }
+    },
+    {
+      "name": "invalid_inputs_rejected",
+      "passed": true,
+      "evidence": [
+        "negative_money",
+        "zero_living_cost",
+        "NaN_pay_ratio"
+      ]
+    }
+  ],
+  "labor_trace_120_steps": [
+    {
+      "month": 1,
+      "employed": {
+        "AGR": 95,
+        "SRV": 55
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 2,
+      "employed": {
+        "AGR": 91,
+        "SRV": 59
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 3,
+      "employed": {
+        "AGR": 86,
+        "SRV": 64
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 4,
+      "employed": {
+        "AGR": 82,
+        "SRV": 68
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 5,
+      "employed": {
+        "AGR": 78,
+        "SRV": 72
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 6,
+      "employed": {
+        "AGR": 74,
+        "SRV": 76
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 7,
+      "employed": {
+        "AGR": 70,
+        "SRV": 80
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 8,
+      "employed": {
+        "AGR": 67,
+        "SRV": 83
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 9,
+      "employed": {
+        "AGR": 63,
+        "SRV": 87
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 10,
+      "employed": {
+        "AGR": 60,
+        "SRV": 90
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 11,
+      "employed": {
+        "AGR": 57,
+        "SRV": 93
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 12,
+      "employed": {
+        "AGR": 54,
+        "SRV": 96
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 13,
+      "employed": {
+        "AGR": 52,
+        "SRV": 98
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 14,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 15,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 16,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 17,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 18,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 19,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 20,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 21,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 22,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 23,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 24,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 25,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 26,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 27,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 28,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 29,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 30,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 31,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 32,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 33,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 34,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 35,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 36,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 37,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 38,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 39,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 40,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 41,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 42,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 43,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 44,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 45,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 46,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 47,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 48,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 49,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 50,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 51,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 52,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 53,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 54,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 55,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 56,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 57,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 58,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 59,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 60,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 61,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 62,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 63,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 64,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 65,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 66,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 67,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 68,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 69,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 70,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 71,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 72,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 73,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 74,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 75,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 76,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 77,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 78,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 79,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 80,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 81,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 82,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 83,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 84,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 85,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 86,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 87,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 88,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 89,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 90,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 91,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 92,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 93,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 94,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 95,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 96,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 97,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 98,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 99,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 100,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 101,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 102,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 103,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 104,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 105,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 106,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 107,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 108,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 109,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 110,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 111,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 112,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 113,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 114,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 115,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 116,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 117,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 118,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 119,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    },
+    {
+      "month": 120,
+      "employed": {
+        "AGR": 50,
+        "SRV": 100
+      },
+      "unemployed": 0
+    }
+  ]
+}

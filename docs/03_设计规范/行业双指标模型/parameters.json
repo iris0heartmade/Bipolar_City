@@ -1,0 +1,36 @@
+{
+  "model_version": "industry-labor-1.0.0",
+  "status": "design_reference_not_runtime",
+  "date": "2026-10-15",
+  "parameter_origin": "游戏设计初值，非现实统计估计；行业工资与税级来自现有V2.1配置",
+  "capacity": {
+    "reserve_horizon_months": 3,
+    "labor_output_exponent": 0.8
+  },
+  "attractiveness": {
+    "weights": {"earnings": 0.60, "security": 0.25, "environment": 0.15},
+    "security_weights": {"timely_pay": 0.60, "cash_runway": 0.40},
+    "reference_gross_wage_cr": 90.0,
+    "reference_wage_pit_rate": 0.08,
+    "reference_living_cost_cr": 50.0,
+    "earnings_log_scale": 0.50,
+    "reference_earnings_score": 0.50,
+    "secure_runway_months": 3.0,
+    "history_weights_newest_first": [0.50, 0.30, 0.20],
+    "score_update_weight": 0.50,
+    "neutral_environment": 0.50,
+    "new_employer_prior_pay_ratio": 0.80,
+    "environment_weights": {"safety": 0.60, "working_time": 0.40}
+  },
+  "labor_flow": {
+    "monthly_hire_rate": 0.10,
+    "startup_hiring_reference_people": 20,
+    "monthly_soft_exit_rate": 0.10,
+    "monthly_switch_rate": 0.05,
+    "switch_score_gap": 5.0,
+    "integer_tie_break": "sorted_industry_id",
+    "jobseeker_priority": true,
+    "switch_requires_offer": true,
+    "same_month_reuse_switch_vacancies": false
+  }
+}
