@@ -2,16 +2,177 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BIPOLE · 行业经营</title>
+<title>BIPOLE · 城市经营</title>
 <link rel="stylesheet" href="/static/css/industry.css">
 </head>
 <body>
-<header><div><span class="eyebrow">BIPOLE / 城市经营观测</span><h1>让行业生长，让城市运转。</h1><p>行业经营测试版 · 固定人口、有限外部市场 · 与桌面实验室使用同一套经济规则</p></div><div class="actions"><button id="save">保存城市</button><button id="load">读取城市</button><button id="advance" class="primary">推进一个月 →</button></div></header>
+<header>
+  <div class="header-info">
+    <span class="eyebrow">BIPOLE / 城市经营</span>
+    <h1>让行业生长，让城市运转。</h1>
+    <p id="status-line">行业经营版 · 玩家是市长，所有改变按月结算 · 0 月份开始</p>
+  </div>
+  <div class="actions">
+    <button id="save">保存</button>
+    <button id="load">读取</button>
+    <button id="new">新建</button>
+  </div>
+</header>
 <main>
-<section class="metrics" aria-label="城市指标"><article><label>当前月份</label><strong id="month">0</strong></article><article><label>实际就业 / 劳动力</label><strong id="employment">—</strong></article><article><label>政府现金 · CR</label><strong id="government">—</strong></article><article><label>居民储蓄 · CR</label><strong id="households">—</strong></article><article><label>当月实际消费 · CR</label><strong id="consumption">—</strong></article></section>
-<div class="workspace"><section class="panel"><div class="section-heading"><h2>七行业经营</h2><span id="balance">尚未结算</span></div><div class="table-wrap"><table><thead><tr><th>行业</th><th>就业</th><th>容纳限度</th><th>吸引力</th><th>月薪 CR</th><th>营业额 CR</th><th>经营现金 CR</th></tr></thead><tbody id="sectors"></tbody></table></div><p class="hint">容纳限度决定能养得起多少员工；吸引力影响员工愿不愿意进入。没有真实空缺就不会凭评分增加就业。</p><h3>本月人员流动</h3><p id="flows">推进一个月后查看真实招聘、缩编与转行。</p><h3>经营观察</h3><p id="observations">每次推进均核对现金、库存与劳动力；未成交需求不会凭空变成收入。</p></section>
-<aside class="panel"><span class="eyebrow">经营安排</span><h2>调整下一月计划</h2><form id="policy"><label for="industry">选择行业</label><select id="industry"></select><label for="wage">工资倍率</label><input id="wage" type="number" min="0.5" max="2" step="0.05" value="1"><p class="hint">调高工资会实际占用行业资金；吸引力随实际发薪记录变化。</p><button class="primary" type="submit">应用工资计划</button></form><hr><form id="tax-policy"><label for="tax">行业利润税倍率</label><input id="tax" type="number" min="0" max="2" step="0.1" value="1"><button type="submit">应用税率</button></form><hr><p class="hint">桌面实验室可比较供货、需求、生活成本、岗位评价和流动速度。这里保留连续城市状态，调整后继续经营。</p><button id="new">新建基准城市</button></aside></div>
-<section class="panel"><h2>近期经营记录</h2><ol id="history"><li>等待第一次月度结算。</li></ol></section>
-</main><footer id="status" role="status">正在读取城市…</footer>
+<div class="grid">
+<!-- 左侧：玩家操作 -->
+<aside class="panel" id="panel-actions">
+  <h2>玩家操作</h2>
+  <p class="hint">先调整计划或下达指令，再点"月进"查看当月结果。</p>
+
+  <h3>1. 一次性推演</h3>
+  <form id="advance-form">
+    <label for="advance-months">一次性推演月数（1—120）</label>
+    <input id="advance-months" type="number" min="1" max="120" step="1" value="1">
+    <button class="primary" type="submit">月进 →</button>
+  </form>
+  <hr>
+
+  <h3>2. 计划调整（下月起生效）</h3>
+  <form id="policy-form">
+    <label for="industry">选择行业</label>
+    <select id="industry"></select>
+    <label for="wage">工资倍率（0.5—2）</label>
+    <input id="wage" type="number" min="0.5" max="2" step="0.05" value="1">
+    <button type="submit">应用工资计划</button>
+  </form>
+  <form id="tax-form">
+    <label for="tax">行业利润税倍率（0—2）</label>
+    <input id="tax" type="number" min="0" max="2" step="0.1" value="1">
+    <button type="submit">应用税率</button>
+  </form>
+  <form id="living-form">
+    <label for="living">人均月生活成本（20—120）</label>
+    <input id="living" type="number" min="20" max="120" step="1" value="50">
+    <button type="submit">调整生活成本</button>
+  </form>
+  <form id="household-form">
+    <label for="household">每就业者家庭人口（1.0—4.0）</label>
+    <input id="household" type="number" min="1" max="4" step="0.1" value="2.5">
+    <button type="submit">调整家庭规模</button>
+  </form>
+  <form id="external-split-form">
+    <label for="external-split">外部订单分给本地比例（0—1）</label>
+    <input id="external-split" type="number" min="0" max="1" step="0.05" value="0.5">
+    <button type="submit">调整外销比例</button>
+  </form>
+  <hr>
+
+  <h3>3. 市政指令（当月内执行）</h3>
+  <form id="purchase-form">
+    <label for="purchase-cash">市政采购外部现金（CR）</label>
+    <input id="purchase-cash" type="number" min="0" step="100" value="0">
+    <label for="purchase-raw">市政采购外部原料（单位）</label>
+    <input id="purchase-raw" type="number" min="0" step="1000" value="0">
+    <button type="submit">市政采购（EXT 现金 / 原料）</button>
+  </form>
+  <form id="subsidy-form">
+    <label for="subsidy-industry">行业补贴（CR）</label>
+    <div class="row">
+      <select id="subsidy-industry"></select>
+      <input id="subsidy-amount" type="number" min="0" step="100" value="0" placeholder="CR">
+    </div>
+    <button type="submit">发放行业补贴</button>
+  </form>
+  <form id="hire-civil-form">
+    <label for="hire-civil">市政雇佣失业者入公务员（人）</label>
+    <input id="hire-civil" type="number" min="0" step="1" value="0">
+    <button type="submit">雇佣入公务员</button>
+  </form>
+  <form id="public-works-form">
+    <label for="public-works">市政工程 / 救济款（CR，按失业池发）</label>
+    <input id="public-works" type="number" min="0" step="100" value="0">
+    <button type="submit">发放救济</button>
+  </form>
+  <form id="limit-hire-form">
+    <label for="limit-hire-industry">限制行业下月招工</label>
+    <div class="row">
+      <select id="limit-hire-industry"></select>
+      <input id="limit-hire-months" type="number" min="1" max="36" step="1" value="3" placeholder="持续月数">
+    </div>
+    <button type="submit">下发限招令</button>
+  </form>
+  <form id="limit-layoff-form">
+    <label for="limit-layoff-industry">禁止行业下月裁员</label>
+    <div class="row">
+      <select id="limit-layoff-industry"></select>
+      <input id="limit-layoff-months" type="number" min="1" max="36" step="1" value="3" placeholder="持续月数">
+    </div>
+    <button type="submit">下发限裁令</button>
+  </form>
+  <form id="tax-amnesty-form">
+    <label for="tax-amnesty-industry">退还本行业本月已缴税</label>
+    <div class="row">
+      <select id="tax-amnesty-industry"></select>
+      <button type="submit">执行税收豁免</button>
+    </div>
+  </form>
+</aside>
+
+<!-- 右侧：指标 + 行业表 + 图表 -->
+<section class="metrics">
+  <article><label>当前月份</label><strong id="month">0</strong></article>
+  <article><label>可劳动人口 / 就业</label><strong id="employment">—</strong></article>
+  <article><label>家庭人口 (×家庭规模)</label><strong id="household-population">—</strong></article>
+  <article><label>政府现金 · CR</label><strong id="government">—</strong></article>
+  <article><label>居民总储蓄 · CR</label><strong id="households">—</strong></article>
+  <article><label>当月实际消费 · CR</label><strong id="consumption">—</strong></article>
+  <article><label>当月营业额 · CR</label><strong id="sales">—</strong></article>
+  <article><label>外部现金 · CR</label><strong id="external-cash">—</strong></article>
+  <article><label>外部原料 · 单位</label><strong id="external-raw">—</strong></article>
+  <article><label>人口自然月增（‰）</label><strong id="net-rate">—</strong></article>
+</section>
+
+<section class="panel" id="panel-sectors">
+  <div class="section-heading">
+    <h2>七行业经营</h2>
+    <span id="balance">尚未结算</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>行业</th><th>就业</th><th>容纳</th><th>目标</th><th>吸引力</th>
+        <th>月薪 CR</th><th>营业额 CR</th><th>税前利润 CR</th>
+        <th>经营现金 CR</th><th>成品库存</th><th>原料库存</th>
+        <th>售价 CR</th><th>亏损月数</th>
+      </tr></thead>
+      <tbody id="sectors"></tbody>
+    </table>
+  </div>
+  <p class="hint">容纳=本期可雇人数上界；目标=本期希望用工；吸引力∈0—100。亏损月数连续累计，≥3 月标记危机，≥6 月触发衰退。</p>
+  <h3>本月人员流动</h3>
+  <p id="flows">—</p>
+  <h3>经营观察</h3>
+  <p id="observations">—</p>
+  <h3>本月已生效的市政政策</h3>
+  <p id="active-policies" class="hint">无</p>
+</section>
+
+<section class="panel" id="panel-chart">
+  <div class="section-heading">
+    <h2>折线图</h2>
+    <div>
+      <label for="chart-metric" class="inline">指标</label>
+      <select id="chart-metric"></select>
+      <button id="chart-reset" class="ghost" type="button">清空折线</button>
+    </div>
+  </div>
+  <canvas id="chart" width="900" height="280" aria-label="指标折线图"></canvas>
+  <p class="hint" id="chart-summary">月进会按"指标"追加一个点，与上一个点连成折线。点击"清空折线"可重新开始。</p>
+</section>
+
+<section class="panel" id="panel-history">
+  <h2>近期经营记录</h2>
+  <ol id="history"><li>等待第一次月度结算。</li></ol>
+</section>
+</div>
+</main>
+<footer id="status" role="status">正在读取城市…</footer>
 <script type="module" src="/static/js/industry.js"></script>
-</body></html>
+</body>
+</html>

@@ -55,7 +55,7 @@ def validate_scenario(scenario):
             if key not in allowed_sector and sector.get(key) != value:
                 raise ValueError(f'当前版本不能修改行业结构参数：{industry}.{key}')
     for key in ('household_seller_weights', 'household_rent_share', 'domestic_supplier_weights',
-                'government_supplier_weights', 'version'):
+                'government_supplier_weights', 'household_consumption_size', 'version'):
         if scenario.get(key) != base[key]:
             raise ValueError(f'当前版本不能修改结算结构：{key}')
 

@@ -23,6 +23,8 @@ class IndustryGame:
     def snapshot(self):
         return {'month': self.city.month, 'scenario': self.city.scenario,
                 'employment': self.city.employment(), 'cash': self.city.cash,
+                'ocean_cash': getattr(self.city, 'ocean_cash', 0),
+                'active_policies': {f'{t}|{k}': v for (t, k), v in self.city._active_policies.items()},
                 'latest': self.city.last_report,
                 'save_exists': (self.save_dir/'industry-slot.json').exists()}
 
@@ -45,6 +47,27 @@ class IndustryGame:
                                        command['value'], command.get('industry', 'IND'))
             self.city.scenario = candidate
             self.city.living_cost_cents = self.city.cr(candidate['city']['living_cost_cr']*self.city.cpi)
+        elif kind == 'purchase_external':
+            # 市政手动采购：现金 + 原料按需一次性买进；现金不足整笔被拒。
+            cash_cr = float(command.get('cash_cr', 0) or 0)
+            raw_units = float(command.get('raw_units', 0) or 0)
+            from_account = command.get('from_account', 'GOV')
+            note = command.get('note', '市政手动采购')
+            paid_cash, paid_raw, reason = self.city.purchase_external(
+                cash_cents=int(round(cash_cr*100)),
+                raw_units=raw_units, from_account=from_account, note=note)
+            if reason and reason != 'empty':
+                raise ValueError(f'市政采购被拒：{reason}')
+        elif kind == 'mayor_command':
+            ok, reason, _ = self.city.mayor_command(
+                kind=command['mayor_kind'],
+                industry=command.get('industry'),
+                cash_cr=float(command.get('cash_cr', 0) or 0),
+                people=int(command.get('people', 0) or 0),
+                months=int(command.get('policy_months', 1) or 1),
+                note=command.get('note', ''))
+            if not ok:
+                raise ValueError(f'市政命令被拒：{reason}')
         elif kind == 'new_game':
             self.city = IndustryEconomy()
         elif kind == 'save':
@@ -70,13 +93,21 @@ class IndustryGame:
 
 class Command(BaseModel):
     model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
-    type: Literal['advance', 'set_parameter', 'new_game', 'save', 'load']
+    type: Literal['advance', 'set_parameter', 'new_game', 'save', 'load',
+                  'purchase_external', 'mayor_command']
     request_id: str | None = Field(default=None, max_length=80)
     months: StrictInt = Field(default=1, ge=1, le=12)
     section: str | None = None
     key: str | None = None
     value: float | None = None
     industry: str = 'IND'
+    cash_cr: float = 0
+    raw_units: float = 0
+    from_account: str = 'GOV'
+    note: str | None = None
+    mayor_kind: str | None = None
+    people: StrictInt = Field(default=0, ge=0, le=10000)
+    policy_months: StrictInt = Field(default=1, ge=1, le=120)
 
 
 @router.get('/state')

@@ -4,6 +4,57 @@
 
 ## [未发布]
 
+### 修复
+- 2026-10-16：Windows 启动脚本重写为纯 ASCII（`economy_lab.bat` / 新增 `start_industry.bat` 与 `start_industry.ps1` / `start.ps1`）。原脚本含中文 echo，在 GBK 默认代码页下会乱码并把每行当作独立命令触发「不是可运行的程序」错误。新脚本把中文文案交给 Python/浏览器渲染，bat 自身只做环境探测和启动。
+
+### 变更
+- 2026-10-16：**V2.1 阶段 15：游戏版 GUI 重构 + 市政指令体系**
+  - **GUI 重构**：左侧改为"玩家操作区"（计划调整 + 市政指令），右侧改为"指标区"（10 个顶指标 + 行业表 + 折线图 + 经营记录）；左 320px、右自适应。
+  - **一次性月进**：表单输入 1—120 月（默认 1），按一下推进指定月数。120 月 = 一次性跑完整个 10 年游戏。
+  - **折线图**：HTML5 canvas，21 个可选指标（就业、失业、政府现金、IND 系列、CBR/CDR、欠付等）。月进追加一个点 + 与前一点连直线；底部有「清空折线」按钮。
+  - **行业表扩充**：就业/容纳/目标/吸引力/月薪/营业额/税前利润/经营现金/成品库存/原料库存/售价/亏损月数 12 列；亏损月数 ≥3 月标 crisis 状态。
+  - **市政指令新增 6 类**（共 7 类）：
+    - `subsidy_industry`：政府 → 行业现金
+    - `hire_civil`：政府雇佣失业者入公务员，每岗位付工资
+    - `pardon_welfare`：政府救济（按失业池发）
+    - `limit_hire`：限时 N 月禁止某行业新进（待业池 + 跨行业 switch）
+    - `limit_layoff`：限时 N 月禁止某行业裁员（保留冗员但允许工资欠付，方案 A）
+    - `tax_amnesty`：退还本行业本月已缴税
+  - **政策机制**：`_active_policies: {(target, kind): expiry_month}` 跨月生效；过期自动清理；下月立即在 labor_month / 硬上限之上退场两处生效。
+  - **新增可调参数 3 项**（GUI 滑块）：`living_cost_cr`、`household_consumption_size`、`external_local_split` 全部纳入 set_parameter 流程。
+  - **REST 命令扩展**：`Command` 模型新增 `mayor_kind / people / policy_months`；`Command.type` Literal 加 `mayor_command`。
+  - **报告新增字段**：`active_policies`（按行业|政策键索引到过期月份）、`recent_mayor_actions`（本月生效的命令流水）、`ocean_cash`、`external_raw_units`。
+  - **测试**：5 项新因果测试覆盖补贴/限招/限裁/雇佣/救济/拒收路径；733 项全过。GUI API 烟雾测试覆盖 6 类 mayor_command + 12 项 set_parameter + advance / save / load / new_game / purchase_external。
+
+### 变更
+- 2026-10-16：**V2.1 阶段 14 续：外部节点取消自动补给，改为市政手动采购**
+  - **删除自动补给**：`settle_markets` 不再每期自动把 OCEAN 现金转给 EXT。EXT 现金/原料池完全靠玩家通过 `purchase_external` 命令补货。
+  - **市政手动采购 API**：`industry_economy.purchase_external(cash_cents, raw_units, from_account='GOV', note='')` 一次性执行：GOV → OCEAN → EXT（现金部分 + 原料部分）。现金不足整笔被拒，状态完全不变。
+  - **REST 命令**：`POST /api/industry/commands` 新增 `type=purchase_external`，参数 `cash_cr` 与 `raw_units`（CR 与单位）。
+  - **GUI**：右侧新增"市政采购外部现金 / 原料"两个输入框与"执行市政采购"按钮；按钮先校验非零再发请求，错误消息会回显到状态栏。
+  - **守恒同步**：`cumulative_raw_purchased_units` 累计玩家采购单位；`cumulative_ext_in_cents` / `cumulative_ext_out_cents` 跨月精确计算 EXT 现金余额；原料守恒由 `cumulative_raw_purchased_units - cumulative_raw_input_qty` 推导。
+  - **实验场景兼容**：开局势能参数 `external_cash_replenish_cr` / `external_raw_replenish_units` 仍生效（直接改 EXT 期初，不走 purchase_external 路径），让历史基线可比。
+  - **新增测试 4 项**：现金路径 / 现金不足拒收 / 零操作必崩 / 市政持续采购保 IND。728 项全过。
+
+### 新增
+- 2026-10-16：**V2.1 阶段 14：可劳动人口 = 显示人口 + 家庭口径 + 自然演化**
+  - **可劳动人口 = 显示人口**：行业表中 `population` 与 `workforce_population` 字段合并为可劳动人口；后续玩法不再需要另一组「家庭人口」账。
+  - **家庭口径消费**：每位就业者背后有 `household_consumption_size`（默认 2.5）口家庭；生活篮子 = 可劳动人口 × 家庭人口 × 月生活成本，已用作需求上限。`data/economy_v2/industry_lab.json` 提供 GUI 滑块 1.0—4.0。
+  - **人口自然演化**：`backend/systems/v21/demography.py` 新增；出生率/死亡率为二级参数，按世界银行 2022 截面回归得到（`gni_cbr_elasticity≈-0.41`，`gni_cdr_elasticity≈-0.31`，控制老龄化与人均消费）。每月净人口变化会同步更新 population、labor_force、unemployed_by_group。
+  - **守恒重做**：OCEAN 虚拟池承载外部资金来源，`cash + ocean` 跨月守恒；EXT 期末按期初 + 期间 OCEAN 注入 + 行业付款 - EXT 支出精确计算；`cumulative_raw_input_qty` 跨月累计避免 cpi 漂移。
+  - **可雇人数公式升级**（方案 A：允许短期欠付）：`evaluate_jobs` 把月初现金 + 预期回款 + 缓冲 - 非人工成本 作为可雇人数上界，避免「月初现金决定一切」造成的瞬时裁员断崖。`pay()` 仍然在「已录用岗位未足额」上抛 AssertionError（保留你要求的断言），但欠付只发生在「当月临时欠付的冗员」上，吸引力会同步下降。
+  - **强制裁员软化**：`labor_month` 之后按 `layoff_cap_share`（默认 10%）对超出硬上限的冗员做渐进退场。
+  - **价格反馈去自强化**：以「目标库存月数 vs 实际库存」驱动价格变化，开局那 1 月的过剩库存不再压垮后续价格。
+  - **外部节点可持续**：EXT 现金与原料改为按月补给（`external_cash_replenish_cr` 与 `external_raw_replenish_units`），OCEAN 池耗尽前不会断供。补给量按 max_months 上限预注入。
+  - **亏损温和处理接入**：连续 3 月亏损置 `sector.crisis=true`，写入 report；连续 6 月置 `decline` 标记供后续剧情逻辑使用。
+  - **GUI 适配**：首页 `frontend/industry.html` 增加「家庭人口」指标；`frontend/js/industry.js` 在经营记录中显示可劳动人口与现金+OCEAN 守恒差。
+  - 测试：原 724 项 v21 测试全部通过；新增强守恒（OCEAN 池、cumulative EXT 净流）、家庭口径消费、缺货自强化不复现、人口自然演化长期自洽的因果测试。
+
+### 变更
+- 2026-10-16：经济模型引入「可劳动人口 = 显示人口」语义后，所有旧的「人口=3000」静态实验保持 3,000 不变；新字段 `workforce_population` 反映当前可劳动人口（含自然演化），`household_population = workforce × household_size` 是真实消费基数。
+- 2026-10-16：每月守恒式由「`sum(cash) == before`」升级为「`sum(cash) + OCEAN == initial_total`」；旧测试已同步更新。
+- 2026-10-16：守恒容差保留 1e-3（货币/库存），劳动力容差保留 ±5 人（人口演化引入 floor 舍入），未放松核心不变量。
+
 ### 新增
 - 2026-10-15：新增 V2.1 中文行业经济实验室，提供七行业参数调整、基准对照、趋势曲线、方案保存与载入、逐月交易报告导出；本轮已实际启动并操作界面，最后一轮另有7项GUI回调与文件检查通过。
 - 2026-10-15：新增共用行业运行内核，将行业吸引力、容纳限度、群体就业分布、工资、标准交付包生产、消费、采购及税费接入真实整数现金与库存记录；外部买方资金有限，每月核对资金、库存和劳动力。
