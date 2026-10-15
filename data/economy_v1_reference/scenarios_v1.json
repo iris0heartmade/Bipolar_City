@@ -1,0 +1,432 @@
+{
+  "config_id": "economy_scenarios_v1",
+  "note": "所有冲击幅度均为游戏压力条件，不声称现实拟合；测试可能得到经济崩溃，程序仍须守恒。",
+  "sources": {
+    "demand": {
+      "title": "IMF：财政政策与自动稳定器",
+      "url": "https://www.imf.org/external/pubs/ft/fandd/basics/36-fiscal-policy.htm",
+      "mechanism": "需求下降与失业救济的收入缓冲；不采用现实系数。"
+    },
+    "supply": {
+      "title": "英格兰银行：2026年4月货币政策报告",
+      "url": "https://www.bankofengland.co.uk/monetary-policy-report/2026/april-2026",
+      "mechanism": "能源涨价提高企业成本并侵蚀居民实际收入。"
+    },
+    "fiscal": {
+      "title": "世界银行：低收入经济体财政脆弱性",
+      "url": "https://www.worldbank.org/en/research/publication/fiscal-vulnerabilities",
+      "mechanism": "高债务、财政收入弱与融资空间不足限制公共支出。"
+    }
+  },
+  "scenarios": [
+    {
+      "id": "baseline",
+      "name": "正常基准",
+      "months": 120,
+      "description": "设计基准的一城长期演化。",
+      "expect": {
+        "no_exits": true,
+        "stable_employment": true,
+        "real_growth": true
+      }
+    },
+    {
+      "id": "export_boom",
+      "name": "外需繁荣",
+      "months": 120,
+      "overrides": {
+        "feedback.export_demand_multiplier": 1.5
+      },
+      "description": "外需提高50%，检验资金支持的扩张与招聘。",
+      "sources": [
+        "demand"
+      ],
+      "expect": {
+        "growth": true
+      }
+    },
+    {
+      "id": "demand_recession",
+      "name": "持续需求衰退",
+      "months": 120,
+      "shocks": [
+        {
+          "start": 13,
+          "name": "居民与外需下降",
+          "overrides": {
+            "feedback.demand_multiplier": 0.3,
+            "feedback.export_demand_multiplier": 0.1
+          }
+        }
+      ],
+      "sources": [
+        "demand"
+      ],
+      "expect": {
+        "exits": true,
+        "mass_unemployment": true,
+        "church_shortage": true
+      },
+      "description": "第13月开始：居民需求意愿降至30%，外部订单降至10%。"
+    },
+    {
+      "id": "import_inflation",
+      "name": "进口成本翻倍",
+      "months": 120,
+      "shocks": [
+        {
+          "start": 13,
+          "name": "进口成本翻倍",
+          "overrides": {
+            "trade.import_price_index": 2
+          }
+        }
+      ],
+      "sources": [
+        "supply"
+      ],
+      "expect": {
+        "losses": true
+      },
+      "description": "第13月开始：进口投入价格变为原来的2倍。"
+    },
+    {
+      "id": "coal_interruption",
+      "name": "煤炭供应中断",
+      "months": 120,
+      "shocks": [
+        {
+          "start": 13,
+          "name": "本地煤矿与煤进口中断",
+          "overrides": {
+            "resources.items": [
+              {
+                "id": "grain",
+                "name": "粮食",
+                "unit": "吨",
+                "unit_price": 90,
+                "opening": 600,
+                "produced": 250,
+                "used": 300,
+                "imported": 50,
+                "exported": 0
+              },
+              {
+                "id": "coal",
+                "name": "煤",
+                "unit": "吨",
+                "unit_price": 40,
+                "opening": 800,
+                "produced": 0,
+                "used": 390,
+                "imported": 0,
+                "exported": 30
+              },
+              {
+                "id": "steel",
+                "name": "钢",
+                "unit": "吨",
+                "unit_price": 180,
+                "opening": 170,
+                "produced": 110,
+                "used": 100,
+                "imported": 0,
+                "exported": 10
+              },
+              {
+                "id": "magic_material",
+                "name": "魔法材料",
+                "unit": "箱",
+                "unit_price": 500,
+                "opening": 20,
+                "produced": 3,
+                "used": 5,
+                "imported": 2,
+                "exported": 0
+              }
+            ]
+          }
+        }
+      ],
+      "sources": [
+        "supply"
+      ],
+      "expect": {
+        "supply_drop": true
+      },
+      "description": "第13月开始：本地煤炭生产和进口停止，先消耗已有库存。"
+    },
+    {
+      "id": "import_blockade",
+      "name": "全部进口中断",
+      "months": 60,
+      "shocks": [
+        {
+          "start": 13,
+          "name": "进口渠道中断",
+          "overrides": {
+            "feedback.import_availability": 0
+          }
+        }
+      ],
+      "sources": [
+        "supply"
+      ],
+      "expect": {
+        "exits": true,
+        "mass_unemployment": true
+      },
+      "description": "第13月开始：所有进口渠道中断。"
+    },
+    {
+      "id": "debt_crisis",
+      "name": "高债务低储备",
+      "months": 120,
+      "overrides": {
+        "city.start_cash": 1000,
+        "city.start_debt": 1000000,
+        "city.loan_interest_rate_monthly": 0.05,
+        "city.central_transfer_monthly": 0
+      },
+      "sources": [
+        "fiscal"
+      ],
+      "expect": {
+        "debt_default": true
+      },
+      "description": "期初仅1000CR市政现金，债务100万CR，月息5%，无中央拨款。"
+    },
+    {
+      "id": "church_exhaustion",
+      "name": "教会救济挤兑",
+      "months": 120,
+      "overrides": {
+        "religion.start_church_cash": 1000,
+        "feedback.church_relief_per_unemployed": 50
+      },
+      "shocks": [
+        {
+          "start": 13,
+          "name": "失业冲击",
+          "overrides": {
+            "feedback.demand_multiplier": 0.4,
+            "feedback.export_demand_multiplier": 0.2
+          }
+        }
+      ],
+      "sources": [
+        "demand",
+        "fiscal"
+      ],
+      "expect": {
+        "church_shortage": true
+      },
+      "description": "教会初始储备1000CR，新增失业者月救济50CR；第13月需求衰退。"
+    },
+    {
+      "id": "capital_flight",
+      "name": "企业外逃",
+      "months": 60,
+      "overrides": {
+        "feedback.firm_cash_multiplier": 5,
+        "feedback.relocation_loss_months": 3,
+        "business.exit_loss_streak_months": 24
+      },
+      "shocks": [
+        {
+          "start": 13,
+          "name": "持续订单下降",
+          "overrides": {
+            "feedback.demand_multiplier": 0.4,
+            "feedback.export_demand_multiplier": 0.1
+          }
+        }
+      ],
+      "sources": [
+        "demand"
+      ],
+      "expect": {
+        "flight": true
+      },
+      "description": "企业初始资金为基准5倍；第13月需求下降，连续亏损3月可外迁。"
+    },
+    {
+      "id": "compound_disaster",
+      "name": "复合危机",
+      "months": 120,
+      "overrides": {
+        "city.start_cash": 1000,
+        "religion.start_church_cash": 0,
+        "feedback.firm_cash_multiplier": 0.2
+      },
+      "shocks": [
+        {
+          "start": 13,
+          "name": "需求供给财政同时恶化",
+          "overrides": {
+            "feedback.demand_multiplier": 0.2,
+            "feedback.export_demand_multiplier": 0.1,
+            "trade.import_price_index": 2,
+            "feedback.import_availability": 0.3,
+            "security.base_threat_intensity": 1
+          }
+        }
+      ],
+      "sources": [
+        "demand",
+        "supply",
+        "fiscal"
+      ],
+      "expect": {
+        "exits": true,
+        "mass_unemployment": true,
+        "church_shortage": true
+      },
+      "description": "低现金与零教会储备；第13月需求、进口和魔法安全同时恶化。"
+    },
+    {
+      "id": "temporary_recovery",
+      "name": "短期冲击后恢复",
+      "months": 120,
+      "shocks": [
+        {
+          "start": 13,
+          "end": 18,
+          "name": "短期外需下降",
+          "overrides": {
+            "feedback.export_demand_multiplier": 0.6
+          }
+        },
+        {
+          "start": 19,
+          "name": "需求恢复与外部复苏",
+          "overrides": {
+            "feedback.export_demand_multiplier": 1.3
+          }
+        }
+      ],
+      "sources": [
+        "demand"
+      ],
+      "expect": {
+        "recovery": true
+      },
+      "description": "第13至18月外需降至60%；第19月起外需恢复至130%。"
+    },
+    {
+      "id": "high_taxes",
+      "name": "最高税率压力",
+      "months": 120,
+      "overrides": {
+        "tax.income_flat_rate": 0.2,
+        "business.profit_tax_rate": 0.25,
+        "tax.property_monthly_rate": 0.0025
+      },
+      "sources": [
+        "demand"
+      ],
+      "expect": {},
+      "description": "个税20%，利润税25%，房产税每月0.25%。"
+    },
+    {
+      "id": "minimum_wage_shock",
+      "name": "高最低工资冲击",
+      "months": 60,
+      "shocks": [
+        {
+          "start": 13,
+          "name": "最低工资提升到500CR",
+          "overrides": {
+            "labour.min_wage": 500
+          }
+        }
+      ],
+      "description": "极端政策边界，远高于基准工资；不对应现实建议。",
+      "expect": {
+        "losses": true,
+        "exits": true
+      }
+    },
+    {
+      "id": "zero_cash",
+      "name": "所有本地期初现金为零",
+      "months": 60,
+      "overrides": {
+        "feedback.firm_cash_multiplier": 0,
+        "feedback.household_cash_multiplier": 0,
+        "city.start_cash": 0,
+        "religion.start_church_cash": 0
+      },
+      "expect": {},
+      "description": "企业、家庭、市政、教会期初现金全部归零；外部订单仍须实际供货。"
+    },
+    {
+      "id": "zero_employment",
+      "name": "期初零就业",
+      "months": 60,
+      "overrides": {
+        "population.employed": 0,
+        "population.unemployed": 1650,
+        "population.out_of_labour_force": 1350,
+        "population.labour_force": 1650
+      },
+      "expect": {},
+      "description": "期初没有企业岗位，1650名劳动力全部失业。"
+    }
+  ],
+  "boundary_sweep": {
+    "seed": 20261014,
+    "count": 20,
+    "months": 240,
+    "values": {
+      "feedback.demand_multiplier": [
+        0,
+        0.2,
+        1,
+        2
+      ],
+      "feedback.export_demand_multiplier": [
+        0,
+        0.2,
+        1,
+        3
+      ],
+      "feedback.firm_cash_multiplier": [
+        0,
+        0.2,
+        1,
+        5
+      ],
+      "feedback.import_availability": [
+        0,
+        0.3,
+        1
+      ],
+      "trade.import_price_index": [
+        0.5,
+        1,
+        2
+      ],
+      "population.natural_growth_rate": [
+        -0.01,
+        0,
+        0.02
+      ],
+      "feedback.household_cash_multiplier": [
+        0,
+        1,
+        5
+      ],
+      "city.start_cash": [
+        0,
+        100000,
+        2000000
+      ],
+      "religion.start_church_cash": [
+        0,
+        20000,
+        500000
+      ]
+    }
+  }
+}
