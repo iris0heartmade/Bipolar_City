@@ -5,6 +5,23 @@
 ## [未发布]
 
 ### 新增
+- 2026-10-16：**V2.1 阶段 M26：玩家外交行动接口（5 类行动）**
+  - **5 类玩家外交行动**（外置于 `data/diplomacy_actions.json`）：
+    - `trade_agreement` 贸易协议（友好 +1/月，月限 3 次，需 visible ≥ 1）
+    - `aid` 援助叙事（金额/100 → +1 友好度，ceil 上取整，月限 1 次，cooldown 2 月）
+    - `immigration_open` 开放移民（友好 +3，月限 2 次，cooldown 1 月）
+    - `statement` 公开声明（友好 ±2，月限 1 次）
+    - `tariff` 征收关税（友好 -10，cooldown 1 月）
+  - **新模块** `backend/systems/v21/diplomacy_action.py`：`DiplomacyAction` dataclass + `ActionConfig` + `DiplomacyActionValidator` + `load_diplomacy_actions()`。DiplomacySystem 新增 `apply_player_action()` 和 `player_actions_history()`。
+  - **核心约束**：M26 阶段所有行动**不实际扣款**，仅修改 DiplomacySystem 助 友 度。这是"叙事优先"原则，避免破坏 IndustryEconomy 守恒。aid 标注为 "user_supplied_narrative" 让校验逻辑知道无需对照 cash。
+  - **REST 端点**：
+    - `POST /api/world/diplomacy_action` — 玩家发起外交行动；target_city_id 不存在返回 404；玩家下台返回 409；未知 action_key 返回 422
+    - `GET /api/world/diplomacy_actions/{city_id}` — 返回该城市最近 50 条玩家行动
+  - **前端 `/world`**：NPC 城市详情面板新增 5 个外交按钮 + 援助金额输入 + 行动结果反馈 + 历史列表；外交行动成功后仅刷新地图连线（不重写 detail 避免清掉 result）。
+  - **测试**：`tests/v21/test_diplomacy_action.py` 15 单测（5 类行动 + cooldown + max_per_month + visibility + clamp + history） + `test_diplomacy_action_integration.py` 9 集成（REST 端到端 + 422 + 409 + 404）。全量 981 项通过。
+  - **端到端**：`scripts/check_diplomacy_action_browser.py`（Playwright），10 项全过（5 类行动友好度变化 + 历史区 + 第 4 次拒绝 + 422 + 历史端点）。证据：`artifacts/diplomacy-action-2026-10-16/world-detail-after-actions.png`。
+  - **设计文档**：[外交行动接口-M26](docs/03_设计规范/外交行动接口-M26-2026-10-16.md)。
+
 - 2026-10-16：**V2.1 阶段 M24：经济触发器与市长下台（校长修正落地）**
   - **触发器只读不写**：M24 是月初报告独立判定器，每条规则只读取 `last_report` 字段，不修改经济数据，不影响守恒（`all_assert_invariants()` 永远通过）。
   - **阈值与宽限期外置**：`data/governance_triggers.json` 单一来源，5 条规则：

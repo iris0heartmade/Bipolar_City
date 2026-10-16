@@ -126,6 +126,7 @@ python -m scripts.check_industry_gui
 python -m scripts.check_single_city_browser
 python -m scripts.check_world_map_browser
 python -m scripts.check_governance_trigger_browser
+python -m scripts.check_diplomacy_action_browser
 ```
 
 浏览器验收需安装`playwright`和Chromium，采用独立端口、独立服务与临时存档。它真实点击表单和地图，核对实际付款、完工、政策、存读档及刷新后的数据，不将截图或接口可用视为整款游戏通过。桌面验收运行真实Tk事件循环和控件回调，不冒充操作系统鼠标验收。
@@ -197,3 +198,23 @@ python -m scripts.check_governance_trigger_browser
 | 城市级 | 每座 `IndustryEconomy` | 每城独立 | scenario、人口基数、行业容量、税率、市长决策 |
 
 世界级与国家级在 `data/world_map.json` 单一来源；城市级每座 NPC 城市从 `npc_mayor_profiles.json` 读取 archetype + 偏好配置，启动时一次性构建独立 IndustryEconomy。
+
+## 10. 玩家外交行动（M26）
+
+M26 让 NPC 城市从"旁观者"变成"可交互对手"。玩家可在 `/world` 详情面板发起 5 类外交行动，主动改变 NPC 友好度。
+
+| 行动 | 友好度变化 | 限制 |
+|---|---|---|
+| 贸易协议 | +1/月 | 月限 3 次；需可见等级 ≥ 1 |
+| 援助（叙事） | ceil(金额/100) | 月限 1 次；cooldown 2 月 |
+| 开放移民 | +3 | 月限 2 次；cooldown 1 月 |
+| 公开声明 | ±2 | 月限 1 次 |
+| 征收关税 | -10 | 月限 1 次；cooldown 1 月 |
+
+**核心约束（M26 阶段）**：所有行动**不实际扣款**，仅修改友好度。这避免破坏 IndustryEconomy 守恒。aid 标注为"叙事"让校验逻辑知道无需对照 cash。
+
+**REST**：
+- `POST /api/world/diplomacy_action` — 玩家发起；target_city_id 不存在返回 404；玩家下台返回 409；未知 action_key 返回 422
+- `GET /api/world/diplomacy_actions/{city_id}` — 该城市最近 50 条玩家行动
+
+详细设计见 [外交行动接口-M26](docs/03_设计规范/外交行动接口-M26-2026-10-16.md)。
