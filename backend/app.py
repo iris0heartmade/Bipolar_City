@@ -8,7 +8,8 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from backend.industry_api import IndustryGame, router
+from backend.industry_api import IndustryGame, router as industry_router
+from backend.game_api import router as game_router
 from backend.config import ROOT, SERVER
 from backend.logging_setup import setup_logging
 
@@ -19,25 +20,30 @@ logger = logging.getLogger(__name__)
 async def lifespan(app):
     app.state.industry_game = IndustryGame()
     app.state.lock = asyncio.Lock()
-    logger.info('行业经营服务启动，月份由玩家操作推进')
+    logger.info('BIPOLE 启动：地图游戏 + 行业经营共用 IndustryGame')
     try:
         yield
     finally:
-        logger.info('行业经营服务停止 month=%d', app.state.industry_game.city.month)
+        logger.info('BIPOLE 停止 month=%d', app.state.industry_game.city.month)
 
 
-app = FastAPI(title="BIPOLE 行业经营", version="2.1.1", lifespan=lifespan)
-app.include_router(router)
+app = FastAPI(title="BIPOLE 城市纪事", version="2.1.2", lifespan=lifespan)
+# 行业经营（原 industry.html 图表 webui）路由
+app.include_router(industry_router)
+# 地图游戏（index.html 等距地图 + 房屋建造视觉）路由
+app.include_router(game_router)
 app.mount("/static", StaticFiles(directory=ROOT / "frontend"), name="static")
 
 
 @app.get("/", include_in_schema=False)
 def index():
-    return FileResponse(ROOT / "frontend/industry.html")
+    """首页 = 真游戏（地图 + 房屋建造视觉，接入新经济内核）。"""
+    return FileResponse(ROOT / "frontend/index.html")
 
 
 @app.get('/industry', include_in_schema=False)
 def industry():
+    """行业经营子页面（图表 webui，阶段 14+15）。"""
     return FileResponse(ROOT / 'frontend/industry.html')
 
 

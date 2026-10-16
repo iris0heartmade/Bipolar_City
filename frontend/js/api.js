@@ -5,12 +5,14 @@ async function readResponse(response) {
   return data;
 }
 
+// 阶段衔接（2026-10-16）：地图游戏接入新行业经济内核，
+// 所有 REST 走 /api/game 前缀（与 /api/industry 行业经营 webui 区分）。
 export async function fetchState() {
-  return readResponse(await fetch('/api/state', {cache:'no-store'}));
+  return readResponse(await fetch('/api/game/state', {cache:'no-store'}));
 }
 
 export async function sendCommand(type, fields = {}) {
-  return readResponse(await fetch('/api/commands', {
+  return readResponse(await fetch('/api/game/commands', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body:JSON.stringify({type, request_id:crypto.randomUUID(), ...fields}),
   }));
@@ -18,5 +20,5 @@ export async function sendCommand(type, fields = {}) {
 
 export async function previewPlacement(definitionId, x, y, rotation) {
   const params = new URLSearchParams({definition_id:definitionId, x, y, rotation});
-  return readResponse(await fetch(`/api/placement?${params}`, {cache:'no-store'}));
+  return readResponse(await fetch(`/api/game/placement?${params}`, {cache:'no-store'}));
 }

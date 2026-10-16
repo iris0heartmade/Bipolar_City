@@ -118,6 +118,27 @@ class IndustryEconomy:
     def jobs(self, industry):
         return self.definitions[industry]['job_capacity_max']
 
+    def add_industry_capacity(self, industry, jobs_added):
+        """在地图上建造 / 拆除一座行业建筑。
+
+        - `jobs_added > 0`：在地图上新增一座建筑，给行业 +N jobs
+        - `jobs_added < 0`：拆除建筑，给行业 -N jobs（但不能低于开局基准）
+        - 不立即招人或裁员；下一次 advance() 的 evaluate_jobs() 会按新容量计算
+        """
+        if industry not in self.keys:
+            raise ValueError(f'未知行业：{industry}')
+        jobs_added = int(jobs_added)
+        if jobs_added == 0:
+            raise ValueError('jobs_added 不能为 0')
+        current = self.definitions[industry]['job_capacity_max']
+        baseline = int(self.definitions[industry]['initial_employees_industrial_city'])
+        new_capacity = current + jobs_added
+        if new_capacity < baseline:
+            raise ValueError(
+                f'行业 {industry} 的容量不能低于开局基准 {baseline}（欲变为 {new_capacity}）')
+        self.definitions[industry]['job_capacity_max'] = new_capacity
+        return new_capacity
+
     def pit(self, industry):
         return 0 if industry == 'AGR' else self.scenario['city']['pit_rate']
 

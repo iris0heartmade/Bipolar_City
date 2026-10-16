@@ -3,120 +3,193 @@ import {drawThumbnail} from './art.js';
 export const $=id=>document.getElementById(id);
 export const money=value=>new Intl.NumberFormat('zh-CN',{maximumFractionDigits:2}).format(value/100);
 const count=value=>new Intl.NumberFormat('zh-CN').format(value);
-const statuses={blueprint:'规划蓝图',queued:'待施工',constructing:'施工中',completed:'已竣工'};
+
+// 阶段衔接（2026-10-16）：地图游戏接入新经济内核后，
+// 原 v1 的「施工中/待施工/竣工」等建筑状态被简化为「直接建成」，
+// 因为 build 命令即时生效（同步行业 jobs_capacity），不再有持续 7-30 天的施工过程。
+const statuses={blueprint:'规划蓝图',completed:'已建成'};
 
 export class GameUI {
-  constructor(onTool){this.onTool=onTool;this.category='全部';this.tool=null;this.housingMode='public';this.selectedId=null;this.catalog=[];this.toastTimer=null;}
-  notify(message,error=false){const toast=$('toast');toast.textContent=message;toast.classList.toggle('error',error);toast.hidden=false;clearTimeout(this.toastTimer);this.toastTimer=setTimeout(()=>toast.hidden=true,error?6000:3000);}
+  constructor(onTool){
+    this.onTool=onTool;
+    this.category='全部';
+    this.tool=null;
+    this.selectedId=null;
+    this.catalog=[];
+    this.toastTimer=null;
+  }
+  notify(message,error=false){
+    const toast=$('toast');
+    toast.textContent=message;
+    toast.classList.toggle('error',error);
+    toast.hidden=false;
+    clearTimeout(this.toastTimer);
+    this.toastTimer=setTimeout(()=>toast.hidden=true,error?6000:3000);
+  }
   showCatalog(){
-    const container=$('building-catalog');container.replaceChildren();
-    const list=this.catalog.filter(d=>d.buildable&&(this.category==='全部'||d.category===this.category||(this.category==='产业'&&d.category==='商业')));
+    const container=$('building-catalog');
+    container.replaceChildren();
+    const list=this.catalog.filter(d=>d.buildable!==false);
     for(const def of list){
-      const button=document.createElement('button');button.className='building-card';button.dataset.building=def.id;
-      button.setAttribute('aria-label',`建造${def.name}`);button.setAttribute('aria-pressed',String(this.tool===def.id));button.classList.toggle('selected',this.tool===def.id);
-      const canvas=document.createElement('canvas');canvas.setAttribute('aria-hidden','true');
-      const info=document.createElement('div'),name=document.createElement('strong'),meta=document.createElement('div'),cost=document.createElement('div'),duration=document.createElement('small');
-      name.textContent=def.name;meta.className='card-info';meta.textContent=`${def.width}×${def.height} 格 · ${def.capacity?`${def.capacity} 人容量`:def.jobs?`${def.merchant_slots?'最多 ':''}${def.jobs} 个岗位`:'公共绿地'}`;
-      cost.className='card-cost';cost.textContent=`◈ ${money(def.cost)}`;duration.textContent=`${def.duration} 日`;
-      cost.append(duration);info.append(name,meta,cost);button.append(canvas,info);button.addEventListener('click',()=>this.onTool(def.id));container.append(button);drawThumbnail(canvas,def);
+      const button=document.createElement('button');
+      button.className='building-card';
+      button.dataset.building=def.id;
+      const industry=def.industry;
+      const industryLabel=industry?` → ${industry} 行业 +${def.jobs_added||0} 岗位`:'（环境装饰）';
+      button.setAttribute('aria-label',`建造${def.name}`);
+      button.setAttribute('aria-pressed',String(this.tool===def.id));
+      button.classList.toggle('selected',this.tool===def.id);
+      const canvas=document.createElement('canvas');
+      canvas.setAttribute('aria-hidden','true');
+      const info=document.createElement('div');
+      const name=document.createElement('strong');
+      const meta=document.createElement('div');
+      const cost=document.createElement('div');
+      const duration=document.createElement('small');
+      name.textContent=def.name;
+      meta.className='card-info';
+      meta.textContent=`${def.width}×${def.height} 格${industryLabel}`;
+      cost.className='card-cost';
+      cost.textContent=`◈ ${money(def.cost)}`;
+      duration.textContent='即时生效';
+      cost.append(duration);
+      info.append(name,meta,cost);
+      button.append(canvas,info);
+      button.addEventListener('click',()=>this.onTool(def.id));
+      container.append(button);
+      drawThumbnail(canvas,def);
     }
   }
   setTool(id){this.tool=id;this.showCatalog();$('inspect-btn').classList.toggle('active',!id);}
-  showHousingTool(){
-    const def=this.catalog.find(d=>d.id===this.tool);$('housing-tool').hidden=!def?.capacity;
-    document.querySelectorAll('[data-housing-mode]').forEach(button=>{const active=button.dataset.housingMode===this.housingMode;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});
-    if(def?.capacity)$('housing-mode-note').textContent=this.housingMode==='public'?'市政持有：竣工开放容量，按实际入住收租并承担维护。':`待售 ${def.units} 户，指导价 ${money(def.sale_price_per_unit)} 银镑/户；成交后开放容量，私人部分停止市政收租。`;
-  }
-  dateLabel(day){const {days_per_month:days,months_per_year:months}=this.state.calendar;return `第 ${Math.floor(day/days/months)+1} 年 · ${Math.floor(day/days)%months+1} 月`;}
   update(state){
-    const first=!this.catalog.length;this.state=state;this.catalog=state.catalog;const {world,summary}=state;
+    const first=!this.catalog.length;
+    this.state=state;
+    this.catalog=state.catalog||[];
     if(first)this.showCatalog();
-    $('cash').textContent=money(world.cash);$('population').textContent=count(world.population);$('capacity').textContent=count(summary.capacity);$('jobs').textContent=count(summary.jobs);
-    $('cash-change').textContent=`预计月结余 ${summary.net>=0?'+':''}${money(summary.net)}`;
-    $('vacancy').textContent=`剩余 ${Math.max(0,summary.capacity-world.population)} 人容量`;
-    $('merchant-metric').textContent=`集市 ${state.commerce.merchants}/${state.commerce.slots} 家商户营业`;
-    const last=world.history.at(-1);$('migration').textContent=last?`上月${last.migration>=0?'迁入':'迁出'} ${Math.abs(last.migration)} 人`:'已有居民 · 等待首份月报';
-    const percentage=summary.capacity?Math.round(world.population/summary.capacity*100):0;
-    $('housing-percent').textContent=`${percentage}%`;$('housing-progress').style.width=`${Math.min(100,percentage)}%`;$('housing-ratio').textContent=`${world.population} / ${summary.capacity} 人`;
-    $('city-advice').textContent=world.population>=summary.capacity?'住房已满。规划新住宅，为下一批居民留出空间。':world.population>=summary.jobs?'岗位不足。新增集市或工坊可提供更多岗位。':'住房与岗位尚有余量。推进月份后，新居民会逐渐迁入。';
-    $('date').textContent=this.dateLabel(world.day);const day=world.day%state.calendar.days_per_month+1,month=Math.floor(world.day/state.calendar.days_per_month)%state.calendar.months_per_year;
-    $('day').textContent=`第 ${day} 日 · ${['早春','暖春','暮春','初夏','盛夏','晚夏','初秋','金秋','暮秋','初冬','深冬','岁末'][month]}`;
-    $('map-subtitle').textContent=`北方河岸 / ${this.dateLabel(world.day)}`;
-    $('pause-btn').textContent=world.paused?'▶ 继续':'Ⅱ 暂停';$('pause-btn').setAttribute('aria-label',world.paused?'继续模拟':'暂停模拟');
-    $('advance-btn').disabled=!world.paused;
-    document.querySelectorAll('[data-speed]').forEach(button=>button.classList.toggle('active',Number(button.dataset.speed)===world.speed));
-    $('plan-bar').hidden=!summary.blueprints&&!this.tool;$('plan-count').textContent=summary.blueprints?`规划 ${summary.blueprints} 座建筑`:'点击地图放置蓝图';
-    $('plan-cost').textContent=`总预算 ◈ ${money(summary.blueprint_cost)}`;$('commit-btn').disabled=!summary.blueprints;$('cancel-btn').disabled=!summary.blueprints;
-    $('rotate-btn').disabled=!this.tool;
-    $('queue-count').textContent=summary.construction?`${summary.construction} 项施工中`:'没有施工项目';
+    const industries=state.industries||[];
+    const totalEmployment=industries.reduce((s,d)=>s+(d.employment||0),0);
+    const totalCapacity=industries.reduce((s,d)=>s+(d.capacity||0),0);
+    const ind=industries.find(d=>d.id==='IND')||{};
+    // 顶 4 个指标（重新定义为新内核派生值）：
+    // - 政府现金（来自 industry_economy.cash['GOV']）
+    // - 当前月份（来自 industry_economy.month）
+    // - 总就业人数（7 行业 employment 求和）
+    // - IND 月营业额（来自 last_report['IND'].revenue_cents）
+    $('cash').textContent=money(state.government_cash_cents||0);
+    $('population').textContent=`第 ${(state.month||0)+1} 月`;
+    $('capacity').textContent=count(totalEmployment);
+    $('jobs').textContent=money(state.last_report?.IND?.revenue_cents||0);
+    $('cash-change').textContent=`OCEAN ${money(state.ocean_cash_cents||0)} · 月份 ${state.month||0}`;
+    $('vacancy').textContent=`行业岗位上限 ${count(totalCapacity)}`;
+    $('merchant-metric').textContent=`IND 就业 ${count(ind.employment||0)}/${count(ind.capacity||0)}`;
+    const yearLabel=`第 ${Math.floor((state.month||0)/12)+1} 年 · ${((state.month||0)%12)+1} 月`;
+    $('date').textContent=yearLabel;
+    $('day').textContent=`V2.1 行业经济内核`;
+    $('map-subtitle').textContent=`北方河岸 / ${yearLabel}`;
+    $('plan-bar').hidden=!this.tool;
+    $('plan-count').textContent=this.tool?'点击地图放置蓝图':'先在左侧选择建筑类型';
+    $('plan-cost').textContent='即时生效 · 扣行业基准预算';
     $('load-btn').disabled=!state.save_exists;
-    this.showHousingTool();this.showEconomy();this.showEvents();this.showChart();this.showLedger();this.showQueue();this.showSelection();
+    // 新经济面板用旧面板的元素复用（不再展示 v1 ledger / queue / events）
+    this.showIndustries();
+    this.showActivePolicies();
+    this.showMayorActions();
+    if(this.selectedId)this.showSelection();
   }
-  showEconomy(){
-    const {housing,commerce,world}=this.state,last=world.history.at(-1);
-    const fields={'unsold-units':housing.unsold_units,'unsold-value':money(housing.unsold_asset_value),'monthly-sales':last?.housing_sales??0,
-      'monthly-sale-value':money(last?.sales_revenue??0),'public-residents':housing.public_residents,'buyer-demand':housing.buyer_demand,
-      'merchant-ratio':`${commerce.merchants} / ${commerce.slots}`,'merchant-demand':commerce.demand};
-    for(const [id,value] of Object.entries(fields))$(id).textContent=value;
-    $('resident-budget').textContent=`居民合计购房与生活余款 ${money(housing.resident_funds)} 银镑。尚无按揭，现金不足时不成交。`;
-    $('commerce-advice').textContent=commerce.merchants<commerce.slots?'空余铺位按消费需求逐月招商；实际入驻才提供岗位和税收。':commerce.demand>commerce.slots?'居民需求超过铺位供给，可以规划新的集市。':'现有铺位已入驻；人口减少时商户可能逐月退出。';
-  }
-  showEvents(){
-    const container=$('events');container.replaceChildren();
-    for(const event of [...this.state.world.events].reverse().slice(0,4)){
-      const item=document.createElement('div');item.className='event-item';const dot=document.createElement('i'),body=document.createElement('div'),title=document.createElement('strong'),date=document.createElement('small'),text=document.createElement('p');
-      title.textContent=event.title;date.textContent=this.dateLabel(event.day);text.textContent=event.text;body.append(title,date,text);item.append(dot,body);container.append(item);
+  showIndustries(){
+    // 在右侧「城市概况」面板里嵌入行业表（替换原 v1 housing 字段）。
+    const container=$('industry-list');
+    if(!container)return;
+    container.replaceChildren();
+    const industries=this.state.industries||[];
+    for(const d of industries){
+      const row=document.createElement('div');
+      row.className='industry-row';
+      const id=document.createElement('strong');
+      id.textContent=d.id;
+      const emp=document.createElement('span');
+      const ratio=d.capacity?(d.employment/d.capacity*100).toFixed(0):'0';
+      emp.textContent=`${d.employment||0}/${d.capacity||0} (${ratio}%)`;
+      const cash=document.createElement('small');
+      cash.textContent=money(d.cash_cents||0);
+      row.append(id,emp,cash);
+      container.append(row);
     }
   }
-  showChart(){
-    const history=this.state.world.history,values=history.length?history.map(item=>item.population):[this.state.world.population,this.state.world.population];
-    if(history.length===1){
-      $('growth-chart').innerHTML='<path d="M5,56 H235" stroke="#e4e7d8" fill="none"/><circle cx="120" cy="32" r="3" fill="#8aa171"/>';
-      $('chart-start').textContent=this.dateLabel(history[0].day);$('chart-end').textContent=`${history[0].population} 人 · 单月记录`;
+  showActivePolicies(){
+    const container=$('policy-list');
+    if(!container)return;
+    container.replaceChildren();
+    const policies=this.state.active_policies||{};
+    const keys=Object.keys(policies);
+    if(!keys.length){
+      const p=document.createElement('p');
+      p.className='empty-note';
+      p.textContent='暂无生效政策。';
+      container.append(p);
       return;
     }
-    const min=Math.min(...values)-10,max=Math.max(...values)+10;
-    const points=values.map((v,i)=>`${5+i/(values.length-1||1)*230},${56-(v-min)/(max-min)*48}`);
-    // Values are numbers from the authoritative state, never placeholder trends.
-    $('growth-chart').innerHTML=`<defs><linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#96ad80" stop-opacity=".3"/><stop offset="1" stop-color="#96ad80" stop-opacity="0"/></linearGradient></defs><path d="M5,56 H235" stroke="#e4e7d8" fill="none"/><path d="M${points.join(' L')} L235,62 L5,62 Z" fill="url(#chart-fill)"/><path d="M${points.join(' L')}" stroke="#8aa171" stroke-width="2" fill="none" stroke-dasharray="${history.length?'':'4 4'}"/>`;
-    $('chart-start').textContent=history.length?this.dateLabel(history[0].day):'开局人口';$('chart-end').textContent=history.length?`${history.at(-1).population} 人`:'推进月份后记录';
-  }
-  showLedger(){
-    const {summary,world}=this.state;$('finance-summary').replaceChildren();
-    const f=this.state.finance;
-    for(const [label,value] of [['预计居民税',f.resident_tax],['预计商户税',f.business_tax],['预计公共房租',f.public_rent],['预计集市铺位租金',f.commercial_rent],['预计月维护',-summary.upkeep],['预计常规结余（不含售房）',summary.net]]){
-      const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=`${value>=0?'+':''}${money(value)}`;$('finance-summary').append(dt,dd);
-    }
-    const list=$('ledger-list');list.replaceChildren();
-    if(!world.ledger.length){const p=document.createElement('p');p.className='empty-note';p.textContent='尚无交易。确认建造或推进一个月后，每笔实际收支会记录在这里。';list.append(p);}
-    for(const entry of [...world.ledger].reverse().slice(0,30)){
-      const item=document.createElement('div');item.className='ledger-item';const label=document.createElement('div'),date=document.createElement('small'),value=document.createElement('b');
-      label.textContent=entry.label;date.textContent=this.dateLabel(entry.day);value.textContent=`${entry.amount>=0?'+':''}${money(entry.amount)}`;value.classList.toggle('negative',entry.amount<0);label.append(date);item.append(label,value);list.append(item);
+    for(const key of keys){
+      const [target,kind]=key.split('|');
+      const row=document.createElement('div');
+      row.className='policy-row';
+      row.textContent=`${target} · ${kind} → 过期月份 ${policies[key]}`;
+      container.append(row);
     }
   }
-  showQueue(){
-    const list=$('queue-list');list.replaceChildren();const buildings=this.state.world.buildings.filter(b=>['queued','constructing'].includes(b.status));
-    if(!buildings.length){const p=document.createElement('p');p.className='empty-note';p.textContent='还没有施工项目。先在地图规划建筑，再确认预算。';list.append(p);}
-    for(const b of buildings){
-      const def=this.catalog.find(d=>d.id===b.definition_id),item=document.createElement('div');item.className='queue-item';item.textContent=def.name;
-      const status=document.createElement('small');status.textContent=`${statuses[b.status]} · ${b.progress}/${def.duration} 日`;
-      const track=document.createElement('div');track.className='progress-track';const bar=document.createElement('div');bar.style.width=`${Math.round(b.progress/def.duration*100)}%`;track.append(bar);item.append(status,track);list.append(item);
+  showMayorActions(){
+    const container=$('mayor-actions');
+    if(!container)return;
+    container.replaceChildren();
+    const actions=(this.state.recent_mayor_actions||[]).slice(-5);
+    if(!actions.length){
+      const p=document.createElement('p');
+      p.className='empty-note';
+      p.textContent='本月尚无市政指令。在「行业经营」页面下达指令后会在此显示。';
+      container.append(p);
+      return;
+    }
+    for(const a of actions){
+      const row=document.createElement('div');
+      row.className='mayor-row';
+      row.textContent=`${a.kind}${a.industry?' / '+a.industry:''}: ${money(a.cash_cents||0)}`;
+      container.append(row);
     }
   }
   showSelection(){
-    const b=this.state.world.buildings.find(b=>b.id===this.selectedId);$('selection-section').hidden=!b;if(!b)return;
-    const def=this.catalog.find(d=>d.id===b.definition_id);$('selected-name').textContent=def.name;$('selected-description').textContent=def.description;$('selected-stats').replaceChildren();
-    const info=this.state.building_info[b.id];
-    const rows=[['状态',statuses[b.status]],['位置',`(${b.x}, ${b.y})`],['朝向',`${b.rotation*90}°`],['产权',{municipal:'市政持有',private:'私人持有',mixed:'部分已售 · 混合产权'}[b.owner_mode]],['市政维护 / 月',`${money(info.maintenance)} 银镑`]];
-    if(def.capacity)rows.push(['开发方案',{public:'公共出租',for_sale:'建成待售',private:'既有私人住房'}[b.housing_mode]],['入住 / 开放容量',`${b.occupancy} / ${info.capacity} 人`],['已售 / 总户数',`${b.sold_units} / ${def.units} 户`]);
-    if(def.jobs)rows.push(['实际就业岗位',`${info.jobs} 个`]);
-    if(def.merchant_slots)rows.push(['入驻 / 铺位',`${b.merchants} / ${def.merchant_slots} 家`]);
-    if(['queued','constructing'].includes(b.status))rows.push(['施工进度',`${b.progress} / ${def.duration} 日`]);
-    for(const [name,value] of rows){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=name;dd.textContent=value;$('selected-stats').append(dt,dd);}
-    $('property-actions').hidden=!def.capacity;
-    $('property-public').disabled=Boolean(b.sold_units)||b.housing_mode==='public';
-    $('property-sale').disabled=Boolean(b.sold_units)||b.housing_mode==='for_sale';
-    $('property-note').textContent=def.capacity?(b.sold_units?'已售户不可收回，市政只承担未售部分维护。':'未售住宅可变更方案；已有住户须有替代住房才能转待售。'):def.merchant_slots?'铺位由商户自主入驻，市长不能手动指定每家商店。':'';
+    if(!this.selectedId){
+      $('selection-section').hidden=true;
+      return;
+    }
+    const buildings=this.state.world?.buildings||[];
+    const b=buildings.find(x=>x.id===this.selectedId);
+    if(!b){
+      $('selection-section').hidden=true;
+      return;
+    }
+    $('selection-section').hidden=false;
+    const def=this.catalog.find(d=>d.id===b.definition_id);
+    $('selected-name').textContent=def?.name||b.definition_id;
+    $('selected-description').textContent=def?.description||'';
+    $('selected-stats').replaceChildren();
+    const rows=[
+      ['定义',b.definition_id],
+      ['位置',`(${b.x}, ${b.y})`],
+      ['状态',statuses[b.status]||b.status],
+      ['建筑行业',def?.industry||'—'],
+      ['单座岗位扩展',def?.jobs_added||0],
+    ];
+    for(const [name,value] of rows){
+      const dt=document.createElement('dt');
+      const dd=document.createElement('dd');
+      dt.textContent=name;
+      dd.textContent=String(value);
+      $('selected-stats').append(dt,dd);
+    }
   }
-  connected(ok){$('connection-status').textContent=ok?'本地模拟已连接':'连接中断 · 请检查后端';document.querySelector('.connection-dot').style.background=ok?'#7b9471':'#b77865';}
+  connected(ok){
+    $('connection-status').textContent=ok?'本地模拟已连接':'连接中断 · 请检查后端';
+    const dot=document.querySelector('.connection-dot');
+    if(dot)dot.style.background=ok?'#7b9471':'#b77865';
+  }
 }

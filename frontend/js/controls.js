@@ -42,10 +42,19 @@ export class MapControls {
   }
   async click(event){
     const cell=this.renderer.cellAt(event.clientX,event.clientY);
-    if(this.tool){const def=this.renderer.catalog[this.tool];const ok=await this.command('place_blueprint',{definition_id:this.tool,x:cell.x,y:cell.y,rotation:this.rotation,housing_mode:def.capacity?this.ui.housingMode:'public'});if(ok)this.validateHover();}
-    else {const b=this.renderer.buildingAt(cell);this.renderer.selection=b?.id??null;this.ui.selectedId=b?.id??null;
+    if(this.tool){
+      // 阶段衔接（2026-10-16）：地图游戏接入新经济内核后，
+      // 点击空地直接 build（不再保留「place_blueprint + commit」两步）。
+      // 后端把建筑类型翻译为对应行业 capacity 扩展：
+      //   workshop → IND +40 jobs；market → SRV +30 jobs；
+      //   row_house/apartment → AGR +12/+24 jobs；park 仅装饰。
+      const ok=await this.command('build',{definition_id:this.tool,x:cell.x,y:cell.y,rotation:this.rotation});
+      if(ok)this.validateHover();
+    }
+    else {
+      const b=this.renderer.buildingAt(cell);
+      this.renderer.selection=b?.id??null;this.ui.selectedId=b?.id??null;
       document.querySelector('[data-pane=overview]').click();this.ui.showSelection();this.renderer.render();
-      if(b&&!window.matchMedia('(max-width: 970px)').matches)$('selection-section').scrollIntoView({block:'nearest'});
     }
   }
 }

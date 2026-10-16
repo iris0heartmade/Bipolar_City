@@ -13,7 +13,7 @@ async function command(type,fields={},successMessage=''){
   busy=true;commandEpoch++;
   try{
     update(await sendCommand(type,fields));
-    if(['commit','load','new_game'].includes(type))controls.setTool(null);
+    if(['build','load','new_game'].includes(type))controls.setTool(null);
     if(['load','new_game'].includes(type)){renderer.selection=null;ui.selectedId=null;ui.showSelection();renderer.reset();}
     if(successMessage)ui.notify(successMessage);
     return true;
@@ -22,21 +22,53 @@ async function command(type,fields={},successMessage=''){
 }
 controls=new MapControls(renderer,ui,command);
 
-$('commit-btn').addEventListener('click',()=>command('commit',{},'工程已批准，推进时间开始施工。'));
-$('cancel-btn').addEventListener('click',()=>command('cancel',{},'蓝图已取消，未收取费用。'));
-$('pause-btn').addEventListener('click',()=>command('pause',{paused:!ui.state.world.paused}));
-$('advance-btn').addEventListener('click',()=>command('advance_month',{},'已推进一个月，月报与财政账本已更新。'));
+// 阶段衔接（2026-10-16）：地图游戏接入新经济内核后，
+// - 「推进一个月」对应 industry_economy.advance()，不是 v1 的 30 天推进
+// - 「暂停 / 倍速」已无意义（游戏按月结算，不存在连续时间模拟）
+// - 「建造」直接是地图点击 → 后端 build（中间不再保留蓝图确认步骤）
+// - 「住宅模式切换」已无意义（行业经济模型不区分公共/待售住宅）
+// - 「确认施工 / 取消蓝图」改为「退出当前工具」语义
+$('commit-btn').addEventListener('click',()=>controls.setTool(null));
+$('cancel-btn').addEventListener('click',()=>controls.setTool(null));
+$('advance-btn').addEventListener('click',()=>command('advance',{months:1},'已推进一个月，月报与行业指标已更新。'));
 $('save-btn').addEventListener('click',()=>command('save',{},'城市已保存到本地存档。'));
 $('load-btn').addEventListener('click',()=>{
   if(window.confirm('读取会替换当前未保存的进度，恢复存档中的城市。继续吗？'))command('load',{},'城市已恢复。');
 });
-document.querySelectorAll('[data-speed]').forEach(button=>button.addEventListener('click',()=>command('speed',{speed:Number(button.dataset.speed)})));
 document.querySelectorAll('[data-category]').forEach(button=>button.addEventListener('click',()=>{ui.category=button.dataset.category;document.querySelectorAll('[data-category]').forEach(b=>b.classList.toggle('active',b===button));ui.showCatalog();}));
 document.querySelectorAll('[data-pane]').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('[data-pane]').forEach(b=>b.classList.toggle('active',b===button));for(const pane of ['overview','economy','ledger'])$(`${pane}-pane`).hidden=button.dataset.pane!==pane;}));
-document.querySelectorAll('[data-housing-mode]').forEach(button=>button.addEventListener('click',()=>controls.setHousingMode(button.dataset.housingMode)));
-$('property-public').addEventListener('click',()=>command('set_housing_mode',{building_id:ui.selectedId,housing_mode:'public'},'未售住宅已改为公共出租。'));
-$('property-sale').addEventListener('click',()=>command('set_housing_mode',{building_id:ui.selectedId,housing_mode:'for_sale'},'未售住宅已进入待售方案，月度按资金与需求成交。'));
 $('clear-selection').addEventListener('click',()=>{ui.selectedId=null;renderer.selection=null;ui.showSelection();renderer.render();});
+// 阶段衔接（2026-10-16）扩展：拆除 / 迁址
+$('remove-btn').addEventListener('click',()=>{
+  if(!ui.selectedId){ui.notify('请先选中一栋建筑',true);return;}
+  const buildings=ui.state.world?.buildings||[];
+  const target=buildings.find(b=>b.id===ui.selectedId);
+  const defn=ui.catalog.find(d=>d.id===target?.definition_id);
+  const label=defn?.name||target?.definition_id||ui.selectedId;
+  if(!window.confirm(`确认拆除「${label}」？会从 ${defn?.industry||'—'} 行业回收 ${defn?.jobs_added||0} 个岗位（不会立即裁员，下月结算生效）。`))return;
+  command('remove',{building_id:ui.selectedId},'建筑已拆除，行业 capacity 已回收。');
+  ui.selectedId=null;renderer.selection=null;
+});
+$('relocate-btn').addEventListener('click',()=>{
+  if(!ui.selectedId){ui.notify('请先选中一栋建筑',true);return;}
+  const buildings=ui.state.world?.buildings||[];
+  const target=buildings.find(b=>b.id===ui.selectedId);
+  if(!target){ui.notify('找不到选中的建筑',true);return;}
+  const defn=ui.catalog.find(d=>d.id===target.definition_id);
+  $('relocate-title').textContent=`把「${defn?.name||target.definition_id}」迁到新地块`;
+  $('relocate-x').value=String(target.x);
+  $('relocate-y').value=String(target.y);
+  $('relocate-dialog').showModal();
+});
+$('confirm-relocate').addEventListener('click',async()=>{
+  const x=Number($('relocate-x').value);
+  const y=Number($('relocate-y').value);
+  if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||x>27||y<0||y>27){
+    ui.notify('坐标必须在 0—27 之间',true);return;
+  }
+  $('relocate-dialog').close();
+  await command('relocate',{building_id:ui.selectedId,new_x:x,new_y:y},'建筑已迁址，行业岗位不变。');
+});
 $('queue-toggle').addEventListener('click',()=>{$('queue-drawer').hidden=!$('queue-drawer').hidden;});$('queue-close').addEventListener('click',()=>{$('queue-drawer').hidden=true;});
 $('help-btn').addEventListener('click',()=>$('help-dialog').showModal());$('new-btn').addEventListener('click',()=>$('new-dialog').showModal());
 document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>button.closest('dialog').close()));

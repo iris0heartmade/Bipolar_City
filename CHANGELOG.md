@@ -4,6 +4,42 @@
 
 ## [未发布]
 
+### 新增
+- 2026-10-16：**V2.1 阶段衔接：建筑拆除 + 迁址支持**
+  - **`add_industry_capacity` 允许负值**：`backend/systems/v21/industry_economy.py` 中 `add_industry_capacity(industry, jobs_added)` 现在接受负值（拆除建筑），但仍保护行业 capacity 不能跌破开局基准（`initial_employees_industrial_city`）；值为 0 仍被拒绝。
+  - **`remove` 命令**（`backend/game_api.py`）：玩家在地图上选中一栋建筑 → 点击「✕ 拆除」按钮 → 后端按 `building_id` 查找建筑 → 调 `add_industry_capacity(industry, -jobs_added)` 回收行业 capacity → 从地图 `world.buildings` 移除该建筑 → 重建完整 state。
+  - **`relocate` 命令**：玩家选中建筑 → 点击「↗ 迁址」按钮 → 弹出对话框输入新 X / Y（0—27）→ 后端校验新坐标不是水/桥/已被占用 → 仅修改 `building.x / y`，**行业 jobs 不变**（视觉迁移，不影响经济内核）。
+  - **地块校验**：`relocate` 拒绝三种坏情况——超出地图（>27）/ 水或桥梁 / 已被其他建筑占用；`remove` 无需校验但要求 `building_id` 存在。
+  - **`_map_buildings` 持久化**：玩家建造/拆除/迁移的建筑信息挂在运行时 `city._map_buildings`（内存）+ 序列化到 `city.scenario['_map_buildings']`（存档）。`IndustryEconomy.to_dict()` 自动包含，`from_dict()` 自动还原，跨 `advance()` 推进月份保留。
+  - **`build_state` 优先从运行时内存读**：构造前端 state 时不再每次重新生成模板默认建筑，而是优先读取运行时玩家真实建筑，保证操作立即可见。
+  - **前端联动**：`frontend/index.html` 在「建筑详情」面板新增 `building-actions` 行（`#remove-btn` 红色 / `#relocate-btn` 主色）+ 新增 `#relocate-dialog`（输入 X/Y 的原生 `<dialog>`）。`frontend/js/main.js` 新增两个 click handler：拆除前 `window.confirm` 二次确认、迁址打开对话框并在确认后调 `command('remove' / 'relocate', ...)`。
+  - **测试**：`artifacts/verify_remove_relocate.py` 验证 build/remove/relocate/校验/save-load 持久化端到端；建一座 workshop → IND 1540；删掉 → IND 1500；迁址 market 不改 SRV 630；迁址到河流 → 400 + 中文错误；配对 build/remove 容量守恒。
+  - **CHANGELOG 引用**：本节是「V2.1 阶段衔接」第一条的扩展，原那条已部署的地图游戏接口现在支持完整的「建 → 看 → 拆/迁」闭环。
+
+### 新增
+- 2026-10-16：**V2.1 阶段衔接：真游戏 web（地图 + 房屋建造）修复 + 模型推演实验室 GUI 升级**
+  - **真游戏 web 接入新经济内核**：新建 `backend/game_api.py`（约 250 行）作为地图游戏 REST 入口，把玩家「在地图上放建筑」翻译为对应行业的 `jobs_capacity` 扩展：
+    - `workshop` → IND 工业 +40 jobs；`market` → SRV 服务业 +30 jobs；`row_house` / `apartment` → AGR 农业 +12 / +24 jobs；`park` 仅装饰；`town_hall` 不可建造
+  - **`backend/app.py` 路由恢复**：首页 `/` 改回 `frontend/index.html`（真游戏地图），子页 `/industry` 保留 `frontend/industry.html`（阶段 15 图表 webui）；同时挂载 `industry_router` 和 `game_router`，两套页面共用同一个 `IndustryGame` 实例与存档。
+  - **`backend/systems/v21/industry_economy.py` 新增 `add_industry_capacity(industry, jobs_added)`**：把地图建造真正落到经济内核（不允许拆除以避免把行业拆垮）。
+  - **`frontend/index.html` 重新设计**：原 v1 集市经营、住宅待售、施工队列等面板下线；保留等距地图视觉（28×28 地形 + 道路 + 桥梁 + 树木 + 装饰）以及 6 种建筑目录（workshop/market/row_house/apartment/park/town_hall）。
+  - **顶指标改为新内核派生**：政府现金 / 当前月份 / 总就业（七行业求和）/ IND 月营业额（来自 `last_report.IND.revenue_cents`）。
+  - **右侧面板改造**：原「人口足迹 SVG 折线」「财政账本 ledger」等 v1 字段下线，新增 3 个面板——七行业状态（实时就业 / 容纳 / 现金）/ 当前生效政策 `_active_policies`（按阶段 15 跨月生效机制）/ 市政指令流水 `recent_mayor_actions`。
+  - **集成横幅**：页面顶部新增深色横幅，说明本次阶段衔接语义并指向 `/industry` 子页面。
+  - **测试**：uvicorn + urllib 端到端验证 `/api/game/state` / `build` / `advance` / `purchase_external` / `mayor_command` / `save` / `new_game` 七类操作 + `/` + `/industry` 两类页面加载；建一座 workshop → IND cap 1500→1540；月进一次 → month 0→1 且 IND 就业自动补到 627。
+
+### 新增
+- 2026-10-16：**模型推演实验室 GUI 升级（按阶段 15 思想）**
+  - **6 类市政指令按钮**（`tools/economy_lab.py` 中 `MAYOR_COMMANDS`）：subsidy_industry / hire_civil / pardon_welfare / limit_hire / limit_layoff / tax_amnesty + 阶段 14 续的 purchase_external。
+  - **市政指令面板**：实验室下方新增「2. 市政指令（按阶段 15 思想）」标签页，支持选择指令种类 + 行业 + 现金/人数/生效月/原料输入，执行按钮会调 `IndustryEconomy.mayor_command()` 然后用 `to_dict()` 回写 scenario 并自动重新推演。
+  - **3 个新增可调参数滑块**（按阶段 15）：`living_cost_cr`（20—120 CR）/ `household_consumption_size`（1.0—4.0 人）/ `external_local_split`（0—1 比例），均挂在左侧调参区，独立 `_add_extra_slider()` 方法。
+  - **行业表扩到 13 列**：就业 / 容纳 / 目标 / 吸引力 / 月薪 / 营业额 / 税前利润 / 经营现金 / 成品库存 / 原料库存 / 售价 / 亏损月数 / crisis 状态标记；crisis 行用浅红背景高亮（`tag_configure('crisis', background='#fde7e3')`）。
+  - **趋势曲线扩到 21 指标**：覆盖阶段 15 阶段产物——总就业 / 总失业 / 政府现金 / 居民总储蓄 / 居民实际消费 / 七行业总工资 / 七行业总营业额 / 七行业总现金 / 外部现金池 / OCEAN 池 / 外部原料 / 可劳动人口 / 家庭人口 / 月生活成本 / 财政月度结余 / 工资欠付累计 / 守恒残差 / IND 就业 / IND 经营现金 / IND 亏损月数 / IND 销售额。
+  - **「清空折线」按钮**：方便对照不同参数 / 指令下的趋势。
+  - **当前生效政策 + 近期指令流水展示**：右侧新增 `policy_text` 文本框，实时显示 `_active_policies`（按行业|政策键索引到过期月份）和 `recent_mayor_actions`（最近 5 条指令）。
+  - **顶部 summary 增强**：新增 OCEAN 池、活跃政策数、本月指令流水数。
+  - **测试**：`python artifacts/verify_lab.py` 验证模块可加载 + `EconomyLab()` 实例化 + `lab.mainloop()` 干净退出，无语法错误与导入错误。
+
 ### 修复
 - 2026-10-16：Windows 启动脚本重写为纯 ASCII（`economy_lab.bat` / 新增 `start_industry.bat` 与 `start_industry.ps1` / `start.ps1`）。原脚本含中文 echo，在 GBK 默认代码页下会乱码并把每行当作独立命令触发「不是可运行的程序」错误。新脚本把中文文案交给 Python/浏览器渲染，bat 自身只做环境探测和启动。
 
