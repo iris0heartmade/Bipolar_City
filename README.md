@@ -125,6 +125,7 @@ python -m pytest -q
 python -m scripts.check_industry_gui
 python -m scripts.check_single_city_browser
 python -m scripts.check_world_map_browser
+python -m scripts.check_governance_trigger_browser
 ```
 
 浏览器验收需安装`playwright`和Chromium，采用独立端口、独立服务与临时存档。它真实点击表单和地图，核对实际付款、完工、政策、存读档及刷新后的数据，不将截图或接口可用视为整款游戏通过。桌面验收运行真实Tk事件循环和控件回调，不冒充操作系统鼠标验收。
@@ -135,7 +136,34 @@ python -m scripts.check_world_map_browser
 
 > **2026-10-16 更新**：M24（游戏结束机制 + 经济触发器）与 M25（世界地图 `/world` + 5 NPC + AI 市长 + 友好度脱敏）已交付；详见 [世界地图设计-M25](docs/03_设计规范/世界地图设计-M25-2026-10-16.md) 与 CHANGELOG。下一步：玩家通过外交行动（贸易协议、援助、关税）主动改变友好度，把 NPC 城市从"旁观者"变成"可交互对手"。
 
-## 8. 世界地图与 NPC 城市
+## 8. 游戏结束机制（M24 经济触发器）
+
+2026-10-16 校长修正要求：**经济崩溃首先判定为玩家责任**，不在经济内核层面追求 120 月长期健康门。M24 实现"月初报告极度异常 → 市长下台事件 → 游戏结束"。
+
+**5 条触发规则**（外置于 `data/governance_triggers.json`，可调）：
+
+| 规则 | 阈值 | 宽限期 | 类型 |
+|---|---|---|---|
+| 失业率危机 | ≥ 30% | 3 月 | grace_period |
+| 政府现金破产 | ≤ -1000 CR | 3 月 | grace_period |
+| 累计欠薪失控 | ≥ 1000 CR | 2 月 | grace_period |
+| 人口锐减 | 单月 -20% | 0（立即） | immediate |
+| 失业 + 欠薪同时爆发 | — | 0（立即） | multi |
+
+**触发后行为**：
+- `IndustryEconomy._trigger.is_game_over = True`
+- `advance(months=N)` 在触发月立刻 `break`，不再推进后续月份
+- REST `/api/industry/commands` 除 `new_game` / `save` / `load` 外一律 409
+- REST `/api/world/advance` 玩家下台时返回 409，NPC AI 与世界时钟冻结
+- 前端 `/industry` 顶部红色横幅 + 月进按钮置灰
+- 前端 `/world` 玩家城金色光晕变灰
+- 玩家可 `new_game` 开新城市，或 `load` 旧存档（保留历史月报供复盘）
+
+**只读不写**：触发器只读 `last_report`，不修改经济数据，不影响 `assert_invariants()` 守恒检查。这是核心约束，让"游戏结束"成为经济生态的一部分而非内核 bug。
+
+详细设计见 [经济触发器与市长下台-M24](docs/03_设计规范/经济触发器与市长下台-M24-2026-10-16.md)。
+
+## 9. 世界地图与 NPC 城市
 
 `/world` 页面是独立的 Web 入口，与原城市 `/` 共享同一个存档与月份时钟。世界地图上 5 座 NPC 城市（禾谷镇/河湾镇/碧涛港/辉月学城/铁壁关）各自后台真实驱动一套 `IndustryEconomy`，与玩家城市使用**同一套七行业内核**但配置不同（人口基数、行业偏向、税率、AI 市长偏好）。
 

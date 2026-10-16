@@ -5,6 +5,30 @@
 ## [未发布]
 
 ### 新增
+- 2026-10-16：**V2.1 阶段 M24：经济触发器与市长下台（校长修正落地）**
+  - **触发器只读不写**：M24 是月初报告独立判定器，每条规则只读取 `last_report` 字段，不修改经济数据，不影响守恒（`all_assert_invariants()` 永远通过）。
+  - **阈值与宽限期外置**：`data/governance_triggers.json` 单一来源，5 条规则：
+    - `unemployment_crisis` 失业率 ≥ 30% 持续 3 月
+    - `government_bankruptcy` 政府现金 ≤ -1000 CR 持续 3 月
+    - `wage_arrears_runaway` 累计欠薪 ≥ 1000 CR 持续 2 月
+    - `population_collapse` 人口单月降幅 ≥ 20% 立即触发（severity=immediate）
+    - `civil_unrest_multi` 失业 + 欠薪同时 breach 立即触发（multi 类型）
+  - **新模块** `backend/systems/v21/governance_trigger.py`（`EconomicTrigger` 类 + `load_governance_triggers()`）+ `backend/systems/v21/industry_economy.py` 集成 `IndustryEconomy._trigger`。
+  - **REST 端点**：
+    - `/api/industry/state` 新增 `is_game_over`、`game_over_reasons`、`trigger_streak` 字段
+    - `/api/industry/commands` 在 `is_game_over=True` 时除 `new_game` / `save` / `load` 外全部返回 **HTTP 409 + game_over error**
+    - `/api/world/state` 新增 `player_game_over` 子字段
+    - `/api/world/advance` 在玩家下台时返回 **HTTP 409**，NPC AI 与世界时钟全部冻结
+    - `/api/industry/_dev/inject_game_over`（dev-only，BIPOLE_DEV=1 才启用）用于浏览器端到端验收
+  - **前端**：
+    - `/industry` 页面顶部红色横幅「市长已下台 — <原因>」+「新建城市」按钮；月进按钮置灰；红色提示文案
+    - `/world` 玩家城金色光晕在下台时变灰色（`#5a3d44`）
+  - **存档兼容**：`_trigger` 状态序列化到 `to_dict()` 的 `_trigger` 字段；`from_dict()` 读取并恢复 trigger 状态；旧存档缺 `_trigger` 时按默认新 trigger 处理。
+  - **测试**：`tests/v21/` 新增 23 项（`test_governance_trigger.py` 13 单测 + `test_governance_integration.py` 10 集成 + REST 409 + 保存/读取/新建）；全量 957 项通过。
+  - **端到端验收**：`scripts/check_governance_trigger_browser.py`（Playwright），10 项全过（banner hidden 初始 / state false / dev 注入 / banner 显示 / 月进 disabled / REST 409 / world.player_game_over / world.advance 409 / new_game 重置 / /world 渲染 5 节点）；证据：`artifacts/governance-trigger-2026-10-16/industry-after-gameover.png`。
+  - **设计文档**：[经济触发器与市长下台-M24](docs/03_设计规范/经济触发器与市长下台-M24-2026-10-16.md)；实施计划：[经济触发器实施计划](docs/superpowers/plans/2026-10-16-governance-trigger.md)。
+  - **校长修正落实**：「月初报告极度异常 → 市长下台事件 → 游戏结束」机制按 2026-10-16 校长修正 commit `6f17b00` 设计意图落地。M25 设计文档第 9 节"边界"提到的"NPC 后台真实运行，玩家下台世界冻结"在本模块一并处理（WorldGame 联动）。
+
 - 2026-10-16：**V2.1 阶段 M25：世界地图独立页面 `/world` + 5 座 NPC 城市 + AI 市长决策 + 友好度脱敏**
   - **独立 Web 页面 `/world`**：浏览器访问 `http://127.0.0.1:8876/world` 进入国家大陆视图。纯 SVG 复古地图背景（无外部美术依赖）：渐变底色 + `feTurbulence` 旧纸纹理 + 北侧山脉 + 中部河流 + 右下罗盘玫瑰 + 左上风玫瑰 + 装饰花边；5 个 NPC 城市节点（按 archetype 配色）+ 玩家城金色光晕 + 10 条友好度关系连线（按友好度渐变 + 粗细 + 透明度）。点击节点查看城市详情；底部"推进 1 个月 →"按钮与世界时钟同步。
   - **5 座 NPC 城市后台真实运行**：与玩家城市共用同一套 `IndustryEconomy` 七行业内核（AGR/IND/SRV/CHU/BNK/MAG/GOV），各自独立 scenario 与 archetype——
