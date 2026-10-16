@@ -5,6 +5,18 @@
 ## [未发布]
 
 ### 新增
+- 2026-10-16：**V2.1 阶段 M27：NPC-NPC 贸易网**
+  - **新模块** `backend/systems/v21/npc_trade_router.py`：`NpcTradeRouter` 类 + `NpcTradeConfig` + `NpcTradeFlow` + `load_npc_trade_config()`。
+  - **数据契约** `data/npc_trade_routes.json`：base_volume_per_month_cr=1000 / friendliness_threshold=30 / distance_factor_divisor=100 / trade_friendliness_delta_per_month=1 / min_volume=100 / max_volume=5000。
+  - **月贸易流公式**：volume = clamp(base × (friendly/100) × 1/(1+distance/divisor), min, max)
+  - **友好度阈值**：友好度 ≥ 30 的 NPC-NPC 对才会产生贸易；初始 50 全通过；玩家-NPC 之间无自动贸易（M26 是玩家与 NPC 的主动外交）。
+  - **WorldGame.advance_npc_only** 集成：每 NPC 城市 advance 完成后 → 调 `_apply_monthly_trade_routes()` → 生成贸易流 + 友好度双向 +1/月。
+  - **REST**：`/api/world/state` 新增 `npc_trade_routes` 字段（每条流包含 city_a / city_b / month / volume_cr / friendliness_delta_per_side）。
+  - **前端**：地图叠加 6 条 NPC-NPC 蓝色虚线（`stroke-dasharray="5,3"`），中段标注月贸易额（取整 CR）。
+  - **核心约束**：M27 阶段**不实际转账**，仅作文叙友好度信号。理由与 M26 一致：跨城现金流会破坏 IndustryEconomy 守恒。后续 M27.1 阶段可引入真实转账。
+  - **测试**：`tests/v21/test_npc_trade_router.py` 13 项（distance_factor 距离反比 / 友好度阈值过滤 / min/max volume 钳位 / route_all 配对 / 流 roundtrip / WorldGame 月增 / REST 暴露）；全量 994 项通过。
+  - **端到端**：`scripts/check_npc_trade_routes_browser.py`（Playwright）9 项全过（state.npc_trade_routes 6 条 + 字段完整 + NPC-NPC 友好度自然增长 + 玩家-NPC 友好度不变 + 渲染 6 条虚线）；证据：`artifacts/npc-trade-routes-2026-10-16/world-with-trade-routes.png`。
+
 - 2026-10-16：**V2.1 阶段 M26：玩家外交行动接口（5 类行动）**
   - **5 类玩家外交行动**（外置于 `data/diplomacy_actions.json`）：
     - `trade_agreement` 贸易协议（友好 +1/月，月限 3 次，需 visible ≥ 1）

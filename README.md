@@ -127,6 +127,7 @@ python -m scripts.check_single_city_browser
 python -m scripts.check_world_map_browser
 python -m scripts.check_governance_trigger_browser
 python -m scripts.check_diplomacy_action_browser
+python -m scripts.check_npc_trade_routes_browser
 ```
 
 浏览器验收需安装`playwright`和Chromium，采用独立端口、独立服务与临时存档。它真实点击表单和地图，核对实际付款、完工、政策、存读档及刷新后的数据，不将截图或接口可用视为整款游戏通过。桌面验收运行真实Tk事件循环和控件回调，不冒充操作系统鼠标验收。
@@ -218,3 +219,19 @@ M26 让 NPC 城市从"旁观者"变成"可交互对手"。玩家可在 `/world` 
 - `GET /api/world/diplomacy_actions/{city_id}` — 该城市最近 50 条玩家行动
 
 详细设计见 [外交行动接口-M26](docs/03_设计规范/外交行动接口-M26-2026-10-16.md)。
+
+## 11. NPC-NPC 贸易网（M27）
+
+M27 让 5 座 NPC 城市之间产生自动贸易流，玩家可在世界地图上看到蓝色虚线（叠加在原关系连线上）+ 月贸易额数字。
+
+| 规则 | 阈值 / 公式 |
+|---|---|
+| 友好度阈值 | ≥ 30 才产生贸易流（初值 50 全通过） |
+| 月贸易额 | clamp(base × (friendly/100) × 1/(1+distance/100), min=100, max=5000) CR |
+| 友好度月增 | 双方 +1/月（叙事友好度信号，不实际转账） |
+
+**核心约束**：M27 阶段所有贸易**不实际转账**——仅生成"贸易流记录"作为友好度信号。后续 M27.1 阶段可扩展为 IndustryEconomy.transfer_to_npc() 真实转账（须扩展守恒路径）。
+
+**REST**：`/api/world/state` 新增 `npc_trade_routes` 字段（每条流含 city_a / city_b / month / volume_cr / friendliness_delta_per_side）。
+
+**前端**：地图叠加 6 条 NPC-NPC 蓝色虚线（`stroke-dasharray="5,3"`），中段标注月贸易额（取整 CR）。
