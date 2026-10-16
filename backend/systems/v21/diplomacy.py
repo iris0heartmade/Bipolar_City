@@ -50,6 +50,15 @@ class DiplomacySystem:
         """最近 N 条玩家行动（按时间倒序）。"""
         return list(reversed(self._player_actions_history[-limit:]))
 
+    # M27：NPC-NPC 贸易流
+    def record_trade_flow(self, flow) -> None:
+        """记录一条 NPC 贸易流（双向调友好度）。"""
+        delta = flow.friendliness_delta_per_side
+        if delta <= 0:
+            return
+        reason = f'NPC-NPC 贸易流（月 {flow.month}，{flow.volume_cr:.0f} CR）'
+        self.adjust_friendliness(flow.city_a, flow.city_b, delta, reason)
+
     def apply_player_action(self, action, current_month: int,
                             player_cash_cr: float = None) -> tuple:
         """应用一次玩家外交行动。

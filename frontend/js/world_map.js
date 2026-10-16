@@ -153,6 +153,46 @@ export function renderWorld(state, opts = {}) {
   });
   svg.appendChild(linksGroup);
 
+  // M27：NPC-NPC 贸易流（虚线，仅 NPC 城市之间，叠加在关系连线上）
+  if (state.npc_trade_routes && state.npc_trade_routes.length > 0) {
+    const tradeGroup = document.createElementNS(ns, 'g');
+    tradeGroup.setAttribute('stroke', '#507ba0');  // 蓝色  贸易流
+    tradeGroup.setAttribute('stroke-width', '1.2');
+    tradeGroup.setAttribute('stroke-dasharray', '5,3');
+    tradeGroup.setAttribute('opacity', '0.55');
+    tradeGroup.setAttribute('fill', 'none');
+    state.npc_trade_routes.forEach(flow => {
+      const a = state.cities.find(c => c.id === flow.city_a);
+      const b = state.cities.find(c => c.id === flow.city_b);
+      if (!a || !b) return;
+      const ax = a.x * 10, ay = a.y * 7;
+      const bx = b.x * 10, by = b.y * 7;
+      const line = document.createElementNS(ns, 'line');
+      line.setAttribute('x1', ax);
+      line.setAttribute('y1', ay);
+      line.setAttribute('x2', bx);
+      line.setAttribute('y2', by);
+      line.dataset.tradeFlow = '1';
+      // 浮在中段画一个 marker 显示流规模
+      const mx = (ax + bx) / 2;
+      const my = (ay + by) / 2;
+      const text = document.createElementNS(ns, 'text');
+      text.setAttribute('x', mx);
+      text.setAttribute('y', my);
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('fill', '#507ba0');
+      text.setAttribute('font-size', '9');
+      text.setAttribute('font-weight', 'bold');
+      text.setAttribute('paint-order', 'stroke');
+      text.setAttribute('stroke', '#f4e6c0');
+      text.setAttribute('stroke-width', '2');
+      text.textContent = `${Math.round(flow.volume_cr)}`;
+      tradeGroup.appendChild(line);
+      tradeGroup.appendChild(text);
+    });
+    svg.appendChild(tradeGroup);
+  }
+
   // 8. 城市节点
   const nodesGroup = document.createElementNS(ns, 'g');
   state.cities.forEach(city => {

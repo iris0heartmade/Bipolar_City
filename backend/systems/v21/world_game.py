@@ -45,7 +45,24 @@ class WorldGame:
         new_game = deepcopy(self)
         new_game.world = replace(self.world, month=self.world.month + months)
         new_game.npc_city = self.npc_city.advance(months=months)
+        # M27：NPC-NPC 贸易流（按月生成 + 友好度互调）
+        new_game._apply_monthly_trade_routes()
         return new_game
+
+    def _apply_monthly_trade_routes(self) -> None:
+        """每月推进后调用：生成 NPC-NPC 贸易流并调友好度。"""
+        from backend.systems.v21.npc_trade_router import NpcTradeRouter
+        router = NpcTradeRouter()
+        npc_ids = [c.id for c in self.world.cities if not c.is_player]
+        positions = {c.id: (c.x, c.y) for c in self.world.cities}
+
+        def friendly(a: str, b: str) -> int:
+            return self.diplomacy.get_relation(a, b).friendliness
+
+        current_month = self.world.month
+        flows = router.route_all(npc_ids, positions, friendly, current_month)
+        for flow in flows:
+            self.diplomacy.record_trade_flow(flow)
     
     def advance_with_player(self, player_city: IndustryEconomy, months: int = 1) -> tuple['WorldGame', IndustryEconomy]:
         """推进 NPC 城市 + 玩家城市。

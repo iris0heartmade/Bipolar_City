@@ -1,0 +1,11 @@
+{
+  "_comment": "M27 NPC-NPC 贸易网契约：按友好度+距离生成贸易路线，不实际转账，只作文叙友好度信号。模块 M27。",
+  "trade_route": {
+    "base_volume_per_month_cr": 1000,
+    "friendliness_threshold": 30,
+    "distance_factor_divisor": 100,
+    "trade_friendliness_delta_per_month": 1,
+    "min_volume_per_month_cr": 100,
+    "max_volume_per_month_cr": 5000
+  }
+}

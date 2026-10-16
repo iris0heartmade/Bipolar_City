@@ -55,7 +55,24 @@ def _build_world_payload(game: WorldGame, industry_game=None) -> dict:
         }
     else:
         payload['player_game_over'] = {'is_game_over': False, 'reasons': []}
+    # M27：NPC-NPC 贸易流
+    payload['npc_trade_routes'] = _compute_npc_trade_routes(game)
     return payload
+
+
+def _compute_npc_trade_routes(game: WorldGame) -> list:
+    """计算当前月份的 NPC-NPC 贸易流快照（不持久化到 Diplomacy）。"""
+    from backend.systems.v21.npc_trade_router import NpcTradeRouter
+    router = NpcTradeRouter()
+    npc_ids = [c.id for c in game.world.cities if not c.is_player]
+    positions = {c.id: (c.x, c.y) for c in game.world.cities}
+
+    def friendly(a: str, b: str) -> int:
+        return game.diplomacy.get_relation(a, b).friendliness
+
+    current_month = game.world.month
+    flows = router.route_all(npc_ids, positions, friendly, current_month)
+    return [flow.to_dict() for flow in flows]
 
 
 @router.get('/state')
