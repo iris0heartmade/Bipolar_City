@@ -5,6 +5,7 @@ logs/
 saves/*.json
 saves/*.bak
 artifacts/
+.tmp/
 
 # 开源参考项目：仅供学习架构与经济模型，不纳入版本库
 /参考/

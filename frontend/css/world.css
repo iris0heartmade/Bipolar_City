@@ -1,11 +1,44 @@
 /* 世界地图页面样式 */
+/* 世界页覆写全局 app-shell：避免 100dvh 把 SVG 拉伸到页面全高 */
+.app-shell {
+  height: auto !important;
+  min-height: 100dvh !important;
+  max-height: none !important;
+}
+/* world.html 只引用 world.css，不引入 style.css，
+   这里补齐 .brand 图标尺寸限制，避免 emblem.svg 被拉伸到容器宽度 */
+.brand img {
+  width: 42px !important;
+  height: 42px !important;
+  flex: 0 0 42px;
+}
+.brand {
+  min-width: 212px;
+  font-family: Georgia, serif;
+  font-size: 24px;
+  font-weight: bold;
+  letter-spacing: 3px;
+  color: var(--green, #5a8a5a);
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  text-decoration: none;
+}
+.brand > span small {
+  display: block;
+  letter-spacing: 3px;
+  font: 10px "Microsoft YaHei", sans-serif;
+  margin-top: 3px;
+  color: #8c8e7f;
+}
 .world-layout {
   display: grid;
   grid-template-columns: 1fr 340px;
   gap: 1rem;
   padding: 1rem;
   background: linear-gradient(135deg, #1a1820, #2c2530);
-  min-height: calc(100vh - 9rem);
+  width: 100%;
+  flex: 0 0 auto;
 }
 .map-panel {
   background: #d4c89a;
@@ -13,8 +46,6 @@
   border-radius: 8px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,0,0,0.1);
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 .map-header {
   background: rgba(139, 111, 71, 0.85);
@@ -31,11 +62,15 @@
   letter-spacing: 1px;
 }
 #world-svg {
-  width: 100%;
-  height: auto;
   display: block;
-  flex: 1;
+  width: 100% !important;
+  height: 560px !important;
+  max-height: 560px !important;
+  min-height: 560px !important;
+  flex: 0 0 560px !important;
   background: #e8d9a8;
+  margin: 0 auto;
+  align-self: flex-start;
 }
 .map-help {
   background: rgba(139, 111, 71, 0.7);
@@ -44,10 +79,6 @@
   font-size: 0.85rem;
   text-align: center;
 }
-.map-help i {
-  margin: 0 0.5rem;
-  color: #d4a537;
-}
 .detail-panel {
   background: #1a1820;
   color: #f4e6c0;
@@ -55,7 +86,8 @@
   border-radius: 8px;
   padding: 1rem;
   overflow-y: auto;
-  max-height: calc(100vh - 9rem);
+  height: 100%;
+  max-height: 100%;
 }
 .detail-panel h2 {
   margin: 0 0 1rem;
