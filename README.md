@@ -128,6 +128,7 @@ python -m scripts.check_world_map_browser
 python -m scripts.check_governance_trigger_browser
 python -m scripts.check_diplomacy_action_browser
 python -m scripts.check_npc_trade_routes_browser
+python -m scripts.check_espionage_browser
 ```
 
 浏览器验收需安装`playwright`和Chromium，采用独立端口、独立服务与临时存档。它真实点击表单和地图，核对实际付款、完工、政策、存读档及刷新后的数据，不将截图或接口可用视为整款游戏通过。桌面验收运行真实Tk事件循环和控件回调，不冒充操作系统鼠标验收。
@@ -235,3 +236,24 @@ M27 让 5 座 NPC 城市之间产生自动贸易流，玩家可在世界地图�
 **REST**：`/api/world/state` 新增 `npc_trade_routes` 字段（每条流含 city_a / city_b / month / volume_cr / friendliness_delta_per_side）。
 
 **前端**：地图叠加 6 条 NPC-NPC 蓝色虚线（`stroke-dasharray="5,3"`），中段标注月贸易额（取整 CR）。
+
+## 12. 行业情报（M28）
+
+M28 让玩家向**盟友级**（friendly ≥ 61）NPC 城市派间谍，获取**完整月报**（不脱敏）。这是 M25 设计文档规划的"信息差"玩法扩展。
+
+| 规则 | 阈值 / 公式 |
+|---|---|
+| 最低友好度 | visible ≥ 3（盟友级，friendly ≥ 61） |
+| 成本 | 2000 CR（叙事代价，不实际扣款） |
+| 月限 | 1 次 / 城市 |
+| 冷却 | 1 月 |
+| 被发现概率 | friendly ≥ 70 → 10%；friendly < 70 → 30% |
+| 被发现惩罚 | 友好度 -20 |
+
+**核心约束**：M28 阶段**不实际扣款**——与 M26/M27 一致，避免破坏 IndustryEconomy 守恒。后续 M28.1 可引入 `IndustryEconomy.spend_on_espionage(cost_cr)` 真实扣款。
+
+**REST**：
+- `POST /api/world/espionage` — 派间谍。返回 `{success, discovered, cost_cr, full_report, relation}`（full_report 仅 success=True 时非空）
+- `GET /api/world/cities/:id/intelligence` — 获取完整 last_report。visible < 3 返回 403。
+
+**前端**：NPC 城市详情面板新增「行业情报」按钮（蓝色），仅盟友级（visible ≥ 3）显示；成功时显示完整月报（劳动力、失业率、GOV 现金、累计欠薪、7 行业就业）。

@@ -5,6 +5,19 @@
 ## [未发布]
 
 ### 新增
+- 2026-10-16：**V2.1 阶段 M28：行业情报（玩家派间谍获取完整 last_report）**
+  - **核心机制**：玩家向友好度 ≥ 3（盟友级，friendly ≥ 61）的 NPC 城市派遣间谍，获取**完整月报**（不脱敏）。成本 2000 CR + 风险。
+  - **新模块** `backend/systems/v21/espionage.py`：`EspionageConfig` + `EspionageAttempt` + `validate_espionage()` + `attempt_espionage()`。
+  - **数据契约** `data/espionage_config.json`：cost_cr=2000 / min_visibility=3 / discovery_probability_low=0.10 (friendly ≥ 70) / discovery_probability_max=0.30 (friendly < 70) / discovery_penalty=-20 / cooldown=1 月 / max_per_month=1。
+  - **风险机制**：被发现概率按友好度分级（盟友级 10%，友好级 30%）。被发现 → 友好度 -20（玩家承担间谍风险）。
+  - **REST**：
+    - `POST /api/world/espionage` — 派间谍。校验：visible ≥ 3 + cooldown + max_per_month。返回 `{success, discovered, cost_cr, full_report, relation}`。
+    - `GET /api/world/cities/:id/intelligence` — 获取完整 last_report（前提 visible ≥ 3，否则 403）。
+  - **前端**：NPC 城市详情面板新增「行业情报」区域，仅盟友级可见「派间谍（成本 2000 CR + 风险）」蓝色按钮；成功时显示完整月报（劳动力、失业率、GOV 现金、累计欠薪、7 行业就业）。
+  - **核心约束**：M28 阶段**不实际扣款**——与 M26/M27 一致，避免破坏 IndustryEconomy 守恒。"成本"是叙事代价，玩家可以选择不实际扣款，等 M28.1 引入真实扣款路径。
+  - **测试**：`tests/v21/test_espionage.py` 11 单测（配置 / 可见等级门槛 / 月限 / 冷却 / 风险概率 / 种子确定性 / roundtrip / 成本固定）+ `test_espionage_integration.py` 8 集成（REST 路径 / spy / cooldown / intelligence visible≥3 / game_over 409）。全量 1013 项通过。
+  - **端到端**：`scripts/check_espionage_browser.py`（Playwright）5 项全过（友好度 < 3 不显示按钮 → 提升到 71 显示按钮 → 派间谍成功显示完整月报 → 第 2 次同月被拒）；证据：`artifacts/espionage-2026-10-16/world-espionage.png`。
+
 - 2026-10-16：**V2.1 阶段 M27：NPC-NPC 贸易网**
   - **新模块** `backend/systems/v21/npc_trade_router.py`：`NpcTradeRouter` 类 + `NpcTradeConfig` + `NpcTradeFlow` + `load_npc_trade_config()`。
   - **数据契约** `data/npc_trade_routes.json`：base_volume_per_month_cr=1000 / friendliness_threshold=30 / distance_factor_divisor=100 / trade_friendliness_delta_per_month=1 / min_volume=100 / max_volume=5000。
