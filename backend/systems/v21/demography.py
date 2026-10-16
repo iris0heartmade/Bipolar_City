@@ -1,14 +1,4 @@
-"""V2.1 阶段 14：可劳动人口自然演化。
-
-可劳动人口 = 显示人口。消费按家庭口径（含非劳动人口）放大。
-出生率与死亡率是二级参数：基础值用世界银行 2022 年截面回归得到，
-再按本期人均工资、相对生活成本、人均教育/服务消费水平做调整。
-
-参考资料（World Bank, WDI 2022-2024）：
-- ln(CBR/1000) = a + eta_cbr * ln(GNI)        eta_cbr ≈ -0.41, R² ≈ 0.73
-- ln(CDR/1000) = a + d1 * ln(GNI) + d2 * old%  d1 ≈ -0.31, d2 ≈ 0.074, R² ≈ 0.58
-- Preston：e0 ≈ a + 5.7 * ln(GNI)              β ≈ 5.7 年 / 单位 ln(收入)
-"""
+"""居民自然变化。年出生/死亡率按十二个月折算；弹性为游戏参数，非实证估计。"""
 from dataclasses import dataclass
 import math
 
@@ -72,7 +62,7 @@ def clamp(value, low, high):
 def compute_rates(city, params, total_household_consumption_cents):
     """根据本期人均收入、相对生活成本、人均消费水平推导 cbr/cdr。
 
-    cbr, cdr 的单位是「每千人每月」。
+    配置为每千人每年，返回每人每月概率。
     """
     income_cr = reference_income(city)
     cpi = max(1e-9, city.cpi)
@@ -96,16 +86,18 @@ def compute_rates(city, params, total_household_consumption_cents):
     wage_response = 1 + params.share_death_wage_response * (1 - min(1.5, max(0.4, gni_ratio)))
     cbr = clamp(base_cbr * birth_response, params.min_cbr_per_thousand, params.max_cbr_per_thousand)
     cdr = clamp(base_cdr * wage_response, params.min_cdr_per_thousand, params.max_cdr_per_thousand)
-    return cbr / 1000, cdr / 1000, income_cr, consumption_ratio
+    return cbr / 12000, cdr / 12000, income_cr, consumption_ratio
 
 
 def natural_change(city, params, total_household_consumption_cents):
-    """按可劳动人口和当月自然增长率推算本月净增减（人，整数）。
+    """按总居民数和当月自然增长率推算本月净增减（人，整数）。
 
     返回 (delta_people, cbr_monthly, cdr_monthly, income_cr, consumption_ratio)
     """
     cbr_m, cdr_m, income_cr, cons_ratio = compute_rates(city, params, total_household_consumption_cents)
     net = cbr_m - cdr_m
     population = sum(city.population.values())
-    delta = int(round(population * net))
+    raw_delta = population * net + city.population_carry
+    delta = math.trunc(raw_delta)
+    city.population_carry = raw_delta - delta
     return delta, cbr_m, cdr_m, income_cr, cons_ratio

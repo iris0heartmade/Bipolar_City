@@ -136,9 +136,10 @@ class CalibrationReport:
     # STEP 08
     adjustments: list[str] = field(default_factory=list)
     # STEP 09
-    stability_12m_passed: bool = True
-    stability_36m_passed: bool = True
-    stability_120m_passed: bool = True
+    stability_12m_passed: bool = False
+    stability_36m_passed: bool = False
+    stability_120m_passed: bool = False
+    runtime_evidence: dict = field(default_factory=dict)
     # STEP 10
     loss: float = 0.0
     version: str = 'v2.1'
@@ -163,7 +164,8 @@ class CalibrationReport:
             'STEP_08': {'adjustments': self.adjustments},
             'STEP_09': {'stability_12m': self.stability_12m_passed,
                         'stability_36m': self.stability_36m_passed,
-                        'stability_120m': self.stability_120m_passed},
+                        'stability_120m': self.stability_120m_passed,
+                        'runtime_evidence': self.runtime_evidence},
             'STEP_10_loss': self.loss,
         }
 
@@ -348,17 +350,21 @@ def step_08_adjust(report: CalibrationReport, preset: CityPreset) -> list[str]:
 
 
 def step_09_stability(report: CalibrationReport, months: int) -> bool:
-    """§16 STEP 09：12/36/120 月稳定性占位。
-
-    实际运行由 monthly_engine_full 驱动；占位返回基于失业率/K 的粗判。
-    """
+    """当前工业城在正式内核实跑；未接入的预设明确标为未验收。"""
+    if report.archetype != 'industrial_city':
+        report.runtime_evidence[str(months)] = {
+            'passed': False, 'months_executed': 0,
+            'reason': '此城市预设尚未映射到正式单城运行内核，不能认证长期稳定性'}
+        return False
     if report.unemployment_rate > 0.12:
         return False
     if report.K < report.N * 1.05:
         return False
-    if months >= 36 and report.L < 50.0:
-        return False
-    return True
+    from backend.systems.v21.runtime_validation import validate_runtime
+    evidence = validate_runtime(months)
+    # 单独预设校准和实际运行是不同口径，两者均须通过，不互相替代。
+    report.runtime_evidence[str(months)] = evidence
+    return evidence['passed'] and (months < 36 or report.L >= 50.0)
 
 
 def step_10_loss(
@@ -448,7 +454,7 @@ def calibrate(input_: CalibrationInput) -> CalibrationReport:
     # STEP 08
     report.adjustments = step_08_adjust(report, preset)
 
-    # STEP 09（占位：12/36/120）
+    # STEP 09：正式单城实跑；未接入的其他预设不作稳定性通过声明。
     report.stability_12m_passed = step_09_stability(report, 12)
     report.stability_36m_passed = step_09_stability(report, 36)
     report.stability_120m_passed = step_09_stability(report, 120)

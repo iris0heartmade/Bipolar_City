@@ -1,0 +1,9 @@
+{
+  "scope": "当前单城行业内核运行验收，不代表五城世界已接入",
+  "minimum_employment_retention": 0.8,
+  "maximum_unemployment_rate": 0.2,
+  "maximum_wage_arrears_cr": 0,
+  "required_positive_consumer_spending": true,
+  "required_positive_sales": true,
+  "checkpoints": [1, 12, 24, 36, 60, 120]
+}

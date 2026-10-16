@@ -1,0 +1,11 @@
+{
+  "housing_base": 3600,
+  "buildings": {
+    "row_house": {"industry": null, "jobs_added": 0, "housing_added": 28, "cost_cents": 420000, "maintenance_cents": 1800},
+    "apartment": {"industry": null, "jobs_added": 0, "housing_added": 56, "cost_cents": 780000, "maintenance_cents": 3800},
+    "market": {"industry": "SRV", "jobs_added": 30, "housing_added": 0, "cost_cents": 560000, "maintenance_cents": 2400},
+    "workshop": {"industry": "IND", "jobs_added": 40, "housing_added": 0, "cost_cents": 640000, "maintenance_cents": 3200},
+    "park": {"industry": null, "jobs_added": 0, "housing_added": 0, "cost_cents": 160000, "maintenance_cents": 900},
+    "town_hall": {"industry": null, "jobs_added": 0, "housing_added": 0, "cost_cents": 0, "maintenance_cents": 0}
+  }
+}

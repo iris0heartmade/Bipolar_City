@@ -1,0 +1,632 @@
+{
+  "baseline": {
+    "checkpoints": [
+      {
+        "month": 1,
+        "employment": 1500,
+        "unemployed": 162,
+        "labor_force": 1662,
+        "population": 3023,
+        "gov_cr": 70786.19,
+        "sales_cr": 322357.6,
+        "consumption_cr": 152822.0,
+        "planned_wages_cr": 132250.0,
+        "paid_wages_cr": 132250.0,
+        "arrears_cr": 0.0,
+        "ext_raw": 4948000.0,
+        "cash_residual": 0,
+        "ind_employment": 610,
+        "ind_sales_cr": 137021.0,
+        "ind_cash_cr": 222521.0
+      },
+      {
+        "month": 3,
+        "employment": 1609,
+        "unemployed": 80,
+        "labor_force": 1689,
+        "population": 3072,
+        "gov_cr": 72019.87,
+        "sales_cr": 334885.13,
+        "consumption_cr": 161739.07,
+        "planned_wages_cr": 142021.48,
+        "paid_wages_cr": 142021.48,
+        "arrears_cr": 0.0,
+        "ext_raw": 4804000.007952214,
+        "cash_residual": 0,
+        "ind_employment": 604,
+        "ind_sales_cr": 144289.36,
+        "ind_cash_cr": 171363.92
+      },
+      {
+        "month": 6,
+        "employment": 1331,
+        "unemployed": 394,
+        "labor_force": 1725,
+        "population": 3138,
+        "gov_cr": 64529.34,
+        "sales_cr": 297599.94,
+        "consumption_cr": 137155.34,
+        "planned_wages_cr": 117728.09,
+        "paid_wages_cr": 117728.09,
+        "arrears_cr": 0.0,
+        "ext_raw": 4588027.356503256,
+        "cash_residual": 0,
+        "ind_employment": 441,
+        "ind_sales_cr": 132336.46,
+        "ind_cash_cr": 138028.36
+      },
+      {
+        "month": 12,
+        "employment": 1328,
+        "unemployed": 463,
+        "labor_force": 1791,
+        "population": 3258,
+        "gov_cr": 41950.04,
+        "sales_cr": 296017.44,
+        "consumption_cr": 132471.99,
+        "planned_wages_cr": 118125.7,
+        "paid_wages_cr": 118125.7,
+        "arrears_cr": 0.0,
+        "ext_raw": 4219916.758860795,
+        "cash_residual": 0,
+        "ind_employment": 439,
+        "ind_sales_cr": 131672.62,
+        "ind_cash_cr": 186138.7
+      },
+      {
+        "month": 24,
+        "employment": 1207,
+        "unemployed": 712,
+        "labor_force": 1919,
+        "population": 3490,
+        "gov_cr": 8341.63,
+        "sales_cr": 281169.04,
+        "consumption_cr": 116537.88,
+        "planned_wages_cr": 108527.61,
+        "paid_wages_cr": 108527.61,
+        "arrears_cr": 0.0,
+        "ext_raw": 3470540.7211198295,
+        "cash_residual": 0,
+        "ind_employment": 421,
+        "ind_sales_cr": 124338.72,
+        "ind_cash_cr": 196437.57
+      },
+      {
+        "month": 36,
+        "employment": 990,
+        "unemployed": 1039,
+        "labor_force": 2029,
+        "population": 3690,
+        "gov_cr": 9272.64,
+        "sales_cr": 260187.43,
+        "consumption_cr": 98844.29,
+        "planned_wages_cr": 91738.31,
+        "paid_wages_cr": 91026.71,
+        "arrears_cr": 711.6,
+        "ext_raw": 2851678.5496539907,
+        "cash_residual": 0,
+        "ind_employment": 337,
+        "ind_sales_cr": 117783.05,
+        "ind_cash_cr": 170677.8
+      },
+      {
+        "month": 60,
+        "employment": 899,
+        "unemployed": 1334,
+        "labor_force": 2233,
+        "population": 4060,
+        "gov_cr": 8065.0,
+        "sales_cr": 257081.71,
+        "consumption_cr": 92288.4,
+        "planned_wages_cr": 83970.68,
+        "paid_wages_cr": 83205.26,
+        "arrears_cr": 765.42,
+        "ext_raw": 1758742.663205245,
+        "cash_residual": 0,
+        "ind_employment": 302,
+        "ind_sales_cr": 117048.51,
+        "ind_cash_cr": 163127.05
+      },
+      {
+        "month": 120,
+        "employment": 96,
+        "unemployed": 2539,
+        "labor_force": 2635,
+        "population": 4791,
+        "gov_cr": 110050.1,
+        "sales_cr": 0.0,
+        "consumption_cr": 12681.57,
+        "planned_wages_cr": 8305.84,
+        "paid_wages_cr": 8305.84,
+        "arrears_cr": 0.0,
+        "ext_raw": 0.0026163734546571504,
+        "cash_residual": 0,
+        "ind_employment": 42,
+        "ind_sales_cr": 0.0,
+        "ind_cash_cr": 121263.51
+      }
+    ],
+    "purchases": []
+  },
+  "procurement_strategy_from_existing_test": {
+    "checkpoints": [
+      {
+        "month": 1,
+        "employment": 1500,
+        "unemployed": 162,
+        "labor_force": 1662,
+        "population": 3023,
+        "gov_cr": 70786.19,
+        "sales_cr": 322357.6,
+        "consumption_cr": 152822.0,
+        "planned_wages_cr": 132250.0,
+        "paid_wages_cr": 132250.0,
+        "arrears_cr": 0.0,
+        "ext_raw": 4948000.0,
+        "cash_residual": 0,
+        "ind_employment": 610,
+        "ind_sales_cr": 137021.0,
+        "ind_cash_cr": 222521.0
+      },
+      {
+        "month": 3,
+        "employment": 1609,
+        "unemployed": 80,
+        "labor_force": 1689,
+        "population": 3072,
+        "gov_cr": 72019.87,
+        "sales_cr": 334885.13,
+        "consumption_cr": 161739.07,
+        "planned_wages_cr": 142021.48,
+        "paid_wages_cr": 142021.48,
+        "arrears_cr": 0.0,
+        "ext_raw": 4804000.007952214,
+        "cash_residual": 0,
+        "ind_employment": 604,
+        "ind_sales_cr": 144289.36,
+        "ind_cash_cr": 171363.92
+      },
+      {
+        "month": 6,
+        "employment": 1331,
+        "unemployed": 394,
+        "labor_force": 1725,
+        "population": 3138,
+        "gov_cr": 53408.62,
+        "sales_cr": 297599.94,
+        "consumption_cr": 137155.34,
+        "planned_wages_cr": 117728.09,
+        "paid_wages_cr": 117728.09,
+        "arrears_cr": 0.0,
+        "ext_raw": 4596027.356503256,
+        "cash_residual": 0,
+        "ind_employment": 441,
+        "ind_sales_cr": 132336.46,
+        "ind_cash_cr": 138028.36
+      },
+      {
+        "month": 12,
+        "employment": 1328,
+        "unemployed": 463,
+        "labor_force": 1791,
+        "population": 3258,
+        "gov_cr": 19561.32,
+        "sales_cr": 296017.44,
+        "consumption_cr": 132471.99,
+        "planned_wages_cr": 118125.7,
+        "paid_wages_cr": 118125.7,
+        "arrears_cr": 0.0,
+        "ext_raw": 4235916.758860795,
+        "cash_residual": 0,
+        "ind_employment": 439,
+        "ind_sales_cr": 131672.62,
+        "ind_cash_cr": 186138.7
+      },
+      {
+        "month": 24,
+        "employment": 1178,
+        "unemployed": 739,
+        "labor_force": 1917,
+        "population": 3486,
+        "gov_cr": 13949.9,
+        "sales_cr": 240637.59,
+        "consumption_cr": 113529.51,
+        "planned_wages_cr": 105776.9,
+        "paid_wages_cr": 105776.9,
+        "arrears_cr": 0.0,
+        "ext_raw": 3514164.517084814,
+        "cash_residual": 0,
+        "ind_employment": 400,
+        "ind_sales_cr": 109645.76,
+        "ind_cash_cr": 179242.23
+      },
+      {
+        "month": 36,
+        "employment": 408,
+        "unemployed": 1577,
+        "labor_force": 1985,
+        "population": 3610,
+        "gov_cr": 8065.0,
+        "sales_cr": 105491.96,
+        "consumption_cr": 48639.11,
+        "planned_wages_cr": 35966.36,
+        "paid_wages_cr": 35966.36,
+        "arrears_cr": 0.0,
+        "ext_raw": 3107206.9411893217,
+        "cash_residual": 0,
+        "ind_employment": 318,
+        "ind_sales_cr": 76860.54,
+        "ind_cash_cr": 180916.06
+      },
+      {
+        "month": 60,
+        "employment": 368,
+        "unemployed": 1722,
+        "labor_force": 2090,
+        "population": 3801,
+        "gov_cr": 8065.0,
+        "sales_cr": 69728.11,
+        "consumption_cr": 43895.64,
+        "planned_wages_cr": 34234.44,
+        "paid_wages_cr": 34234.44,
+        "arrears_cr": 0.0,
+        "ext_raw": 2486131.88713529,
+        "cash_residual": 0,
+        "ind_employment": 348,
+        "ind_sales_cr": 68534.8,
+        "ind_cash_cr": 186137.95
+      },
+      {
+        "month": 120,
+        "employment": 363,
+        "unemployed": 2022,
+        "labor_force": 2385,
+        "population": 4338,
+        "gov_cr": 8065.0,
+        "sales_cr": 79575.02,
+        "consumption_cr": 49404.4,
+        "planned_wages_cr": 34255.31,
+        "paid_wages_cr": 34255.31,
+        "arrears_cr": 0.0,
+        "ext_raw": 971629.3869282462,
+        "cash_residual": 0,
+        "ind_employment": 346,
+        "ind_sales_cr": 78146.75,
+        "ind_cash_cr": 217939.67
+      }
+    ],
+    "purchases": [
+      {
+        "month": 1,
+        "result": [
+          0,
+          0.0,
+          "GOV 现金不足：需 15000000 现 7000000"
+        ]
+      },
+      {
+        "month": 6,
+        "result": [
+          300000,
+          8000.0,
+          null
+        ]
+      },
+      {
+        "month": 12,
+        "result": [
+          300000,
+          8000.0,
+          null
+        ]
+      },
+      {
+        "month": 18,
+        "result": [
+          300000,
+          8000.0,
+          null
+        ]
+      },
+      {
+        "month": 24,
+        "result": [
+          0,
+          0.0,
+          "GOV 现金不足：需 1157060 现 806500"
+        ]
+      },
+      {
+        "month": 30,
+        "result": [
+          300000,
+          8000.0,
+          null
+        ]
+      },
+      {
+        "month": 36,
+        "result": [
+          300000,
+          8000.0,
+          null
+        ]
+      },
+      {
+        "month": 42,
+        "result": [
+          0,
+          0.0,
+          "GOV 现金不足：需 1204541 现 924218"
+        ]
+      },
+      {
+        "month": 48,
+        "result": [
+          0,
+          0.0,
+          "GOV 现金不足：需 1220945 现 814638"
+        ]
+      },
+      {
+        "month": 54,
+        "result": [
+          0,
+          0.0,
+          "GOV 现金不足：需 1237647 现 843537"
+        ]
+      },
+      {
+        "month": 60,
+        "result": [
+          300000,
+          8000.0,
+          null
+        ]
+      },
+      {
+        "month": 66,
+        "result": [
+          300000,
+          8000.0,
+          null
+        ]
+      },
+      {
+        "month": 72,
+        "result": [
+          300000,
+          8000.0,
+          null
+        ]
+      },
+      {
+        "month": 78,
+        "result": [
+          300000,
+          8000.0,
+          null
+        ]
+      },
+      {
+        "month": 84,
+        "result": [
+          300000,
+          8000.0,
+          null
+        ]
+      },
+      {
+        "month": 90,
+        "result": [
+          300000,
+          8000.0,
+          null
+        ]
+      },
+      {
+        "month": 96,
+        "result": [
+          300000,
+          8000.0,
+          null
+        ]
+      },
+      {
+        "month": 102,
+        "result": [
+          300000,
+          8000.0,
+          null
+        ]
+      },
+      {
+        "month": 108,
+        "result": [
+          300000,
+          8000.0,
+          null
+        ]
+      },
+      {
+        "month": 114,
+        "result": [
+          300000,
+          8000.0,
+          null
+        ]
+      },
+      {
+        "month": 120,
+        "result": [
+          300000,
+          8000.0,
+          null
+        ]
+      }
+    ]
+  },
+  "policy_save": {
+    "error": "TypeError",
+    "message": "keys must be str, int, float, bool or None, not tuple"
+  },
+  "one_month_policy_duration": [
+    {
+      "month": 1,
+      "policies": {
+        "IND|limit_hire": 1
+      }
+    },
+    {
+      "month": 2,
+      "policies": {
+        "IND|limit_hire": 1
+      }
+    },
+    {
+      "month": 3,
+      "policies": {}
+    }
+  ],
+  "external_local_split": [
+    {
+      "split": 0,
+      "consumption_cr": 152822.0,
+      "external_sales_cr": 87800.0
+    },
+    {
+      "split": 0.5,
+      "consumption_cr": 152822.0,
+      "external_sales_cr": 43900.0
+    },
+    {
+      "split": 1,
+      "consumption_cr": 152822.0,
+      "external_sales_cr": 0.0
+    }
+  ],
+  "limit_layoff": [
+    {
+      "month": 13,
+      "control": 439,
+      "policy": 439,
+      "policy_layoffs": 0
+    },
+    {
+      "month": 14,
+      "control": 436,
+      "policy": 436,
+      "policy_layoffs": 3
+    },
+    {
+      "month": 15,
+      "control": 434,
+      "policy": 434,
+      "policy_layoffs": 2
+    }
+  ],
+  "refund_insolvency": {
+    "industry": "SRV",
+    "tax_cr": 2920.46,
+    "result": [
+      true,
+      null,
+      292046
+    ],
+    "gov_cr_after_refund": -2920.46
+  },
+  "invariant_checker_quality": {
+    "labor_checker_mutates_invalid_input_without_rejection": {
+      "initial_unemployment": {
+        "H0": 7,
+        "H1": 24,
+        "H2": 51,
+        "H3": 52,
+        "H4": 2,
+        "H5": 3,
+        "H6": 6,
+        "H7": 5
+      },
+      "after_check": {
+        "H0": 16,
+        "H1": 22,
+        "H2": 48,
+        "H3": 49,
+        "H4": 2,
+        "H5": 3,
+        "H6": 5,
+        "H7": 5
+      },
+      "e_plus_u_minus_labor_force": 0
+    },
+    "positive_inventory_injection_accepted": true
+  },
+  "arrears_accounting": {
+    "first_shortfall": {
+      "month": 26,
+      "unpaid_cr": 702.28
+    },
+    "sum_unpaid_cr": 17538.96,
+    "displayed_arrears_cr": 765.42,
+    "repayment_transactions": []
+  },
+  "household_parameter_reporting": {
+    "configured_household_size": 4,
+    "reported_household_size": 2.5,
+    "reported_household_population": 7558,
+    "population": 3023
+  },
+  "negative_demography": {
+    "population_before": 3000,
+    "population_after": 3000,
+    "reported_delta_people": -50
+  },
+  "empty_external_receiver": {
+    "payer_cash_cr": 1100000.0,
+    "requested_cents": 100,
+    "paid_cents": 0,
+    "shortfalls": []
+  },
+  "desktop_actual_callbacks": {
+    "default_months": "36",
+    "initial_history": 36,
+    "initial_status": "第36月结果已更新；每月检查现金、劳动力和库存守恒。基准未做完整世界平衡校准，收缩也会如实显示。",
+    "same_input_requeues_identical_scenario": true,
+    "simulation_starts_at_month": 1,
+    "scenario_has_city_after_policy": false,
+    "enqueue_after_policy_error": "KeyError: 'sectors'"
+  },
+  "http_endpoints": {
+    "placement": {
+      "status": 500,
+      "body": "Internal Server Error"
+    },
+    "initial_ids": [
+      "h0",
+      "h0",
+      "h1",
+      "h2",
+      "h3",
+      "h4",
+      "h5",
+      "h6",
+      "h7",
+      "h8",
+      "h9"
+    ],
+    "repeat_build": {
+      "status": 200,
+      "gov_spent_cr": 0.0,
+      "jobs_added": 80,
+      "count_at_cell": 2
+    },
+    "frontend_new_game_payload": {
+      "status": 422,
+      "body": "{\"detail\":[{\"type\":\"extra_forbidden\",\"loc\":[\"body\",\"seed\"],\"msg\":\"Extra inputs are not permitted\",\"input\":123}]}"
+    },
+    "save_with_active_policy": {
+      "status": 400,
+      "body": "{\"detail\":\"操作未生效：keys must be str, int, float, bool or None, not tuple\"}"
+    }
+  }
+}

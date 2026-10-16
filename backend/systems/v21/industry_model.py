@@ -238,7 +238,7 @@ def match(supplies, vacancies, benefits):
 
 
 def labor_month(*, employed, unemployed, capacities, hard_limits, targets,
-                scores, params, carries=None):
+                scores, params, carries=None, limit_hire=(), limit_layoff=(), layoff_cap_share=None):
     """冻结输入，退出/待业招聘/在职转行依次计算，最后同时写出人数。
 
     这里只验证按行业总人数的流动。生产接口应把返回的流动按居民群体
@@ -260,15 +260,28 @@ def labor_month(*, employed, unemployed, capacities, hard_limits, targets,
     working, layoffs, vacancy = {}, {}, {}
     for i in keys:
         forced = max(0, employed[i] - hard_limits[i])
+        if layoff_cap_share is not None:
+            forced = min(forced, math.ceil(employed[i] * layoff_cap_share))
+        if i in limit_layoff:
+            forced = 0
         retained = employed[i] - forced
         gap = max(0, retained - targets[i])
         soft, state[i, 'exit'] = quota(f['monthly_soft_exit_rate'], retained,
                                       gap, state.get((i, 'exit'), 0.0))
+        if layoff_cap_share is not None:
+            soft = min(soft, max(0, math.ceil(employed[i] * layoff_cap_share) - forced))
+        if i in limit_layoff:
+            soft = 0
+            state[i, 'exit'] = 0.0
         layoffs[i], working[i] = forced + soft, retained - soft
         room = max(0, targets[i] - working[i])
         vacancy[i], state[i, 'hire'] = quota(
             f['monthly_hire_rate'], max(working[i], f['startup_hiring_reference_people']),
             room, state.get((i, 'hire'), 0.0))
+            # Hiring freezes apply before matching, including transfers.
+    for i in limit_hire:
+        vacancy[i] = 0
+        state[i, 'hire'] = 0.0
     seekers = unemployed + sum(layoffs.values())
     hired_flows = match({'U': seekers}, vacancy, {('U', i): scores[i] for i in keys})
     hired = {i: hired_flows.get(('U', i), 0) for i in keys}
@@ -289,7 +302,7 @@ def labor_month(*, employed, unemployed, capacities, hard_limits, targets,
     final_unemployed = seekers - sum(hired.values())
     if sum(result.values()) + final_unemployed != sum(employed.values()) + unemployed:
         raise AssertionError('劳动力不守恒')
-    if any(result[i] < 0 or result[i] > hard_limits[i] for i in keys):
+    if any(result[i] < 0 or result[i] > max(hard_limits[i], employed[i] if i in limit_layoff or layoff_cap_share is not None else 0) for i in keys):
         raise AssertionError('人数越过硬边界')
     return {'employed': result, 'unemployed': final_unemployed,
             'layoffs': layoffs, 'hires_from_unemployment': hired,

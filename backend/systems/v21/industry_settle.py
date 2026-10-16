@@ -1,11 +1,7 @@
-"""行业实验真实交易：每笔钱都有付款者，标准交付包只售出一次。
+"""真实行业交易；总居民数乘消费等价系数形成生活需求。
 
-阶段 14 改：
-- 家庭口径：每位就业者背后有 household_consumption_size 口家庭；
-  生活需求按「家庭人口」而不是「可劳动人口」计算，倍数由配置驱动。
-- 外部节点可持续：每月注入 fixed_cash 和 fixed_raw（按 external_replenish_cap_cents 上限）；
-  原料按 replenish_price 计价购买；EXT 不会再耗尽。
-- 外部订单按比例分给本地和外部（external_local_split），本地订单不会因外部竞争被吃光。
+外部订单依配置切分为一次本地购买预算和外部购买预算，均由真实账户付款。
+外部节点只接受玩家显式采购，不按月自动注资或补原料。
 """
 import math
 from backend.systems.v21.industry_scenario import split_integer
@@ -30,11 +26,11 @@ def settle_markets(city, opening, wages):
             total += city.buy(i, seller, amount, 'domestic_purchase')
         city.actual_domestic[i] = total
         city.actual_rent[i] = city.pay(i, 'PROP', city.cr(sector['rent_cr']*city.cpi), 'commercial_rent')
-    # 生活篮子：家庭口径。名义需求 = 可劳动人口 × 每户人口 × 生活成本；
+    # 生活篮子：名义需求 = 总居民数 × 消费等价系数 × 生活成本；
     # 实际预算仍受「储蓄提款上限 + 当期可支配收入」封顶。
     household_size = float(c.get('household_consumption_size', 1.0))
     for h, population in city.population.items():
-        nominal = population * household_size * city.living_cost_cents
+        nominal = round(population * household_size * city.living_cost_cents)
         budget = min(city.cash[h], max(0, round(c['savings_draw_limit']*opening[h])+city.income[h]), nominal)
         rent_budget = round(budget*city.scenario['household_rent_share'])
         goods = split_integer(budget-rent_budget, city.scenario['household_seller_weights'])
@@ -47,9 +43,12 @@ def settle_markets(city, opening, wages):
     for seller, amount in split_integer(city.cr(c['government_purchases_cr']), city.scenario['government_supplier_weights']).items():
         city.buy('GOV', seller, amount, 'public_purchase')
     city.buy('GOV', 'IND', city.cr(c['public_investment_cr']), 'capital_purchase')
-    capex_weights = {i: city.cash[i] for i in city.keys if i not in ('CHU', 'GOV', 'IND')}
-    for buyer, amount in split_integer(city.cr(c['private_capex_cr']), capex_weights).items():
-        city.buy(buyer, 'IND', amount, 'capital_purchase')
+    capex_budgets, capex_reserves = private_capital_budgets(city)
+    for buyer, amount in capex_budgets.items():
+        paid = city.buy(buyer, 'IND', amount, 'capital_purchase')
+        if paid:
+            city.transactions[-1].update(asset_effect='standard_package_consumption',
+                                         reserved_working_cash_cents=capex_reserves[buyer])
     for h, amount in split_integer(city.cr(c['offerings_cr']), city.population).items():
         city.pay(h, 'CHU', amount, 'offering')
     # 同一个有限外部贸易节点：外部订单按 external_local_split 切给本地一份后，
@@ -61,11 +60,30 @@ def settle_markets(city, opening, wages):
                                   *sector['demand_multiplier']*city.cpi)
         local_portion = round(demand_external * ext_split)
         if local_portion > 0:
-            # 本地居民把部分外部订单"消化"为本地购买
-            for h, p in city.population.items():
-                share = split_integer(local_portion, city.scenario['household_seller_weights'])
-                share.pop(seller, None)
-                amount = share.get(seller, 0)
+            for h, amount in split_integer(local_portion, city.population).items():
                 city.buy(h, seller, amount, 'consumer_purchase')
         ext_remainder = demand_external - local_portion
         city.buy('EXT', seller, ext_remainder, 'external_purchase', external=True)
+
+
+def private_capital_budgets(city):
+    """可取消投资只使用盈利行业的自由现金，先留足运营与欠薪资金。"""
+    c = city.scenario['city']
+    free, reserves = {}, {}
+    previous = city.last_report['sectors'] if city.last_report else {}
+    for industry in city.keys:
+        if industry in ('CHU', 'GOV', 'IND'):
+            continue
+        sector = city.sector(industry)
+        scale = city.actual_activity[industry] / max(city.initial_activity(industry), 1e-9)
+        payroll = city.employment()[industry] * city.current_wages[industry]
+        operating = city.cr((sector['operating_cr'] * scale + sector['rent_cr']) * city.cpi)
+        debt = sum(city.arrears[industry].values())
+        reserves[industry] = math.ceil((payroll + operating) * c.get('private_capex_reserve_months', 2)) + debt
+        profitable = previous.get(industry, {}).get('profit_cents')
+        if c.get('private_capex_require_profit', True) and (profitable is None or profitable <= 0):
+            free[industry] = 0
+        else:
+            free[industry] = max(0, city.cash[industry] - reserves[industry])
+    budget = min(city.cr(c['private_capex_cr']), sum(free.values()))
+    return split_integer(budget, free), reserves

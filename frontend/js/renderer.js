@@ -62,10 +62,10 @@ export class CityRenderer {
       objects.push({depth:b.x+b.y+size[0]+size[1]-1,draw:()=>{
         drawBuilding(ctx,def,b,{selected:b.id===this.selection});
         const p=project(b.x+size[0]/2,b.y+size[1]/2);
-        if(this.housing&&def.capacity){const capacity=b.housing_mode==='for_sale'?b.sold_units*def.unit_capacity:def.capacity;this.label(ctx,p.x,p.y-70,`${b.occupancy}/${capacity} 人`, '#bddecc');}
+        if(this.housing&&def.capacity){const capacity=b.housing_mode==='for_sale'?b.sold_units*def.unit_capacity:def.capacity;this.label(ctx,p.x,p.y-70,b.player_built?`新增住房 ${b.status==='completed'?capacity:0} 人`:'开局住房底座', '#bddecc');}
         if(b.status==='completed'&&b.housing_mode==='for_sale'&&b.sold_units<def.units)this.label(ctx,p.x,p.y-70,`待售 ${def.units-b.sold_units} 户`,'#dfc48e');
         if(b.status==='blueprint')this.label(ctx,p.x,p.y-65,'规划','#bde0ce');
-        if(b.status==='queued'||b.status==='constructing')this.label(ctx,p.x,p.y-74,`${Math.min(100,Math.round(b.progress/def.duration*100))}%`,'#dbbe81');
+        if(b.status==='queued'||b.status==='constructing')this.label(ctx,p.x,p.y-74,'下月完工','#dbbe81');
       }});
     }
     objects.sort((a,b)=>a.depth-b.depth).forEach(item=>item.draw());

@@ -57,9 +57,8 @@
 <body>
   <div class="app-shell">
     <div class="integration-banner">
-      <span>⚒ V2.1 阶段衔接：等距地图 + 房屋建造视觉已接入 V2.1 行业经济内核（阶段 14+15）。
-        地图建筑类型映射到行业 capacity 扩展：workshop→工业 / market→服务业 / 住宅→农业。</span>
-      <span>完整图表 webui：<a href="/industry">/industry</a> · 帮助 <code>?</code></span>
+      <span>⚒ 建设需要投资，下一月完工。工坊与集市扩展经营设施，住宅增加住房。</span>
+      <span><a href="/industry">行业经营与市政政策</a> · 帮助 <code>?</code></span>
     </div>
     <header class="topbar">
       <a class="brand" href="/" aria-label="BIPOLE 首页"><img src="/static/assets/emblem.svg" alt=""><span>BIPOLE<small>双极 · 城市纪事</small></span></a>
@@ -71,7 +70,7 @@
       <div class="metric"><span class="metric-icon gold">◈</span><div><label>政府现金 <small>CR</small></label><strong id="cash">—</strong><span id="cash-change">等待城市数据</span></div></div>
       <div class="metric"><span class="metric-icon green">♙</span><div><label>当前月份 <small>月</small></label><strong id="population">—</strong><span id="migration">开局为 0 月</span></div></div>
       <div class="metric"><span class="metric-icon brick">⌂</span><div><label>总就业 <small>人</small></label><strong id="capacity">—</strong><span id="vacancy">七行业合计</span></div></div>
-      <div class="metric"><span class="metric-icon blue">⚒</span><div><label>IND 月营业额 <small>CR</small></label><strong id="jobs">—</strong><span id="merchant-metric">工业实际月度收入</span></div></div>
+      <div class="metric"><span class="metric-icon blue">⚒</span><div><label>工业月营业额 <small>CR</small></label><strong id="jobs">—</strong><span id="merchant-metric">工业实际月度收入</span></div></div>
     </section>
 
     <main class="workspace">
@@ -80,44 +79,44 @@
         <p class="panel-intro">以蓝图落笔，以经营续写。</p>
         <div class="category-tabs" role="group" aria-label="建筑分类"><button data-category="全部" class="active">全部</button><button data-category="住宅">住宅</button><button data-category="公共">公共</button><button data-category="产业">经营</button></div>
         <div id="building-catalog" class="building-catalog"></div>
-        <section id="housing-tool" class="housing-tool" hidden><label>住宅开发方案</label><div class="mode-switch" role="group" aria-label="住宅开发方案"><button data-housing-mode="public" class="active" aria-pressed="true">公共出租</button><button data-housing-mode="for_sale" aria-pressed="false">建成待售</button></div><p id="housing-mode-note">市政持有，按实际入住收租并承担维护。</p></section>
-        <div class="planning-note"><span>✧</span><p><strong>蓝图规划免费</strong><br>确认施工后才会扣除预算。</p></div>
+
+        <div class="planning-note"><span>✧</span><p><strong>建设需要真实投资</strong><br>点击合法空地即扣预算，下一月完工并承担维护。</p></div>
         <button id="inspect-btn" class="inspect-button active">↖ 查看城市 / 选择建筑</button>
         <div class="sidebar-bottom"><span>原型测试城市 · 非小说正史</span><button id="new-btn">新建开局 ↗</button></div>
       </aside>
 
       <section class="map-panel" aria-label="等距城市地图">
         <div class="map-top"><div><span class="map-title"><i></i>河湾镇 · 城市视图</span><small id="map-subtitle">北方河岸 / 第一年</small></div><div class="map-view-tools"><button id="grid-btn" aria-pressed="false" title="切换格子线">▦ 格子</button><button id="layer-btn" aria-pressed="false" title="显示住宅容量">⌂ 住房</button></div></div>
-        <canvas id="city-canvas" tabindex="0" aria-label="城市地图；选择建筑后点击空地放蓝图，R 旋转，Esc 退出，拖动平移，滚轮缩放"></canvas>
+        <canvas id="city-canvas" tabindex="0" aria-label="城市地图；选择建筑后点击合法空地付款建设，R 旋转，Esc 退出，拖动平移，滚轮缩放"></canvas>
         <div class="map-caption"><span class="compass">N <b>↗</b></span><div><strong>魔导灯下，城市的印契由你续写。</strong><span>蒸汽与术式共鸣 · 河湾市政观测盘</span></div></div>
         <div id="placement-hint" class="placement-hint" hidden></div>
         <div class="map-controls"><button id="zoom-in" aria-label="放大地图">＋</button><button id="zoom-out" aria-label="缩小地图">−</button><button id="reset-view" aria-label="重置地图视角">⌖</button><span id="zoom-label">100%</span></div>
         <div class="mini-map"><canvas id="minimap" width="144" height="100" aria-label="城市全图"></canvas><span>河湾地区 / 28 × 28</span></div>
         <div class="map-help"><span>拖动平移</span><i>·</i><span>滚轮缩放</span><i>·</i><span>R 旋转</span></div>
-        <div id="plan-bar" class="plan-bar" hidden><div><strong id="plan-count">规划 0 座建筑</strong><span id="plan-cost">预算 —</span></div><button id="rotate-btn" class="quiet-button">↻ 旋转</button><button id="cancel-btn" class="quiet-button">取消蓝图</button><button id="commit-btn" class="save-button">确认施工 →</button></div>
+        <div id="plan-bar" class="plan-bar" hidden><div><strong id="plan-count">规划 0 座建筑</strong><span id="plan-cost">预算 —</span></div><button id="rotate-btn" class="quiet-button">↻ 旋转</button><button id="cancel-btn" class="quiet-button">退出建造</button><button id="commit-btn" class="save-button">完成选择</button></div>
       </section>
 
       <aside class="overview-panel panel">
         <div class="overview-tabs" role="group" aria-label="信息面板"><button data-pane="overview" class="active">城市概况</button><button data-pane="economy">行业经营</button><button data-pane="ledger">财政账本</button></div>
         <div id="overview-pane">
           <div class="city-card"><span class="city-seal">⌂</span><span class="eyebrow">THE ARCANE AGE</span><h2>河湾镇</h2><p>魔导灯初亮 · 工业时代的河岸城镇</p><div><span>市政纪事 · 第二章</span><b id="town-stage">安居与市集</b></div></div>
-          <section class="housing-section"><div class="section-label"><h3>七行业实时状态</h3><span id="housing-percent">—</span></div><div class="progress-track"><div id="housing-progress"></div></div><div class="legend"><span><i></i>七行业总和</span><span id="housing-ratio">— / —</span></div><p id="city-advice" class="city-advice">正在连接行业经济内核……</p></section>
+          <section class="housing-section"><div class="section-label"><h3>住房与施工</h3><span id="housing-percent">—</span></div><div class="progress-track"><div id="housing-progress"></div></div><div class="legend"><span><i></i>全城住房容量</span><span id="housing-ratio">— / —</span></div><p id="city-advice" class="city-advice">正在连接行业经济内核……</p></section>
           <section class="growth-section"><div class="section-label"><h3>七行业就业</h3><span>实时</span></div><div id="industry-list" class="industry-list"></div></section>
-          <section class="growth-section"><div class="section-label"><h3>当前生效政策</h3><span>_active_policies</span></div><div id="policy-list" class="policy-list"></div></section>
+          <section class="growth-section"><div class="section-label"><h3>当前生效政策</h3><span>按月到期</span></div><div id="policy-list" class="policy-list"></div></section>
           <section class="growth-section"><div class="section-label"><h3>市政指令流水</h3><span>本月生效</span></div><div id="mayor-actions" class="mayor-actions"></div></section>
           <section id="selection-section" class="selection-section" hidden><div class="section-label"><h3 id="selected-name">建筑详情</h3><button id="clear-selection" aria-label="关闭建筑详情">×</button></div><p id="selected-description"></p><dl id="selected-stats"></dl><div id="building-actions" class="building-actions"><button id="relocate-btn" type="button">↗ 迁址</button><button id="remove-btn" type="button" class="danger">✕ 拆除</button></div></section>
         </div>
-        <div id="economy-pane" hidden><div class="panel-heading"><h2>行业经营</h2></div><p class="panel-intro">原 v1 集市经营已下线。完整的「行业经营」界面在 <a href="/industry">/industry</a> 子页面（图表 webui · 阶段 15），包含 21 指标折线图、6 类市政指令、新参数滑块。</p><div id="ledger-list" class="ledger-list"></div></div>
-        <div id="ledger-pane" hidden><div class="panel-heading"><h2>市政收支印册</h2></div><p class="panel-intro">v1 ledger 已下线，完整经济流水请查看 <a href="/industry">/industry</a> 子页面。本面板保留仅作返回原 v1 路径。</p><dl id="finance-summary" class="finance-summary"></dl><div id="ledger-list2" class="ledger-list"></div></div>
+        <div id="economy-pane" hidden><div class="panel-heading"><h2>行业经营</h2></div><p class="panel-intro">打开<a href="/industry">行业经营</a>，查看逐月趋势并下达有预算代价的政策。地图建设与行业页面共享当前城市，切换页面不会重置月份。</p><div id="ledger-list" class="ledger-list"></div></div>
+        <div id="ledger-pane" hidden><div class="panel-heading"><h2>市政收支印册</h2></div><p class="panel-intro">以下为最近一次月结的真实交易。建设投资在下一次月报中列示；维护欠款会累积，后续有钱时偿付。更多指标请查看<a href="/industry">行业经营</a>。</p><dl id="finance-summary" class="finance-summary"></dl><div id="ledger-list2" class="ledger-list"></div></div>
         <div class="overview-footer"><span class="connection-dot"></span><span id="connection-status">连接本地模拟</span></div>
       </aside>
     </main>
 
-    <footer class="timebar"><div class="calendar"><span>◷</span><div><strong id="date">第 1 年 · 1 月</strong><small id="day">V2.1 行业经济内核</small></div></div><div class="time-controls"><button id="advance-btn" class="advance-button">推进一个月 →</button></div><span class="timebar-label">齿轮向前，术式未眠。</span></footer>
+    <footer class="timebar"><div class="calendar"><span>◷</span><div><strong id="date">第 1 年 · 1 月</strong><small id="day">V2.1 行业经济内核</small></div></div><div class="time-controls"><button id="queue-toggle" class="quiet-button">施工队列</button><button id="advance-btn" class="advance-button">推进一个月 →</button></div><span class="timebar-label">齿轮向前，术式未眠。</span></footer>
     <section id="queue-drawer" class="queue-drawer" hidden><div class="section-label"><h3>施工队列</h3><button id="queue-close" aria-label="关闭施工队列">×</button></div><div id="queue-list"></div></section>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-  <dialog id="help-dialog"><button class="dialog-close" data-close aria-label="关闭指南">×</button><span class="eyebrow">YOUR FIRST CITY · V2.1</span><h2>欢迎，河湾镇的新市长。</h2><p>V2.1 阶段衔接：等距地图保留，建造操作接入新行业经济内核。</p><ol><li>左侧选择建筑（workshop 工业 / market 服务业 / 住宅 农业 / park 装饰）。</li><li>在地图空地点击 → 即时扩展对应行业的 capacity_max（不消耗预算，但行业基准容量上升）。</li><li>点「推进一个月」触发 <code>industry_economy.advance()</code>：就业调整、工资发放、利润结算、税收、OCEAN 守恒检查。</li><li>右侧「城市概况」实时展示七行业就业、当前生效政策、本月市政指令流水。</li><li>完整图表界面（21 指标折线 + 6 类市政指令 + 滑块）在 <a href="/industry">/industry</a> 子页面。</li></ol><p class="dialog-note">v1 集市/住宅待售/施工队列已下线。存档通过 <code>save</code> 命令落到 <code>saves/game-slot.json</code>，与 <code>/industry</code> 共享同一份 IndustryGame 状态。</p><button class="save-button" data-close>开始书写城市故事 →</button></dialog>
+  <dialog id="help-dialog"><button class="dialog-close" data-close aria-label="关闭指南">×</button><span class="eyebrow">YOUR FIRST CITY · V2.1</span><h2>欢迎，河湾镇的新市长。</h2><ol><li>选择建筑，在草地放置，黄色入口必须连接道路；R 可旋转。</li><li>点击合法地块即从市政金库付款给工业施工。下一次月结完工，并开始承担每月维护。预算不足时整笔拒绝。</li><li>工坊和集市增加岗位与生产设施，实际就业仍取决于工资资金、原料与需求。住宅增加住房，不增加农业岗位；开局住房总底座为3600人。</li><li>推进一个月后查看行业营业额、就业和维护欠款。钱仍存在，不代表城市经营健康。</li><li>在<a href="/industry">行业经营</a>页面下达政策，并检查月报中的实际付款和结果。</li><li>保存与读取会保留施工、住房、政策和当前月份。地图与行业经营共享同一城市。</li></ol><p class="dialog-note">拆除不退投资；不能拆市政厅，不能让住房或在岗人员所需岗位不足。迁址必须重新满足完整占地与入口规则。</p><button class="save-button" data-close>开始经营 →</button></dialog>
   <dialog id="new-dialog"><button class="dialog-close" data-close aria-label="关闭新建开局">×</button><span class="eyebrow">A NEW CHAPTER</span><h2>重新接手一座小城</h2><p>会替换当前未保存的城市，不会删除已有存档。同一种子得到同一开局。</p><label class="seed-label" for="seed-input">开局种子</label><input id="seed-input" type="number" min="0" max="2147483647" value="20261012"><button id="confirm-new" class="save-button">创建新开局 →</button></dialog>
   <dialog id="relocate-dialog"><button class="dialog-close" data-close aria-label="关闭迁址">×</button><span class="eyebrow">RELOCATE BUILDING</span><h2 id="relocate-title">把建筑迁到新的地块</h2><p>迁移仅改变建筑位置，不改变行业岗位数；目标地块必须是草地区（不是水/桥/路/已占建筑）。</p><div class="relocate-row"><label for="relocate-x">新 X（0—27）</label><input id="relocate-x" type="number" min="0" max="27" step="1" value="0"><label for="relocate-y">新 Y（0—27）</label><input id="relocate-y" type="number" min="0" max="27" step="1" value="0"></div><button id="confirm-relocate" class="save-button">确认迁址 →</button></dialog>
   <script type="module" src="/static/js/main.js"></script>

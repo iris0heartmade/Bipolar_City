@@ -44,6 +44,20 @@ def validate_scenario(scenario):
             value = group[key]
             if type(value) not in (int, float) or not math.isfinite(value) or not control['min'] <= value <= control['max']:
                 raise ValueError(f"{control['label']}须在{control['min']}—{control['max']}之间")
+    # 人口参数是显式游戏参数；导入仍须保证年率与上下界有效。
+    demography = scenario['demographics']
+    for key, value in demography.items():
+        if type(value) not in (int, float) or not math.isfinite(value):
+            raise ValueError(f'人口参数无效：{key}')
+    for prefix in ('cbr', 'cdr'):
+        low, high = demography[f'min_{prefix}_per_thousand'], demography[f'max_{prefix}_per_thousand']
+        if not 0 <= low <= high <= 1000:
+            raise ValueError('人口年率上下界无效')
+        if not low <= demography[f'reference_{prefix}_per_thousand'] <= high:
+            raise ValueError('人口基准年率超出上下界')
+    for key in ('fertility_lag_months', 'mortality_lag_months'):
+        if type(demography[key]) is not int or demography[key] < 0:
+            raise ValueError('人口滞后月份须为非负整数')
     # 非可调常量须保持场景定义，导入方案不能绕过资金/人口来源规则。
     allowed_city = {c['key'] for c in base['controls'] if c['section'] == 'city'}
     for key, value in base['city'].items():

@@ -22,12 +22,6 @@ async function command(type,fields={},successMessage=''){
 }
 controls=new MapControls(renderer,ui,command);
 
-// 阶段衔接（2026-10-16）：地图游戏接入新经济内核后，
-// - 「推进一个月」对应 industry_economy.advance()，不是 v1 的 30 天推进
-// - 「暂停 / 倍速」已无意义（游戏按月结算，不存在连续时间模拟）
-// - 「建造」直接是地图点击 → 后端 build（中间不再保留蓝图确认步骤）
-// - 「住宅模式切换」已无意义（行业经济模型不区分公共/待售住宅）
-// - 「确认施工 / 取消蓝图」改为「退出当前工具」语义
 $('commit-btn').addEventListener('click',()=>controls.setTool(null));
 $('cancel-btn').addEventListener('click',()=>controls.setTool(null));
 $('advance-btn').addEventListener('click',()=>command('advance',{months:1},'已推进一个月，月报与行业指标已更新。'));
@@ -45,8 +39,8 @@ $('remove-btn').addEventListener('click',()=>{
   const target=buildings.find(b=>b.id===ui.selectedId);
   const defn=ui.catalog.find(d=>d.id===target?.definition_id);
   const label=defn?.name||target?.definition_id||ui.selectedId;
-  if(!window.confirm(`确认拆除「${label}」？会从 ${defn?.industry||'—'} 行业回收 ${defn?.jobs_added||0} 个岗位（不会立即裁员，下月结算生效）。`))return;
-  command('remove',{building_id:ui.selectedId},'建筑已拆除，行业 capacity 已回收。');
+  if(!window.confirm(`确认拆除「${label}」？投资不退还；已完工建筑将回收新增岗位、产能或住房。住房及在岗人员容量不足时拒绝拆除。`))return;
+  command('remove',{building_id:ui.selectedId},'建筑已拆除，新增能力已回收。');
   ui.selectedId=null;renderer.selection=null;
 });
 $('relocate-btn').addEventListener('click',()=>{
@@ -63,7 +57,7 @@ $('relocate-btn').addEventListener('click',()=>{
 $('confirm-relocate').addEventListener('click',async()=>{
   const x=Number($('relocate-x').value);
   const y=Number($('relocate-y').value);
-  if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||x>27||y<0||y>27){
+  if(!Number.isInteger(x)||!Number.isInteger(y)||x<0||x>27||y<0||y>27){
     ui.notify('坐标必须在 0—27 之间',true);return;
   }
   $('relocate-dialog').close();

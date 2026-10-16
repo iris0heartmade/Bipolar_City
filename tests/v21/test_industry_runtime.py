@@ -211,17 +211,18 @@ def test_purchase_external_rejects_when_cash_short():
     city.assert_invariants()
 
 
-def test_no_external_purchase_means_eventual_collapse():
-    """零操作且无市政采购：原料耗尽时行业应进入危机，与现实经济崩溃节奏一致。"""
+def test_no_external_purchase_consumes_only_finite_real_resources():
+    """不采购时资源按真实投入减少；不预设城市必须在指定月份崩溃。"""
     city = IndustryEconomy()
+    opening_raw = city.external_raw
     r = None
     for _ in range(120):
         r = city.advance()
-    # 120 月后无市政采购，原料应耗尽，IND 行业产能应明显低于建制上限
-    assert city.external_raw < 10
-    ind = r['sectors']['IND']
-    structural = ind['capacity_details']['structural']
-    assert ind['employed'] < structural / 2 or ind['crisis']
+    assert 0 <= city.external_raw < opening_raw
+    assert city.external_raw == pytest.approx(
+        city.initial_external_raw - city.cumulative_raw_input_qty, abs=1e-3)
+    assert city.cumulative_raw_purchased_units == 0
+    assert r['cash_residual_cents'] == 0
 
 
 def test_mayor_purchase_keeps_industry_alive():

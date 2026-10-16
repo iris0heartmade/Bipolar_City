@@ -25,9 +25,9 @@
   <h2>玩家操作</h2>
   <p class="hint">先调整计划或下达指令，再点"月进"查看当月结果。</p>
 
-  <h3>1. 一次性推演</h3>
+  <h3>1. 继续经营</h3>
   <form id="advance-form">
-    <label for="advance-months">一次性推演月数（1—120）</label>
+    <label for="advance-months">从当前月份继续（1—120个月）</label>
     <input id="advance-months" type="number" min="1" max="120" step="1" value="1">
     <button class="primary" type="submit">月进 →</button>
   </form>
@@ -52,9 +52,9 @@
     <button type="submit">调整生活成本</button>
   </form>
   <form id="household-form">
-    <label for="household">每就业者家庭人口（1.0—4.0）</label>
+    <label for="household">居民消费等价系数（1.0—4.0）</label>
     <input id="household" type="number" min="1" max="4" step="0.1" value="2.5">
-    <button type="submit">调整家庭规模</button>
+    <button type="submit">调整消费系数</button>
   </form>
   <form id="external-split-form">
     <label for="external-split">外部订单分给本地比例（0—1）</label>
@@ -65,11 +65,12 @@
 
   <h3>3. 市政指令（当月内执行）</h3>
   <form id="purchase-form">
-    <label for="purchase-cash">市政采购外部现金（CR）</label>
+    <label for="purchase-cash">外部贸易支持金（CR，国库转给外部市场）</label>
     <input id="purchase-cash" type="number" min="0" step="100" value="0">
     <label for="purchase-raw">市政采购外部原料（单位）</label>
     <input id="purchase-raw" type="number" min="0" step="1000" value="0">
-    <button type="submit">市政采购（EXT 现金 / 原料）</button>
+    <button type="submit">执行贸易支持 / 原料采购</button>
+    <p class="hint">采购原料归市政持有。企业实际领用时支付给市政，收回周转资金；支持金单独转给外部市场，不产生原料。</p>
   </form>
   <form id="subsidy-form">
     <label for="subsidy-industry">行业补贴（CR）</label>
@@ -117,8 +118,8 @@
 <!-- 右侧：指标 + 行业表 + 图表 -->
 <section class="metrics">
   <article><label>当前月份</label><strong id="month">0</strong></article>
-  <article><label>可劳动人口 / 就业</label><strong id="employment">—</strong></article>
-  <article><label>家庭人口 (×家庭规模)</label><strong id="household-population">—</strong></article>
+  <article><label>就业 / 劳动力 / 总居民</label><strong id="employment">—</strong></article>
+  <article><label>消费等价人数（非实际人口）</label><strong id="household-population">—</strong></article>
   <article><label>政府现金 · CR</label><strong id="government">—</strong></article>
   <article><label>居民总储蓄 · CR</label><strong id="households">—</strong></article>
   <article><label>当月实际消费 · CR</label><strong id="consumption">—</strong></article>
@@ -144,7 +145,7 @@
       <tbody id="sectors"></tbody>
     </table>
   </div>
-  <p class="hint">容纳=本期可雇人数上界；目标=本期希望用工；吸引力∈0—100。亏损月数连续累计，≥3 月标记危机，≥6 月触发衰退。</p>
+  <p class="hint">容纳是本期可雇人数上界，目标是期望用工；吸引力为0—100。连续亏损≥3月标记危机。消费系数只表示需求规模，不改变居民人数。模型条件用于开发校准，正式预算行动见市政指令。</p>
   <h3>本月人员流动</h3>
   <p id="flows">—</p>
   <h3>经营观察</h3>

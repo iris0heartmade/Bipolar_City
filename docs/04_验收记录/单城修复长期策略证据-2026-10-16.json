@@ -1,0 +1,1356 @@
+{
+  "scope": "Two actual budgeted strategies; healthy 120-month gate NOT met",
+  "scenario": {
+    "version": "industry-economy-1.1.0",
+    "scope": "七行业单城标准交付包；总居民、劳动力和就业分别核算；消费等价系数只调整需求规模；自然变化按年度游戏参数换算到月；有限外部账户，不代表完整多城商品世界",
+    "city": {
+      "population": 3000,
+      "labor_participation": 0.55,
+      "living_cost_cr": 50,
+      "inflation": 0.003,
+      "housing": 3600,
+      "security": 0.95,
+      "external_cash_cr": 1000000,
+      "external_raw_units": 5000000,
+      "external_cash_replenish_cr": 30000,
+      "external_raw_replenish_units": 20000,
+      "external_replenish_cap_cents": 0,
+      "external_raw_replenish_price_cr": 1.2,
+      "savings_draw_limit": 0.1,
+      "profit_tax_multiplier": 1,
+      "pit_rate": 0.08,
+      "property_tax_cr": 5505,
+      "government_purchases_cr": 14400,
+      "public_investment_cr": 1500,
+      "welfare_cr": 3200,
+      "central_transfer_cr": 2500,
+      "external_interest_cr": 600,
+      "church_grant_cr": 660,
+      "offerings_cr": 1500,
+      "property_maintenance_cr": 19000,
+      "private_capex_cr": 13000,
+      "dividend_ratio": 0.5203252032520326,
+      "private_capex_reserve_months": 2,
+      "private_capex_require_profit": true,
+      "domestic_input_share": 0.6006655574043261,
+      "input_buffer_months": 0.2,
+      "opening_output_months": 1,
+      "target_inventory_months": 1.0,
+      "raw_price_cr": 1,
+      "initial_service_quality": 1,
+      "wage_alpha": 0.4,
+      "wage_gamma": 0.02,
+      "wage_cap_up": 0.03,
+      "wage_cap_down": -0.02,
+      "price_pressure_k": 0.08,
+      "price_change_cap": 0.05,
+      "price_floor_ratio": 0.25,
+      "price_ceiling_ratio": 4,
+      "default_months": 1,
+      "max_months": 120,
+      "household_size_per_worker": 2.5,
+      "payroll_finance_buffer_months": 0.5,
+      "attrition_rate_when_unpaid": 0.25,
+      "layoff_cap_share": 0.1,
+      "demand_history_window": 3,
+      "demand_history_discount": 0.4,
+      "external_local_split": 0.5,
+      "exit_pay_runway_months": 2.0,
+      "max_loss_streak": 3,
+      "absorb_rehire_runway_months": 1.0,
+      "household_consumption_size": 2.5
+    },
+    "demographics": {
+      "reference_gni_ppp_per_capita": 1666,
+      "gni_cbr_elasticity": -0.405,
+      "gni_cdr_elasticity": -0.314,
+      "old_share_cdr_coef": 0.074,
+      "reference_cbr_per_thousand": 14.38,
+      "reference_cdr_per_thousand": 7.1,
+      "share_birth_consumption_response": 0.6,
+      "share_death_wage_response": 0.7,
+      "fertility_lag_months": 6,
+      "mortality_lag_months": 3,
+      "min_cbr_per_thousand": 5.0,
+      "max_cbr_per_thousand": 35.0,
+      "min_cdr_per_thousand": 2.0,
+      "max_cdr_per_thousand": 25.0
+    },
+    "household_seller_weights": {
+      "AGR": 0.2,
+      "IND": 0.45,
+      "SRV": 0.32,
+      "BNK": 0.01,
+      "MAG": 0.02
+    },
+    "household_rent_share": 0.2,
+    "household_consumption_size": 2.5,
+    "domestic_supplier_weights": {
+      "AGR": 0.07386888273314866,
+      "IND": 0.5586334256694367,
+      "SRV": 0.33702677746999077,
+      "BNK": 0.03047091412742382
+    },
+    "government_supplier_weights": {
+      "IND": 0.4166666666666667,
+      "SRV": 0.4236111111111111,
+      "MAG": 0.1597222222222222
+    },
+    "sectors": {
+      "AGR": {
+        "name": "农业",
+        "reference_sales_cr": 47000,
+        "operating_cr": 23100,
+        "rent_cr": 1000,
+        "depreciation_cr": 2500,
+        "external_demand_cr": 15000,
+        "tourism_cr": 0,
+        "output_price_cr": 10,
+        "wage_multiplier": 1,
+        "demand_multiplier": 1,
+        "input_supply_ratio": 1,
+        "safety_quality": 0.5,
+        "working_time_quality": 0.5
+      },
+      "IND": {
+        "name": "工业",
+        "reference_sales_cr": 190000,
+        "operating_cr": 104500,
+        "rent_cr": 5100,
+        "depreciation_cr": 7000,
+        "external_demand_cr": 55000,
+        "tourism_cr": 0,
+        "output_price_cr": 100,
+        "wage_multiplier": 1,
+        "demand_multiplier": 1,
+        "input_supply_ratio": 1,
+        "safety_quality": 0.5,
+        "working_time_quality": 0.5
+      },
+      "SRV": {
+        "name": "服务商业",
+        "reference_sales_cr": 110000,
+        "operating_cr": 46500,
+        "rent_cr": 3000,
+        "depreciation_cr": 1500,
+        "external_demand_cr": 5000,
+        "tourism_cr": 5000,
+        "output_price_cr": 100,
+        "wage_multiplier": 1,
+        "demand_multiplier": 1,
+        "input_supply_ratio": 1,
+        "safety_quality": 0.5,
+        "working_time_quality": 0.5
+      },
+      "CHU": {
+        "name": "教会",
+        "reference_sales_cr": 2000,
+        "operating_cr": 1000,
+        "rent_cr": 0,
+        "depreciation_cr": 0,
+        "external_demand_cr": 2000,
+        "tourism_cr": 0,
+        "output_price_cr": 10,
+        "wage_multiplier": 1,
+        "demand_multiplier": 1,
+        "input_supply_ratio": 1,
+        "safety_quality": 0.5,
+        "working_time_quality": 0.5
+      },
+      "BNK": {
+        "name": "银行",
+        "reference_sales_cr": 6500,
+        "operating_cr": 1900,
+        "rent_cr": 400,
+        "depreciation_cr": 200,
+        "external_demand_cr": 2000,
+        "tourism_cr": 0,
+        "output_price_cr": 100,
+        "wage_multiplier": 1,
+        "demand_multiplier": 1,
+        "input_supply_ratio": 1,
+        "safety_quality": 0.5,
+        "working_time_quality": 0.5
+      },
+      "MAG": {
+        "name": "魔法学院",
+        "reference_sales_cr": 8500,
+        "operating_cr": 3300,
+        "rent_cr": 500,
+        "depreciation_cr": 250,
+        "external_demand_cr": 3800,
+        "tourism_cr": 0,
+        "output_price_cr": 100,
+        "wage_multiplier": 1,
+        "demand_multiplier": 1,
+        "input_supply_ratio": 1,
+        "safety_quality": 0.5,
+        "working_time_quality": 0.5
+      },
+      "GOV": {
+        "name": "公务员",
+        "reference_sales_cr": 0,
+        "operating_cr": 0,
+        "rent_cr": 0,
+        "depreciation_cr": 0,
+        "external_demand_cr": 0,
+        "tourism_cr": 0,
+        "output_price_cr": 1,
+        "wage_multiplier": 1,
+        "demand_multiplier": 1,
+        "input_supply_ratio": 1,
+        "safety_quality": 0.5,
+        "working_time_quality": 0.5
+      }
+    },
+    "controls": [
+      {
+        "section": "city",
+        "key": "living_cost_cr",
+        "label": "人均月生活成本",
+        "min": 20,
+        "max": 120,
+        "step": 1,
+        "unit": "CR/月"
+      },
+      {
+        "section": "city",
+        "key": "inflation",
+        "label": "月通胀率",
+        "min": -0.005,
+        "max": 0.01,
+        "step": 0.001,
+        "unit": "比例"
+      },
+      {
+        "section": "city",
+        "key": "profit_tax_multiplier",
+        "label": "利润税倍率",
+        "min": 0,
+        "max": 2,
+        "step": 0.1,
+        "unit": "倍"
+      },
+      {
+        "section": "city",
+        "key": "government_purchases_cr",
+        "label": "政府月采购预算",
+        "min": 0,
+        "max": 40000,
+        "step": 1000,
+        "unit": "CR"
+      },
+      {
+        "section": "city",
+        "key": "household_consumption_size",
+        "label": "居民消费等价系数",
+        "min": 1.0,
+        "max": 4.0,
+        "step": 0.1,
+        "unit": "倍"
+      },
+      {
+        "section": "city",
+        "key": "external_local_split",
+        "label": "外部订单分给本地比例",
+        "min": 0,
+        "max": 1,
+        "step": 0.05,
+        "unit": "比例"
+      },
+      {
+        "section": "sector",
+        "key": "wage_multiplier",
+        "label": "工资倍率",
+        "min": 0.5,
+        "max": 2,
+        "step": 0.05,
+        "unit": "倍"
+      },
+      {
+        "section": "sector",
+        "key": "demand_multiplier",
+        "label": "外部订单倍率（公务员为计划）",
+        "min": 0,
+        "max": 2,
+        "step": 0.05,
+        "unit": "倍"
+      },
+      {
+        "section": "sector",
+        "key": "input_supply_ratio",
+        "label": "原料供货比例",
+        "min": 0,
+        "max": 1.5,
+        "step": 0.05,
+        "unit": "比例"
+      },
+      {
+        "section": "sector",
+        "key": "safety_quality",
+        "label": "工作场所安全",
+        "min": 0,
+        "max": 1,
+        "step": 0.05,
+        "unit": "评分"
+      },
+      {
+        "section": "sector",
+        "key": "working_time_quality",
+        "label": "工时质量",
+        "min": 0,
+        "max": 1,
+        "step": 0.05,
+        "unit": "评分"
+      },
+      {
+        "section": "flow",
+        "key": "monthly_hire_rate",
+        "label": "月招聘速度",
+        "min": 0,
+        "max": 0.3,
+        "step": 0.01,
+        "unit": "比例"
+      },
+      {
+        "section": "flow",
+        "key": "monthly_switch_rate",
+        "label": "月转行速度",
+        "min": 0,
+        "max": 0.2,
+        "step": 0.01,
+        "unit": "比例"
+      },
+      {
+        "section": "flow",
+        "key": "monthly_soft_exit_rate",
+        "label": "月渐进缩编速度",
+        "min": 0,
+        "max": 0.3,
+        "step": 0.01,
+        "unit": "比例"
+      },
+      {
+        "section": "flow",
+        "key": "switch_score_gap",
+        "label": "转行评分优势门槛",
+        "min": 0,
+        "max": 20,
+        "step": 1,
+        "unit": "分"
+      },
+      {
+        "section": "capacity",
+        "key": "reserve_horizon_months",
+        "label": "经营储备摊用期",
+        "min": 2,
+        "max": 6,
+        "step": 1,
+        "unit": "月"
+      },
+      {
+        "section": "attractiveness",
+        "key": "score_update_weight",
+        "label": "吸引力更新速度",
+        "min": 0.1,
+        "max": 1,
+        "step": 0.05,
+        "unit": "比例"
+      },
+      {
+        "section": "weights",
+        "key": "earnings",
+        "label": "收入质量权重",
+        "min": 0,
+        "max": 1,
+        "step": 0.05,
+        "unit": "比例"
+      },
+      {
+        "section": "weights",
+        "key": "security",
+        "label": "就业稳定性权重",
+        "min": 0,
+        "max": 1,
+        "step": 0.05,
+        "unit": "比例"
+      },
+      {
+        "section": "weights",
+        "key": "environment",
+        "label": "工作环境权重",
+        "min": 0,
+        "max": 1,
+        "step": 0.05,
+        "unit": "比例"
+      }
+    ],
+    "model": {
+      "model_version": "industry-labor-1.0.0",
+      "status": "shared_runtime",
+      "date": "2026-10-15",
+      "parameter_origin": "游戏设计初值，非现实统计估计；行业工资与税级来自现有V2.1配置",
+      "capacity": {
+        "reserve_horizon_months": 3,
+        "labor_output_exponent": 0.8
+      },
+      "attractiveness": {
+        "weights": {
+          "earnings": 0.6,
+          "security": 0.25,
+          "environment": 0.15
+        },
+        "security_weights": {
+          "timely_pay": 0.6,
+          "cash_runway": 0.4
+        },
+        "reference_gross_wage_cr": 90.0,
+        "reference_wage_pit_rate": 0.08,
+        "reference_living_cost_cr": 50.0,
+        "earnings_log_scale": 0.5,
+        "reference_earnings_score": 0.5,
+        "secure_runway_months": 3.0,
+        "history_weights_newest_first": [
+          0.5,
+          0.3,
+          0.2
+        ],
+        "score_update_weight": 0.5,
+        "neutral_environment": 0.5,
+        "new_employer_prior_pay_ratio": 0.8,
+        "environment_weights": {
+          "safety": 0.6,
+          "working_time": 0.4
+        }
+      },
+      "labor_flow": {
+        "monthly_hire_rate": 0.1,
+        "startup_hiring_reference_people": 20,
+        "monthly_soft_exit_rate": 0.1,
+        "monthly_switch_rate": 0.05,
+        "switch_score_gap": 5.0,
+        "integer_tie_break": "sorted_industry_id",
+        "jobseeker_priority": true,
+        "switch_requires_offer": true,
+        "same_month_reuse_switch_vacancies": false
+      }
+    }
+  },
+  "best": {
+    "name": "p5000-t2-s0",
+    "purchases": 5000,
+    "tax": 2,
+    "subsidy": 0,
+    "replenish": true,
+    "shock": false,
+    "snapshots": {
+      "24": {
+        "employment": 1291,
+        "labor_force": 1674,
+        "arrears_cr": 0.0,
+        "cash_cr": 441611.02,
+        "raw": 3361083.4100595964,
+        "external_cash_cr": 523353.6,
+        "paid_ratio": 1.0,
+        "srv_employment": 414,
+        "srv_cash_cr": 305313.52,
+        "ind_employment": 585,
+        "intervention_cost_cr": 0.0,
+        "cash_residual": 0
+      },
+      "36": {
+        "employment": 1281,
+        "labor_force": 1685,
+        "arrears_cr": 0.0,
+        "cash_cr": 630730.65,
+        "raw": 2579179.5461040875,
+        "external_cash_cr": 203626.88,
+        "paid_ratio": 1.0,
+        "srv_employment": 435,
+        "srv_cash_cr": 364338.54,
+        "ind_employment": 551,
+        "intervention_cost_cr": 0.0,
+        "cash_residual": 0
+      },
+      "37": {
+        "employment": 1275,
+        "labor_force": 1686,
+        "arrears_cr": 0.0,
+        "cash_cr": 646737.29,
+        "raw": 2515563.18166503,
+        "external_cash_cr": 174789.5,
+        "paid_ratio": 1.0,
+        "srv_employment": 433,
+        "srv_cash_cr": 369563.65,
+        "ind_employment": 547,
+        "intervention_cost_cr": 0.0,
+        "cash_residual": 0
+      },
+      "42": {
+        "employment": 1249,
+        "labor_force": 1691,
+        "arrears_cr": 0.0,
+        "cash_cr": 727308.53,
+        "raw": 2201084.4265274093,
+        "external_cash_cr": 25329.15,
+        "paid_ratio": 1.0,
+        "srv_employment": 423,
+        "srv_cash_cr": 396206.75,
+        "ind_employment": 534,
+        "intervention_cost_cr": 0.0,
+        "cash_residual": 0
+      },
+      "48": {
+        "employment": 1156,
+        "labor_force": 1697,
+        "arrears_cr": 0.0,
+        "cash_cr": 779659.07,
+        "raw": 1840702.4098525196,
+        "external_cash_cr": 600.0,
+        "paid_ratio": 1.0,
+        "srv_employment": 390,
+        "srv_cash_cr": 405910.28,
+        "ind_employment": 498,
+        "intervention_cost_cr": 0.0,
+        "cash_residual": 0
+      },
+      "60": {
+        "employment": 1366,
+        "labor_force": 1708,
+        "arrears_cr": 0.0,
+        "cash_cr": 831882.86,
+        "raw": 1065687.9478357905,
+        "external_cash_cr": 600.0,
+        "paid_ratio": 1.0,
+        "srv_employment": 517,
+        "srv_cash_cr": 386504.15,
+        "ind_employment": 568,
+        "intervention_cost_cr": 0.0,
+        "cash_residual": 0
+      },
+      "72": {
+        "employment": 1223,
+        "labor_force": 1719,
+        "arrears_cr": 0.0,
+        "cash_cr": 879471.4,
+        "raw": 318503.82941148186,
+        "external_cash_cr": 600.0,
+        "paid_ratio": 1.0,
+        "srv_employment": 474,
+        "srv_cash_cr": 378107.19,
+        "ind_employment": 496,
+        "intervention_cost_cr": 0.0,
+        "cash_residual": 0
+      },
+      "120": {
+        "employment": 1173,
+        "labor_force": 1762,
+        "arrears_cr": 0.0,
+        "cash_cr": 1081474.54,
+        "raw": 116623.72367788582,
+        "external_cash_cr": 600.0,
+        "paid_ratio": 1.0,
+        "srv_employment": 460,
+        "srv_cash_cr": 147353.0,
+        "ind_employment": 467,
+        "intervention_cost_cr": 3595590.89,
+        "cash_residual": 0
+      }
+    },
+    "actions": [
+      {
+        "month": 76,
+        "kind": "raw",
+        "units": 48604.2747432974,
+        "cost_cents": 6084774,
+        "reason": null
+      },
+      {
+        "month": 77,
+        "kind": "raw",
+        "units": 62734.51824408249,
+        "cost_cents": 7877302,
+        "reason": null
+      },
+      {
+        "month": 78,
+        "kind": "raw",
+        "units": 62965.53400429654,
+        "cost_cents": 7930028,
+        "reason": null
+      },
+      {
+        "month": 79,
+        "kind": "raw",
+        "units": 63401.93213033433,
+        "cost_cents": 8008944,
+        "reason": null
+      },
+      {
+        "month": 80,
+        "kind": "raw",
+        "units": 63230.50771843897,
+        "cost_cents": 8011252,
+        "reason": null
+      },
+      {
+        "month": 81,
+        "kind": "raw",
+        "units": 63135.79393594383,
+        "cost_cents": 8023249,
+        "reason": null
+      },
+      {
+        "month": 82,
+        "kind": "raw",
+        "units": 62835.10545177656,
+        "cost_cents": 8008993,
+        "reason": null
+      },
+      {
+        "month": 83,
+        "kind": "raw",
+        "units": 62163.5969856334,
+        "cost_cents": 7947173,
+        "reason": null
+      },
+      {
+        "month": 84,
+        "kind": "raw",
+        "units": 61720.84078495861,
+        "cost_cents": 7914241,
+        "reason": null
+      },
+      {
+        "month": 85,
+        "kind": "raw",
+        "units": 60905.09116885846,
+        "cost_cents": 7833069,
+        "reason": null
+      },
+      {
+        "month": 86,
+        "kind": "raw",
+        "units": 60355.55017952026,
+        "cost_cents": 7785679,
+        "reason": null
+      },
+      {
+        "month": 87,
+        "kind": "raw",
+        "units": 59793.353834948255,
+        "cost_cents": 7736297,
+        "reason": null
+      },
+      {
+        "month": 88,
+        "kind": "raw",
+        "units": 59370.83274772539,
+        "cost_cents": 7704675,
+        "reason": null
+      },
+      {
+        "month": 89,
+        "kind": "raw",
+        "units": 59332.457086791124,
+        "cost_cents": 7722794,
+        "reason": null
+      },
+      {
+        "month": 90,
+        "kind": "raw",
+        "units": 59320.501281629404,
+        "cost_cents": 7744401,
+        "reason": null
+      },
+      {
+        "month": 91,
+        "kind": "raw",
+        "units": 59586.0394568272,
+        "cost_cents": 7802405,
+        "reason": null
+      },
+      {
+        "month": 92,
+        "kind": "raw",
+        "units": 60061.784633529096,
+        "cost_cents": 7888295,
+        "reason": null
+      },
+      {
+        "month": 93,
+        "kind": "raw",
+        "units": 59966.17843663809,
+        "cost_cents": 7899366,
+        "reason": null
+      },
+      {
+        "month": 94,
+        "kind": "raw",
+        "units": 60208.957760496065,
+        "cost_cents": 7955141,
+        "reason": null
+      },
+      {
+        "month": 95,
+        "kind": "raw",
+        "units": 60289.551737473565,
+        "cost_cents": 7989687,
+        "reason": null
+      },
+      {
+        "month": 96,
+        "kind": "raw",
+        "units": 60194.57221958523,
+        "cost_cents": 8001031,
+        "reason": null
+      },
+      {
+        "month": 97,
+        "kind": "raw",
+        "units": 60452.515590578696,
+        "cost_cents": 8059423,
+        "reason": null
+      },
+      {
+        "month": 98,
+        "kind": "raw",
+        "units": 60342.10600761064,
+        "cost_cents": 8068837,
+        "reason": null
+      },
+      {
+        "month": 99,
+        "kind": "raw",
+        "units": 60372.84126094288,
+        "cost_cents": 8097166,
+        "reason": null
+      },
+      {
+        "month": 100,
+        "kind": "raw",
+        "units": 60278.80446892638,
+        "cost_cents": 8108808,
+        "reason": null
+      },
+      {
+        "month": 101,
+        "kind": "raw",
+        "units": 60060.67605735443,
+        "cost_cents": 8103703,
+        "reason": null
+      },
+      {
+        "month": 102,
+        "kind": "raw",
+        "units": 60044.72662122332,
+        "cost_cents": 8125856,
+        "reason": null
+      },
+      {
+        "month": 103,
+        "kind": "raw",
+        "units": 59891.57678028618,
+        "cost_cents": 8129445,
+        "reason": null
+      },
+      {
+        "month": 104,
+        "kind": "raw",
+        "units": 59470.364136478966,
+        "cost_cents": 8096488,
+        "reason": null
+      },
+      {
+        "month": 105,
+        "kind": "raw",
+        "units": 59449.69031523721,
+        "cost_cents": 8117955,
+        "reason": null
+      },
+      {
+        "month": 106,
+        "kind": "raw",
+        "units": 59201.19674238698,
+        "cost_cents": 8108275,
+        "reason": null
+      },
+      {
+        "month": 107,
+        "kind": "raw",
+        "units": 59072.37569237084,
+        "cost_cents": 8114903,
+        "reason": null
+      },
+      {
+        "month": 108,
+        "kind": "raw",
+        "units": 58949.357337494745,
+        "cost_cents": 8122298,
+        "reason": null
+      },
+      {
+        "month": 109,
+        "kind": "raw",
+        "units": 58979.81580704411,
+        "cost_cents": 8150874,
+        "reason": null
+      },
+      {
+        "month": 110,
+        "kind": "raw",
+        "units": 58786.8236061926,
+        "cost_cents": 8148576,
+        "reason": null
+      },
+      {
+        "month": 111,
+        "kind": "raw",
+        "units": 58494.57313512644,
+        "cost_cents": 8132390,
+        "reason": null
+      },
+      {
+        "month": 112,
+        "kind": "raw",
+        "units": 58400.9407228505,
+        "cost_cents": 8143731,
+        "reason": null
+      },
+      {
+        "month": 113,
+        "kind": "raw",
+        "units": 58457.615285600856,
+        "cost_cents": 8176089,
+        "reason": null
+      },
+      {
+        "month": 114,
+        "kind": "raw",
+        "units": 58295.01438936869,
+        "cost_cents": 8177807,
+        "reason": null
+      },
+      {
+        "month": 115,
+        "kind": "raw",
+        "units": 58218.03273192275,
+        "cost_cents": 8191509,
+        "reason": null
+      },
+      {
+        "month": 116,
+        "kind": "raw",
+        "units": 58213.17359632105,
+        "cost_cents": 8215397,
+        "reason": null
+      },
+      {
+        "month": 117,
+        "kind": "raw",
+        "units": 58212.08591618133,
+        "cost_cents": 8239890,
+        "reason": null
+      },
+      {
+        "month": 118,
+        "kind": "raw",
+        "units": 58165.730242756195,
+        "cost_cents": 8258028,
+        "reason": null
+      },
+      {
+        "month": 119,
+        "kind": "raw",
+        "units": 58220.345345903785,
+        "cost_cents": 8290579,
+        "reason": null
+      },
+      {
+        "month": 120,
+        "kind": "raw",
+        "units": 58198.04544478662,
+        "cost_cents": 8312266,
+        "reason": null
+      }
+    ],
+    "failed_actions": 0,
+    "minimum_employment": 1156,
+    "peak_employment": 1507
+  },
+  "shock": {
+    "name": "p0-t2-s20000-shock",
+    "purchases": 0,
+    "tax": 2,
+    "subsidy": 20000,
+    "replenish": true,
+    "shock": true,
+    "snapshots": {
+      "24": {
+        "employment": 1325,
+        "labor_force": 1674,
+        "arrears_cr": 0.0,
+        "cash_cr": 522070.5,
+        "raw": 3355740.691986561,
+        "external_cash_cr": 528887.18,
+        "paid_ratio": 1.0,
+        "srv_employment": 443,
+        "srv_cash_cr": 275555.6,
+        "ind_employment": 583,
+        "intervention_cost_cr": 0.0,
+        "cash_residual": 0
+      },
+      "36": {
+        "employment": 1302,
+        "labor_force": 1685,
+        "arrears_cr": 0.0,
+        "cash_cr": 742149.96,
+        "raw": 2565885.4801678127,
+        "external_cash_cr": 217831.52,
+        "paid_ratio": 1.0,
+        "srv_employment": 458,
+        "srv_cash_cr": 313132.1,
+        "ind_employment": 541,
+        "intervention_cost_cr": 0.0,
+        "cash_residual": 0
+      },
+      "37": {
+        "employment": 1245,
+        "labor_force": 1686,
+        "arrears_cr": 0.0,
+        "cash_cr": 758744.13,
+        "raw": 2510675.940406245,
+        "external_cash_cr": 210261.41,
+        "paid_ratio": 1.0,
+        "srv_employment": 455,
+        "srv_cash_cr": 315081.64,
+        "ind_employment": 487,
+        "intervention_cost_cr": 0.0,
+        "cash_residual": 0
+      },
+      "42": {
+        "employment": 1148,
+        "labor_force": 1691,
+        "arrears_cr": 0.0,
+        "cash_cr": 822098.19,
+        "raw": 2210314.358482675,
+        "external_cash_cr": 199441.13,
+        "paid_ratio": 1.0,
+        "srv_employment": 414,
+        "srv_cash_cr": 311861.98,
+        "ind_employment": 441,
+        "intervention_cost_cr": 0.0,
+        "cash_residual": 0
+      },
+      "48": {
+        "employment": 1396,
+        "labor_force": 1696,
+        "arrears_cr": 0.0,
+        "cash_cr": 918392.19,
+        "raw": 1859167.4958485211,
+        "external_cash_cr": 45062.3,
+        "paid_ratio": 1.0,
+        "srv_employment": 535,
+        "srv_cash_cr": 309701.64,
+        "ind_employment": 522,
+        "intervention_cost_cr": 0.0,
+        "cash_residual": 0
+      },
+      "60": {
+        "employment": 969,
+        "labor_force": 1706,
+        "arrears_cr": 0.0,
+        "cash_cr": 1046342.33,
+        "raw": 1229406.4192305284,
+        "external_cash_cr": 600.0,
+        "paid_ratio": 1.0,
+        "srv_employment": 461,
+        "srv_cash_cr": 163517.71,
+        "ind_employment": 230,
+        "intervention_cost_cr": 0.0,
+        "cash_residual": 0
+      },
+      "72": {
+        "employment": 945,
+        "labor_force": 1716,
+        "arrears_cr": 0.0,
+        "cash_cr": 981962.78,
+        "raw": 690324.2058864668,
+        "external_cash_cr": 600.0,
+        "paid_ratio": 1.0,
+        "srv_employment": 417,
+        "srv_cash_cr": 65484.81,
+        "ind_employment": 222,
+        "intervention_cost_cr": 200000.0,
+        "cash_residual": 0
+      },
+      "120": {
+        "employment": 758,
+        "labor_force": 1746,
+        "arrears_cr": 0.0,
+        "cash_cr": 1285657.68,
+        "raw": 81629.09932078181,
+        "external_cash_cr": 600.0,
+        "paid_ratio": 1.0,
+        "srv_employment": 201,
+        "srv_cash_cr": 106223.05,
+        "ind_employment": 293,
+        "intervention_cost_cr": 2207822.6,
+        "cash_residual": 0
+      }
+    },
+    "actions": [
+      {
+        "month": 37,
+        "kind": "demand_shock"
+      },
+      {
+        "month": 43,
+        "kind": "demand_restore"
+      },
+      {
+        "month": 63,
+        "kind": "srv_subsidy",
+        "cost_cents": 2000000,
+        "success": true,
+        "reason": null
+      },
+      {
+        "month": 64,
+        "kind": "srv_subsidy",
+        "cost_cents": 2000000,
+        "success": true,
+        "reason": null
+      },
+      {
+        "month": 65,
+        "kind": "srv_subsidy",
+        "cost_cents": 2000000,
+        "success": true,
+        "reason": null
+      },
+      {
+        "month": 66,
+        "kind": "srv_subsidy",
+        "cost_cents": 2000000,
+        "success": true,
+        "reason": null
+      },
+      {
+        "month": 67,
+        "kind": "srv_subsidy",
+        "cost_cents": 2000000,
+        "success": true,
+        "reason": null
+      },
+      {
+        "month": 68,
+        "kind": "srv_subsidy",
+        "cost_cents": 2000000,
+        "success": true,
+        "reason": null
+      },
+      {
+        "month": 69,
+        "kind": "srv_subsidy",
+        "cost_cents": 2000000,
+        "success": true,
+        "reason": null
+      },
+      {
+        "month": 70,
+        "kind": "srv_subsidy",
+        "cost_cents": 2000000,
+        "success": true,
+        "reason": null
+      },
+      {
+        "month": 71,
+        "kind": "srv_subsidy",
+        "cost_cents": 2000000,
+        "success": true,
+        "reason": null
+      },
+      {
+        "month": 72,
+        "kind": "srv_subsidy",
+        "cost_cents": 2000000,
+        "success": true,
+        "reason": null
+      },
+      {
+        "month": 73,
+        "kind": "srv_subsidy",
+        "cost_cents": 2000000,
+        "success": true,
+        "reason": null
+      },
+      {
+        "month": 74,
+        "kind": "srv_subsidy",
+        "cost_cents": 2000000,
+        "success": true,
+        "reason": null
+      },
+      {
+        "month": 75,
+        "kind": "srv_subsidy",
+        "cost_cents": 2000000,
+        "success": true,
+        "reason": null
+      },
+      {
+        "month": 76,
+        "kind": "srv_subsidy",
+        "cost_cents": 2000000,
+        "success": true,
+        "reason": null
+      },
+      {
+        "month": 87,
+        "kind": "raw",
+        "units": 34745.34658766733,
+        "cost_cents": 4495488,
+        "reason": null
+      },
+      {
+        "month": 88,
+        "kind": "raw",
+        "units": 42456.586023721,
+        "cost_cents": 5509678,
+        "reason": null
+      },
+      {
+        "month": 89,
+        "kind": "raw",
+        "units": 43218.09473881862,
+        "cost_cents": 5625326,
+        "reason": null
+      },
+      {
+        "month": 90,
+        "kind": "raw",
+        "units": 43356.92464493752,
+        "cost_cents": 5660327,
+        "reason": null
+      },
+      {
+        "month": 91,
+        "kind": "raw",
+        "units": 44153.18554679549,
+        "cost_cents": 5781573,
+        "reason": null
+      },
+      {
+        "month": 92,
+        "kind": "raw",
+        "units": 44097.28063893039,
+        "cost_cents": 5791575,
+        "reason": null
+      },
+      {
+        "month": 93,
+        "kind": "raw",
+        "units": 44459.71501883931,
+        "cost_cents": 5856694,
+        "reason": null
+      },
+      {
+        "month": 94,
+        "kind": "raw",
+        "units": 44115.99261973126,
+        "cost_cents": 5828849,
+        "reason": null
+      },
+      {
+        "month": 95,
+        "kind": "raw",
+        "units": 46089.67365128512,
+        "cost_cents": 6107892,
+        "reason": null
+      },
+      {
+        "month": 96,
+        "kind": "raw",
+        "units": 46261.3013634934,
+        "cost_cents": 6149028,
+        "reason": null
+      },
+      {
+        "month": 97,
+        "kind": "raw",
+        "units": 45730.76637379214,
+        "cost_cents": 6096745,
+        "reason": null
+      },
+      {
+        "month": 98,
+        "kind": "raw",
+        "units": 44192.24329194093,
+        "cost_cents": 5909307,
+        "reason": null
+      },
+      {
+        "month": 99,
+        "kind": "raw",
+        "units": 42461.20893691416,
+        "cost_cents": 5694870,
+        "reason": null
+      },
+      {
+        "month": 100,
+        "kind": "raw",
+        "units": 40733.54660502444,
+        "cost_cents": 5479546,
+        "reason": null
+      },
+      {
+        "month": 101,
+        "kind": "raw",
+        "units": 39142.86149584796,
+        "cost_cents": 5281361,
+        "reason": null
+      },
+      {
+        "month": 102,
+        "kind": "raw",
+        "units": 38401.975331846246,
+        "cost_cents": 5196941,
+        "reason": null
+      },
+      {
+        "month": 103,
+        "kind": "raw",
+        "units": 37787.01091057285,
+        "cost_cents": 5129059,
+        "reason": null
+      },
+      {
+        "month": 104,
+        "kind": "raw",
+        "units": 38276.72612776885,
+        "cost_cents": 5211118,
+        "reason": null
+      },
+      {
+        "month": 105,
+        "kind": "raw",
+        "units": 39309.88922887009,
+        "cost_cents": 5367831,
+        "reason": null
+      },
+      {
+        "month": 106,
+        "kind": "raw",
+        "units": 40018.378204692446,
+        "cost_cents": 5480970,
+        "reason": null
+      },
+      {
+        "month": 107,
+        "kind": "raw",
+        "units": 40478.200511478615,
+        "cost_cents": 5560580,
+        "reason": null
+      },
+      {
+        "month": 108,
+        "kind": "raw",
+        "units": 40478.31789177426,
+        "cost_cents": 5577278,
+        "reason": null
+      },
+      {
+        "month": 109,
+        "kind": "raw",
+        "units": 41482.112089880146,
+        "cost_cents": 5732732,
+        "reason": null
+      },
+      {
+        "month": 110,
+        "kind": "raw",
+        "units": 41784.23376314262,
+        "cost_cents": 5791808,
+        "reason": null
+      },
+      {
+        "month": 111,
+        "kind": "raw",
+        "units": 42664.61568457805,
+        "cost_cents": 5931581,
+        "reason": null
+      },
+      {
+        "month": 112,
+        "kind": "raw",
+        "units": 42595.72212058341,
+        "cost_cents": 5939769,
+        "reason": null
+      },
+      {
+        "month": 113,
+        "kind": "raw",
+        "units": 42991.02325383155,
+        "cost_cents": 6012876,
+        "reason": null
+      },
+      {
+        "month": 114,
+        "kind": "raw",
+        "units": 42450.60198557614,
+        "cost_cents": 5955103,
+        "reason": null
+      },
+      {
+        "month": 115,
+        "kind": "raw",
+        "units": 42438.585042791296,
+        "cost_cents": 5971278,
+        "reason": null
+      },
+      {
+        "month": 116,
+        "kind": "raw",
+        "units": 41345.608505936994,
+        "cost_cents": 5834944,
+        "reason": null
+      },
+      {
+        "month": 117,
+        "kind": "raw",
+        "units": 41004.32191560329,
+        "cost_cents": 5804140,
+        "reason": null
+      },
+      {
+        "month": 118,
+        "kind": "raw",
+        "units": 40169.05927490289,
+        "cost_cents": 5702967,
+        "reason": null
+      },
+      {
+        "month": 119,
+        "kind": "raw",
+        "units": 39969.87927144494,
+        "cost_cents": 5691712,
+        "reason": null
+      },
+      {
+        "month": 120,
+        "kind": "raw",
+        "units": 39357.435244576525,
+        "cost_cents": 5621314,
+        "reason": null
+      }
+    ],
+    "failed_actions": 0,
+    "minimum_employment": 755,
+    "peak_employment": 1521
+  },
+  "source_files": [
+    "sweep.json",
+    "best-and-shock.json"
+  ]
+}

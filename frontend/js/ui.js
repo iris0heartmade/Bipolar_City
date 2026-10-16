@@ -4,10 +4,7 @@ export const $=id=>document.getElementById(id);
 export const money=value=>new Intl.NumberFormat('zh-CN',{maximumFractionDigits:2}).format(value/100);
 const count=value=>new Intl.NumberFormat('zh-CN').format(value);
 
-// 阶段衔接（2026-10-16）：地图游戏接入新经济内核后，
-// 原 v1 的「施工中/待施工/竣工」等建筑状态被简化为「直接建成」，
-// 因为 build 命令即时生效（同步行业 jobs_capacity），不再有持续 7-30 天的施工过程。
-const statuses={blueprint:'规划蓝图',completed:'已建成'};
+const statuses={constructing:'施工中，下次月结完工',completed:'已建成'};
 
 export class GameUI {
   constructor(onTool){
@@ -35,7 +32,7 @@ export class GameUI {
       button.className='building-card';
       button.dataset.building=def.id;
       const industry=def.industry;
-      const industryLabel=industry?` → ${industry} 行业 +${def.jobs_added||0} 岗位`:'（环境装饰）';
+      const industryLabel=industry?` → ${industry} +${def.jobs_added||0} 岗位与产能`:def.housing_added?` → +${def.housing_added} 人住房`:'（公共设施）';
       button.setAttribute('aria-label',`建造${def.name}`);
       button.setAttribute('aria-pressed',String(this.tool===def.id));
       button.classList.toggle('selected',this.tool===def.id);
@@ -51,7 +48,7 @@ export class GameUI {
       meta.textContent=`${def.width}×${def.height} 格${industryLabel}`;
       cost.className='card-cost';
       cost.textContent=`◈ ${money(def.cost)}`;
-      duration.textContent='即时生效';
+      duration.textContent=`下一月完工 · 维护 ${money(def.maintenance)}/月`;
       cost.append(duration);
       info.append(name,meta,cost);
       button.append(canvas,info);
@@ -76,24 +73,35 @@ export class GameUI {
     // - 总就业人数（7 行业 employment 求和）
     // - IND 月营业额（来自 last_report['IND'].revenue_cents）
     $('cash').textContent=money(state.government_cash_cents||0);
-    $('population').textContent=`第 ${(state.month||0)+1} 月`;
+    $('population').textContent=`已结算 ${state.month||0} 月`;
     $('capacity').textContent=count(totalEmployment);
-    $('jobs').textContent=money(state.last_report?.IND?.revenue_cents||0);
-    $('cash-change').textContent=`OCEAN ${money(state.ocean_cash_cents||0)} · 月份 ${state.month||0}`;
+    $('jobs').textContent=money(state.last_report?.sectors?.IND?.sales_cents||0);
+    $('cash-change').textContent=`建设从此付款 · 维护欠款 ${money(state.maintenance_due_cents||0)}`;
     $('vacancy').textContent=`行业岗位上限 ${count(totalCapacity)}`;
     $('merchant-metric').textContent=`IND 就业 ${count(ind.employment||0)}/${count(ind.capacity||0)}`;
     const yearLabel=`第 ${Math.floor((state.month||0)/12)+1} 年 · ${((state.month||0)%12)+1} 月`;
     $('date').textContent=yearLabel;
-    $('day').textContent=`V2.1 行业经济内核`;
+    $('day').textContent=`按月经营 · 建设次月完工`;
     $('map-subtitle').textContent=`北方河岸 / ${yearLabel}`;
     $('plan-bar').hidden=!this.tool;
-    $('plan-count').textContent=this.tool?'点击地图放置蓝图':'先在左侧选择建筑类型';
-    $('plan-cost').textContent='即时生效 · 扣行业基准预算';
+    $('plan-count').textContent=this.tool?'点击合法空地立即投资建设':'先在左侧选择建筑类型';
+    $('plan-cost').textContent='实际付款给工业 · 下一月完工';
+    $('housing-ratio').textContent=`居民 ${count(state.housing?.residents||0)} / 住房 ${count(state.housing?.capacity||0)}`;
+    $('housing-percent').textContent=`施工 ${state.summary?.construction||0} 座`;
+    $('housing-progress').style.width=`${Math.min(100,(state.housing?.residents||0)/(state.housing?.capacity||1)*100)}%`;
+    $('city-advice').textContent='就业受工资资金、原料与需求共同限制。新增岗位不保证立即招满；住宅只增加住房。';
+    const queue=$('queue-list');queue.replaceChildren();
+    for(const b of state.world?.buildings||[]){if(b.status!=='constructing')continue;const row=document.createElement('p');row.textContent=`${this.catalog.find(d=>d.id===b.definition_id)?.name||b.definition_id}：下次月结完工`;queue.append(row);}
     $('load-btn').disabled=!state.save_exists;
     // 新经济面板用旧面板的元素复用（不再展示 v1 ledger / queue / events）
     this.showIndustries();
     this.showActivePolicies();
     this.showMayorActions();
+    const ledger=$('ledger-list2');ledger.replaceChildren();
+    const names={building_investment:'建设投资',building_maintenance:'建筑维护',consumer_purchase:'居民消费',wage:'工资',tax:'税款'};
+    for(const tx of (state.last_report?.transactions||[]).slice(-30)){
+      const row=document.createElement('p');row.textContent=`${names[tx.kind]||tx.kind}：${tx.from} → ${tx.to} · ${money(tx.amount_cents||0)} CR`;ledger.append(row);
+    }
     if(this.selectedId)this.showSelection();
   }
   showIndustries(){
@@ -177,7 +185,10 @@ export class GameUI {
       ['位置',`(${b.x}, ${b.y})`],
       ['状态',statuses[b.status]||b.status],
       ['建筑行业',def?.industry||'—'],
-      ['单座岗位扩展',def?.jobs_added||0],
+      ['单座岗位扩展',b.player_built?(def?.jobs_added||0):'已包含于开局行业底座'],
+      ['新增住房',b.player_built?(def?.housing_added||0):'已包含于全城住房底座'],
+      ['每月维护',b.player_built?`${money(def?.maintenance||0)} CR`:'开局底座已计入行业运营'],
+      ['维护欠款',`${money(b.maintenance_due_cents||0)} CR`],
     ];
     for(const [name,value] of rows){
       const dt=document.createElement('dt');

@@ -11,12 +11,13 @@ let busy=false;
 let chartSeries=[];      // [{month, value}]
 let chartMetric='employment';
 const records=[];
+let chartStartMonth=0;
 
 const METRICS=[
   {key:'employment',      label:'就业总人数',       getter:d=>sumEmployment(d), unit:'人'},
   {key:'unemployment',    label:'失业人数',         getter:d=>d.latest?.unemployed ?? 0, unit:'人'},
-  {key:'workforce',       label:'可劳动人口',       getter:d=>d.latest?.workforce_population ?? 0, unit:'人'},
-  {key:'household',       label:'家庭人口',         getter:d=>d.latest?.household_population ?? 0, unit:'人'},
+  {key:'workforce',       label:'劳动力',           getter:d=>d.latest?.labor_force ?? d.labor_force ?? 0, unit:'人'},
+  {key:'household',       label:'消费等价人数',     getter:d=>d.latest?.consumption_equivalent_population ?? d.latest?.household_population ?? 0, unit:'等价人'},
   {key:'gov',             label:'政府现金',         getter:d=>d.cash.GOV/100, unit:'CR'},
   {key:'hh',              label:'居民总储蓄',       getter:d=>sumHouseholds(d)/100, unit:'CR'},
   {key:'ind',             label:'行业总经营现金',   getter:d=>d.latest?.industry_cash_cents/100 ?? 0, unit:'CR'},
@@ -24,13 +25,13 @@ const METRICS=[
   {key:'ext_raw',         label:'外部原料',         getter:d=>d.cash.EXT/100>=0 ? (d.latest?.external_raw_units ?? d.latest?.raw_reserve_units ?? 0) : 0, unit:'单位'},
   {key:'sales',           label:'当月营业额',       getter:d=>d.latest?.sales_cents/100 ?? 0, unit:'CR'},
   {key:'consumption',     label:'当月实际消费',     getter:d=>d.latest?.consumer_spending_cents/100 ?? 0, unit:'CR'},
-  {key:'wages',           label:'当月工资发放',     getter:d=>d.latest?.wages_cents/100 ?? 0, unit:'CR'},
-  {key:'arrears',         label:'当月欠付工资',     getter:d=>d.latest?.wage_arrears_cents/100 ?? 0, unit:'CR'},
+  {key:'wages',           label:'当月实付工资',     getter:d=>(d.latest?.paid_wages_cents ?? d.latest?.wages_cents ?? 0)/100, unit:'CR'},
+  {key:'arrears',         label:'累计未偿工资',     getter:d=>(d.latest?.wage_arrears_cents ?? 0)/100, unit:'CR'},
   {key:'fiscal',          label:'财政当月变动',     getter:d=>d.latest?.fiscal_balance_cents/100 ?? 0, unit:'CR'},
-  {key:'cpi',             label:'CPI 指数',         getter:d=>d.latest?.living_cost_cents ? (d.latest.living_cost_cents/100/50) : 1, unit:'倍'},
-  {key:'cbr',             label:'出生率',           getter:d=>d.latest?.demography?.cbr_per_thousand ?? 0, unit:'‰'},
-  {key:'cdr',             label:'死亡率',           getter:d=>d.latest?.demography?.cdr_per_thousand ?? 0, unit:'‰'},
-  {key:'net',             label:'人口净增',         getter:d=>(d.latest?.demography?.cbr_per_thousand ?? 0)-(d.latest?.demography?.cdr_per_thousand ?? 0), unit:'‰'},
+  {key:'cpi',             label:'物价指数',         getter:d=>d.latest?.cpi ?? 1, unit:'倍'},
+  {key:'cbr',             label:'年出生率',         getter:d=>d.latest?.demography?.cbr_per_thousand ?? 0, unit:'‰/年'},
+  {key:'cdr',             label:'年死亡率',         getter:d=>d.latest?.demography?.cdr_per_thousand ?? 0, unit:'‰/年'},
+  {key:'net',             label:'人口月净增率',     getter:d=>(d.latest?.demography?.cbr_monthly_per_thousand ?? 0)-(d.latest?.demography?.cdr_monthly_per_thousand ?? 0), unit:'‰/月'},
   {key:'IND_emp',         label:'工业就业',         getter:d=>d.employment.IND ?? 0, unit:'人'},
   {key:'IND_cash',        label:'工业经营现金',     getter:d=>d.cash.IND/100, unit:'CR'},
   {key:'IND_sales',       label:'工业营业额',       getter:d=>d.latest?.sectors?.IND?.sales_cents/100 ?? 0, unit:'CR'},
@@ -46,7 +47,7 @@ function render(data){
   snapshot=data;
   const r=data.latest;
   $('month').textContent=data.month;
-  $('employment').textContent=r?`${number(sumEmployment(data))} / ${number(r.workforce_population ?? 0)}`:'—';
+  $('employment').textContent=`${number(sumEmployment(data))} / ${number(r?.labor_force ?? data.labor_force)} / ${number(r?.population ?? data.population)}`;
   $('household-population').textContent=r?number(r.household_population ?? 0):'—';
   $('government').textContent=number(data.cash.GOV/100);
   $('households').textContent=number(sumHouseholds(data)/100);
@@ -54,7 +55,7 @@ function render(data){
   $('sales').textContent=r?number(r.sales_cents/100):'—';
   $('external-cash').textContent=number(data.cash.EXT/100);
   $('external-raw').textContent=r?number(r.external_raw_units ?? r.raw_reserve_units ?? 0):'—';
-  $('net-rate').textContent=r&&r.demography?number((r.demography.cbr_per_thousand||0)-(r.demography.cdr_per_thousand||0)):'—';
+  $('net-rate').textContent=r&&r.demography?number((r.demography.cbr_monthly_per_thousand||0)-(r.demography.cdr_monthly_per_thousand||0)):'—';
   $('status-line').textContent=`行业经营版 · 玩家是市长，所有改变按月结算 · ${data.month} 月份`;
 
   const tbody=$('sectors');
@@ -88,18 +89,20 @@ function render(data){
     const hires=Object.values(r.hires||{}).reduce((a,b)=>a+b,0),exits=Object.values(r.layoffs||{}).reduce((a,b)=>a+b,0);
     $('flows').textContent=`从待业池录用 ${hires} 人；缩编 ${exits} 人。${changes.length?changes.join('；'):'本月没有在职转行。'}`;
     const loss=(r.sectors?Object.values(r.sectors).filter(s=>(s.profit_cents||0)<0).map(s=>s.name):[]);
-    $('observations').textContent=`本月实际工资 ${number(r.wages_cents/100)} CR，营业额 ${number(r.sales_cents/100)} CR。${loss.length?`税前亏损：${loss.join('、')}。`:'非公共行业经营结果见上表。'}`;
+    const paid=r.paid_wages_cents ?? r.transactions.filter(t=>t.kind==='wage').reduce((n,t)=>n+t.amount_cents,0);
+    $('observations').textContent=`本月应付工资 ${number(r.wages_cents/100)} CR，实付 ${number(paid/100)} CR，累计未偿 ${number(r.wage_arrears_cents/100)} CR；营业额 ${number(r.sales_cents/100)} CR。${loss.length?`税前亏损：${loss.join('、')}。`:'非公共行业经营结果见上表。'}`;
     const crisis=(r.sectors?Object.entries(r.sectors).filter(([,s])=>s.crisis).map(([i])=>data.scenario.sectors[i]?.name):[]);
     $('active-policies').textContent=(()=>{
       const pol=Object.entries(data.active_policies||{});
       const ap=pol.length?`市政限时政策：${pol.map(([k,v])=>`${k}(剩${v-data.month}月)`).join('；')}。`:'';
-      const rec=r.recent_mayor_actions||[];
+      const rec=data.recent_mayor_actions?.length?data.recent_mayor_actions:(r.recent_mayor_actions||[]);
       const recText=rec.length?`本月市政动作：${rec.map(a=>a.kind+(a.industry?`/${a.industry}`:'')+(a.cash_cents?` ${a.cash_cents/100}CR`:a.people?` ${a.people}人`:a.months?` ${a.months}月`:'')).join('；')}。`:'';
       return [crisis.length?`⚠ 危机标记：${crisis.join('、')}`:'',ap,recText].filter(Boolean).join(' / ')||'无'
     })()
   }
   fillSelects(data);
   syncControlValues(data);
+  rebuildHistory(data);
   drawChart();
 }
 
@@ -119,7 +122,7 @@ function fillSelects(data){
   if(!met.options.length){
     for(const m of METRICS){met.append(new Option(`${m.label} (${m.unit})`,m.key))}
     met.value=chartMetric;
-    met.onchange=()=>{chartMetric=met.value;chartSeries=[];drawChart()}
+    met.onchange=()=>{chartMetric=met.value;if(snapshot)rebuildHistory(snapshot);drawChart()}
   }
 }
 
@@ -141,7 +144,7 @@ async function command(type,fields={}){
   try{
     const data=await read(await fetch('/api/industry/commands',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,request_id:crypto.randomUUID(),...fields})}));
     if(type==='advance'){onAdvance(data)}
-    else if(type==='new_game'||type==='load'){chartSeries=[];records.length=0}
+    else if(type==='new_game'||type==='load'){chartStartMonth=0;chartSeries=[];records.length=0}
     render(data);
     if(type==='save')notice('城市已保存');
     else if(type==='load')notice('已恢复保存状态');
@@ -163,9 +166,19 @@ function restoreFormState(){
 }
 
 function onAdvance(data){
-  records.unshift(`第${data.month}月：就业 ${sumEmployment(data)}人，可劳动人口 ${data.latest?.workforce_population ?? '?'}，政府现金 ${number(data.cash.GOV/100)} CR，营业额 ${number(data.latest?.sales_cents/100 ?? 0)} CR。`);
-  const m=METRICS.find(x=>x.key===chartMetric);
-  if(m){chartSeries.push({month:data.month,value:m.getter(data)||0})}
+  rebuildHistory(data);
+}
+
+function rebuildHistory(data){
+  const history=data.history||[];
+  const metric=METRICS.find(x=>x.key===chartMetric);
+  chartSeries=history.filter(r=>r.month>chartStartMonth).map(r=>{
+    const cash={GOV:r.government_cash_cents,EXT:r.external_cash_cents,H_TOTAL:r.household_cash_cents};
+    for(const [i,s] of Object.entries(r.sectors||{}))cash[i]=s.cash_cents;
+    return {month:r.month,value:metric?.getter({latest:r,cash,employment:r.employment})||0};
+  });
+  records.splice(0,records.length,...history.slice(-12).reverse().map(r=>`第${r.month}月：就业 ${Object.values(r.employment).reduce((a,b)=>a+b,0)}人；政府现金 ${number(r.government_cash_cents/100)} CR；营业额 ${number(r.sales_cents/100)} CR。`));
+  if(records.length)$('history').replaceChildren(...records.map(text=>{const li=document.createElement('li');li.textContent=text;return li}));
 }
 
 function drawChart(){
@@ -227,7 +240,7 @@ $('tax-amnesty-form').onsubmit=e=>{e.preventDefault();command('mayor_command',{m
 $('save').onclick=()=>command('save');
 $('load').onclick=()=>command('load');
 $('new').onclick=()=>{if(confirm('新建会替换当前经营状态，确认吗？'))command('new_game')};
-$('chart-reset').onclick=()=>{chartSeries=[];drawChart()};
+$('chart-reset').onclick=()=>{chartStartMonth=snapshot?.month||0;chartSeries=[];drawChart()};
 $('industry').onchange=()=>{if(snapshot){$('wage').value=snapshot.scenario.sectors[$('industry').value].wage_multiplier}};
 
 try{

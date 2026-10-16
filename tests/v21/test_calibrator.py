@@ -133,12 +133,17 @@ class TestStep08Adjust:
 
 # ===== §16 STEP 09 =====
 class TestStep09Stability:
-    def test_passes_basic(self):
+    def test_basic_report_requires_actual_runtime_evidence(self):
         report = CalibrationReport(
             archetype='industrial_city', seed=0,
             N=3000, K=3300, L=75.0, unemployment_rate=0.09,
         )
-        assert step_09_stability(report, 12) is True
+        result = step_09_stability(report, 12)
+        evidence = report.runtime_evidence['12']
+        assert evidence['engine'] == 'IndustryEconomy'
+        assert evidence['months_executed'] == 12
+        assert len(evidence['history']) == 12
+        assert result == evidence['passed']
 
     def test_fails_high_unemployment(self):
         report = CalibrationReport(
