@@ -11,6 +11,9 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
 from backend.systems.v21.world_game import WorldGame, get_world_game, reset_world_game_for_tests
 from backend.systems.v21.world_view import full_city_payload
 from backend.systems.v21.diplomacy_action import DiplomacyAction
+from backend.systems.v21.espionage import (
+    EspionageAttempt, attempt_espionage, load_espionage_config, validate_espionage,
+)
 
 
 router = APIRouter(prefix='/api/world')
@@ -195,6 +198,110 @@ async def diplomacy_actions(city_id: str):
     history = game.diplomacy.player_actions_history(limit=50)
     city_actions = [a.to_dict() for a in history if a.target_city_id == city_id]
     return city_actions
+
+
+# M28：行业情报（派间谍）
+class EspionageCommand(BaseModel):
+    """M28 行业情报：玩家派间谍获取 NPC 完整 last_report。"""
+    model_config = ConfigDict(extra='forbid')
+    target_city_id: str = Field(..., max_length=40)
+
+
+@router.post('/espionage')
+async def espionage(command: EspionageCommand, request: Request):
+    """派间谍。校验 friendly ≥ 3（盟友级）+ cooldown + max_per_month。"""
+    import random as _rng_mod
+    industry_game = getattr(request.app.state, 'industry_game', None)
+    if industry_game is not None:
+        trigger = getattr(industry_game.city, '_trigger', None)
+        if trigger and trigger.is_game_over:
+            raise HTTPException(status_code=409, detail={
+                'error': 'game_over',
+                'message': '市长已下台，无法派遣间谍。',
+            })
+    game = get_world_game()
+    target_node = game.get_city_node(command.target_city_id)
+    if target_node is None:
+        raise HTTPException(status_code=404, detail=f'未知城市：{command.target_city_id}')
+    if target_node.is_player:
+        raise HTTPException(status_code=400, detail='不能对自己派遣间谍')
+    current_month = game.world.month
+    visibility = game.diplomacy.get_visibility(command.target_city_id)
+    relation = game.diplomacy.relation_with_player(command.target_city_id)
+    cfg = load_espionage_config()
+    history = getattr(game, '_espionage_history', [])
+    ok, reason = validate_espionage(cfg, command.target_city_id,
+                                     current_month, visibility, history)
+    if not ok:
+        # 失败也记录在 history 中（让前端能看到被拒原因）
+        failed = EspionageAttempt(
+            target_city_id=command.target_city_id, month=current_month,
+            cost_cr=0, success=False, discovered=False, friendliness_delta=0,
+            note=reason,
+        )
+        history.append(failed)
+        game._espionage_history = history[-200:]
+        return {
+            'success': False, 'reason': reason, 'record': failed.to_dict(),
+            'relation': {
+                'friendliness': relation.friendliness,
+                'visibility': visibility,
+            },
+        }
+    # 执行派遣（M28 用随机种子确保可测试）
+    rng = _rng_mod.Random(game.world.seed * 1000 + current_month)
+    attempt = attempt_espionage(cfg, command.target_city_id,
+                                current_month, relation.friendliness, rng=rng)
+    history.append(attempt)
+    game._espionage_history = history[-200:]
+    # 应用友好度惩罚（如果被发现）
+    if attempt.friendliness_delta != 0:
+        game.diplomacy.adjust_friendliness(
+            game.player_city_id, command.target_city_id,
+            attempt.friendliness_delta,
+            f'间谍被发现（{cfg.discovery_penalty_friendliness} 友好度）',
+        )
+    # 成功 → 返回完整 last_report
+    full_report = None
+    if attempt.success:
+        npc_city = game.npc_city.get_city(command.target_city_id)
+        if npc_city is not None:
+            full_report = npc_city.last_report
+    return {
+        'success': attempt.success,
+        'discovered': attempt.discovered,
+        'reason': attempt.note,
+        'cost_cr': attempt.cost_cr,
+        'record': attempt.to_dict(),
+        'full_report': full_report,
+        'relation': {
+            'friendliness': game.diplomacy.relation_with_player(command.target_city_id).friendliness,
+            'visibility': game.diplomacy.get_visibility(command.target_city_id),
+        },
+    }
+
+
+@router.get('/cities/{city_id}/intelligence')
+async def city_intelligence(city_id: str):
+    """M28：返回 NPC 城市的完整 last_report（不脱敏）。前提：玩家对该城市的 visibility ≥ 3（盟友级）。"""
+    game = get_world_game()
+    visibility = game.diplomacy.get_visibility(city_id)
+    if visibility < 3:
+        raise HTTPException(status_code=403, detail=f'可见等级不足：需要 ≥ 3，当前 {visibility}（需先派间谍或提升友好度）')
+    node = game.get_city_node(city_id)
+    if node is None or node.is_player:
+        raise HTTPException(status_code=404, detail=f'未知 NPC 城市：{city_id}')
+    npc_city = game.npc_city.get_city(city_id)
+    if npc_city is None:
+        raise HTTPException(status_code=500, detail='NPC 城市未启动')
+    return {
+        'city_id': city_id,
+        'name_cn': node.name_cn,
+        'archetype': node.archetype,
+        'month': npc_city.month,
+        'last_report': npc_city.last_report,
+        'visibility': visibility,
+    }
 
 
 def set_world_game_for_request(game: WorldGame):

@@ -1,0 +1,13 @@
+{
+  "_comment": "M28 行业情报契约：派间谍获取 NPC 完整 last_report。友好度 ≥ 3（盟友级）才能派遣。模块 M28。",
+  "espionage": {
+    "cost_cr": 2000,
+    "min_visibility": 3,
+    "discovery_probability_max": 0.30,
+    "discovery_probability_low": 0.10,
+    "discovery_friendliness_threshold": 70,
+    "discovery_penalty_friendliness": -20,
+    "cooldown_months": 1,
+    "max_per_month": 1
+  }
+}

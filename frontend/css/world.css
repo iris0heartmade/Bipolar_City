@@ -181,6 +181,13 @@
 .dip-result .ok{color:#2c7a3d}
 .dip-result .err{color:#a13d2b}
 .dip-history{margin-top:8px;font-size:0.8rem;color:#8a9bb0}
+.dip-espionage{background:#507ba0;color:#fff;border:1px solid #2c5470;padding:8px 14px;
+  border-radius:4px;cursor:pointer;font-weight:600;margin:4px 0}
+.dip-espionage:hover{background:#609bc5}
+.intell-detail{margin-top:6px;padding:8px;background:#1a1820;border:1px solid #507ba0;
+  border-radius:4px;font-size:0.85rem;color:#cce0f0}
+.intell-detail strong{color:#507ba0;font-size:0.95rem}
+.intell-detail p{margin:2px 0;color:#a4c0d0}
 .bottombar {
   display: flex;
   justify-content: space-between;

@@ -1,4 +1,4 @@
-// 城市详情渲染：可见字段 + 锁定字段 + 关系 + AI 最近动作 + M26 外交行动。
+// 城市详情渲染：可见字段 + 锁定字段 + 关系 + AI 最近动作 + M26 外交行动 + M28 情报按钮。
 
 const FIELD_LABELS = {
   population_g: '人口量级',
@@ -25,6 +25,8 @@ const DIPLOMACY_ACTIONS = [
   { key: 'statement',       label: '公开声明', delta: '+2/月' },
   { key: 'tariff',          label: '征收关税', delta: '-10' },
 ];
+
+const ESPIONAGE_COST_CR = 2000;
 
 function formatValue(key, value) {
   if (value === null || value === undefined) return '？？？';
@@ -79,6 +81,16 @@ export function renderDetail(detail) {
     lines.push(`<div id="dip-result" class="dip-result"></div>`);
     // 历史
     lines.push(`<div id="dip-history" class="dip-history"></div>`);
+    // M28：行业情报按钮（仅 visibility ≥ 3 盟友级）
+    const visibility = (detail.relation && detail.visibility !== undefined) ? detail.visibility : 0;
+    if (visibility >= 3) {
+      lines.push('<h3>行业情报</h3>');
+      lines.push('<p class="hint">派间谍获取完整月报（不脱敏）。被发现可能损失友好度。</p>');
+      lines.push(`<button class="dip-espionage" id="espionage-btn" data-city="${detail.id}">
+        派间谍（成本 ${ESPIONAGE_COST_CR} CR + 风险）
+      </button>`);
+      lines.push('<div id="espionage-result" class="dip-result"></div>');
+    }
     // 字段顺序按 FIELD_LABELS
     for (const [key, label] of Object.entries(FIELD_LABELS)) {
       const hasValue = detail[key] !== undefined && detail[key] !== null;
@@ -112,6 +124,8 @@ export function renderDetail(detail) {
   bindDiplomacyHandlers(detail.id);
   // 加载玩家对该城市的历史
   loadDiplomacyHistory(detail.id);
+  // M28：绑定情报按钮
+  bindEspionageHandler(detail.id);
 }
 
 function bindDiplomacyHandlers(cityId) {
@@ -187,4 +201,41 @@ async function loadDiplomacyHistory(cityId) {
   } catch (error) {
     histEl.innerHTML = '';
   }
+}
+
+// M28：派间谍按钮绑定
+async function bindEspionageHandler(cityId) {
+  const btn = document.getElementById('espionage-btn');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    const resultEl = document.getElementById('espionage-result');
+    if (resultEl) resultEl.textContent = '执行中…';
+    try {
+      const r = await fetch('/api/world/espionage', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({target_city_id: cityId}),
+      });
+      const data = await r.json();
+      if (data.success) {
+        if (resultEl) {
+          resultEl.innerHTML = `<span class="ok">✓ 情报获取成功</span>
+            <div class="intell-detail">
+              <strong>${data.full_report.month ? `月 ${data.full_report.month}` : ''}</strong>
+              <p>劳动力 ${data.full_report.labor_force ?? '?'} · 失业率 ${((data.full_report.unemployed ?? 0) / Math.max(1, data.full_report.labor_force ?? 1) * 100).toFixed(1)}%</p>
+              <p>GOV 现金 ${(data.full_report.government_cash_cents ?? 0)/100} CR · 累计欠薪 ${(data.full_report.wage_arrears_cents ?? 0)/100} CR</p>
+              <p>行业就业：${Object.entries(data.full_report.sectors || {}).map(([k,v]) => `${k}:${v.employed ?? 0}`).join(' / ')}</p>
+            </div>`;
+        }
+      } else {
+        if (resultEl) {
+          resultEl.innerHTML = `<span class="err">✗ ${data.reason}</span>`;
+        }
+      }
+      // 触发全局刷新（友好度可能变化）
+      window.dispatchEvent(new Event('diplomacy-changed'));
+    } catch (error) {
+      if (resultEl) resultEl.innerHTML = `<span class="err">✗ 网络错误：${error.message}</span>`;
+    }
+  });
 }
