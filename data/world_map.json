@@ -1,0 +1,21 @@
+{
+  "cities": [
+    {"id": "agricultural_town", "name_cn": "禾谷镇", "archetype": "agricultural_town", "x": 28, "y": 72, "is_player_default": false},
+    {"id": "industrial_city",   "name_cn": "河湾镇", "archetype": "industrial_city",   "x": 50, "y": 50, "is_player_default": true},
+    {"id": "commercial_port",   "name_cn": "碧涛港", "archetype": "commercial_port",   "x": 78, "y": 30, "is_player_default": false},
+    {"id": "magic_academy",     "name_cn": "辉月学城", "archetype": "magic_academy",     "x": 18, "y": 28, "is_player_default": false},
+    {"id": "mining_border",     "name_cn": "铁壁关", "archetype": "mining_border",     "x": 75, "y": 78, "is_player_default": false}
+  ],
+  "distance_matrix": {
+    "agricultural_town|industrial_city": 240,
+    "agricultural_town|commercial_port": 480,
+    "agricultural_town|magic_academy":   520,
+    "agricultural_town|mining_border":   380,
+    "industrial_city|commercial_port":   320,
+    "industrial_city|magic_academy":     360,
+    "industrial_city|mining_border":     290,
+    "commercial_port|magic_academy":     540,
+    "commercial_port|mining_border":     410,
+    "magic_academy|mining_border":       460
+  }
+}
