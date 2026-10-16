@@ -32,7 +32,10 @@ function visibilityFromFriendliness(f) {
   return 0;
 }
 
-export function renderWorld(state) {
+export function renderWorld(state, opts = {}) {
+  // M24：玩家下台时金色光晕变灰
+  const playerDefeated = !!(opts.player_game_over && opts.player_game_over.is_game_over);
+  const playerColor = playerDefeated ? '#5a3d44' : PALETTE.player_glow;
   const svg = document.getElementById('world-svg');
   if (!svg) return;
   svg.innerHTML = '';
@@ -160,14 +163,14 @@ export function renderWorld(state) {
     g.style.cursor = 'pointer';
     g.onclick = () => window.onCityClick(city.id);
 
-    // 玩家城金色光晕
+    // 玩家城金色光晕（M24：玩家下台 → 灰色）
     if (city.is_player) {
       const glow = document.createElementNS(ns, 'circle');
       glow.setAttribute('cx', x);
       glow.setAttribute('cy', y);
       glow.setAttribute('r', 28);
-      glow.setAttribute('fill', PALETTE.player_glow);
-      glow.setAttribute('opacity', '0.45');
+      glow.setAttribute('fill', playerColor);
+      glow.setAttribute('opacity', playerDefeated ? '0.35' : '0.45');
       glow.setAttribute('filter', 'url(#player-glow)');
       g.appendChild(glow);
     }
@@ -182,14 +185,14 @@ export function renderWorld(state) {
     circle.setAttribute('stroke-width', 2);
     g.appendChild(circle);
 
-    // 内圈（区分玩家城）
+    // 内圈（区分玩家城；M24 玩家下台 → 灰描边）
     if (city.is_player) {
       const inner = document.createElementNS(ns, 'circle');
       inner.setAttribute('cx', x);
       inner.setAttribute('cy', y);
       inner.setAttribute('r', 10);
       inner.setAttribute('fill', 'none');
-      inner.setAttribute('stroke', PALETTE.player_glow);
+      inner.setAttribute('stroke', playerColor);
       inner.setAttribute('stroke-width', '2');
       g.appendChild(inner);
     }

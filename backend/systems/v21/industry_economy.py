@@ -10,6 +10,7 @@ from statistics import median
 
 from backend.systems.v21.industry_model import attractiveness, capacity, employment_target, labor_month
 from backend.systems.v21.industry_scenario import default_scenario, read_config, split_integer, validate_scenario
+from backend.systems.v21.governance_trigger import EconomicTrigger
 
 
 class IndustryEconomy:
@@ -120,6 +121,8 @@ class IndustryEconomy:
         self._active_policies = {}
         self._last_policy_actions = []
         self.last_demography = {}
+        # M24 经济触发器：只读不写，不影响经济守恒
+        self._trigger = EconomicTrigger()
         # 阶段 14：累加器已前移（必须在 boot 采购之前）
         self.scenario['model']['status'] = 'shared_runtime'
 
@@ -657,6 +660,8 @@ class IndustryEconomy:
         report = self.make_report(opening, e, wages, outputs, profits, industry_taxes, capacities, targets, cap_details, flow)
         self.update_prices_and_wages()
         self.last_report = report
+        # M24 触发器只读检查（不修改经济数据）
+        self._trigger.evaluate(report)
         self._last_policy_actions = []
         self._settling = False
         return report
@@ -842,6 +847,8 @@ class IndustryEconomy:
         data = deepcopy(self.__dict__)
         data['carries'] = [[i, kind, v] for (i, kind), v in self.carries.items()]
         data['_active_policies'] = [[i, kind, expiry] for (i, kind), expiry in self._active_policies.items()]
+        # M24：序列化触发器状态（streak + reasons）
+        data['_trigger'] = self._trigger.to_dict()
         data['_state_version'] = self.STATE_VERSION
         return data
 
@@ -866,7 +873,11 @@ class IndustryEconomy:
                     raise ValueError('政策状态无效')
             from backend.systems.v21.industry_state import validate_state
             validate_state(data, city)
+            # M24：从 data 恢复触发器状态（如果存档没有 _trigger 则保持新 city 默认）
+            trigger_data = data.pop('_trigger', None)
             city.__dict__.update(data)
+            if trigger_data is not None:
+                city._trigger = EconomicTrigger.from_dict(trigger_data)
             city.assert_invariants()
             return city
         except (KeyError, TypeError, AssertionError, OverflowError) as error:

@@ -1,0 +1,43 @@
+{
+  "_comment": "经济触发器阈值与宽限期。每月从 last_report 读取指标，单项持续多月极度异常进入宽限期（grace_period）；多项同时触发直接下台（immediate）。校长修正 2026-10-16：经济崩溃 = 玩家责任；触发器只读不写，不影响经济守恒。模块 M24。",
+  "triggers": {
+    "unemployment_crisis": {
+      "metric": "unemployment_rate",
+      "comparison": ">=",
+      "threshold": 0.30,
+      "grace_months": 3,
+      "severity": "grace_period",
+      "label": "失业率危机（≥30%）"
+    },
+    "government_bankruptcy": {
+      "metric": "government_cash_cents",
+      "comparison": "<=",
+      "threshold": -100000,
+      "grace_months": 3,
+      "severity": "grace_period",
+      "label": "政府现金破产（≤-1000 CR）"
+    },
+    "wage_arrears_runaway": {
+      "metric": "wage_arrears_cents",
+      "comparison": ">=",
+      "threshold": 100000,
+      "grace_months": 2,
+      "severity": "grace_period",
+      "label": "累计欠薪失控（≥1000 CR）"
+    },
+    "population_collapse": {
+      "metric": "population_change_rate",
+      "comparison": "<=",
+      "threshold": -0.20,
+      "grace_months": 0,
+      "severity": "immediate",
+      "label": "人口锐减（单月-20%）"
+    },
+    "civil_unrest_multi": {
+      "type": "multi",
+      "all_of": ["unemployment_crisis", "wage_arrears_runaway"],
+      "severity": "immediate",
+      "label": "失业 + 欠薪同时爆发"
+    }
+  }
+}

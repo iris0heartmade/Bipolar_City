@@ -15,7 +15,7 @@ from backend.systems.v21.world_view import full_city_payload
 router = APIRouter(prefix='/api/world')
 
 
-def _build_world_payload(game: WorldGame) -> dict:
+def _build_world_payload(game: WorldGame, industry_game=None) -> dict:
     nodes = []
     for city_node in game.world.cities:
         nodes.append({
@@ -34,7 +34,7 @@ def _build_world_payload(game: WorldGame) -> dict:
             'friendliness': r.friendliness,
             'last_event': r.last_event,
         })
-    return {
+    payload = {
         'world': {
             'seed': game.world.seed,
             'month': game.world.month,
@@ -45,11 +45,22 @@ def _build_world_payload(game: WorldGame) -> dict:
         'cities': nodes,
         'links': links,
     }
+    # M24：暴露玩家下台状态，让前端可据此灰化玩家城节点
+    if industry_game is not None:
+        trigger = getattr(industry_game.city, '_trigger', None)
+        payload['player_game_over'] = {
+            'is_game_over': trigger.is_game_over if trigger else False,
+            'reasons': trigger.reasons if trigger else [],
+        }
+    else:
+        payload['player_game_over'] = {'is_game_over': False, 'reasons': []}
+    return payload
 
 
 @router.get('/state')
-async def state():
-    return _build_world_payload(get_world_game())
+async def state(request: Request):
+    industry_game = getattr(request.app.state, 'industry_game', None) if hasattr(request, 'app') else None
+    return _build_world_payload(get_world_game(), industry_game=industry_game)
 
 
 @router.get('/cities/{city_id}')
@@ -79,10 +90,20 @@ class AdvanceCommand(BaseModel):
 
 @router.post('/advance')
 async def advance(command: AdvanceCommand, request: Request):
+    # M24：玩家下台 → 世界冻结，NPC AI 也停摆
+    industry_game = getattr(request.app.state, 'industry_game', None)
+    if industry_game is not None:
+        trigger = getattr(industry_game.city, '_trigger', None)
+        if trigger and trigger.is_game_over:
+            raise HTTPException(status_code=409, detail={
+                'error': 'game_over',
+                'reasons': trigger.reasons,
+                'message': '市长已下台，世界地图已冻结。',
+            })
     game = get_world_game()
     new_game = game.advance_npc_only(command.months)
     set_world_game_for_request(new_game)
-    return _build_world_payload(new_game)
+    return _build_world_payload(new_game, industry_game=industry_game)
 
 
 def set_world_game_for_request(game: WorldGame):

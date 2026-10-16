@@ -6,6 +6,11 @@
 <link rel="stylesheet" href="/static/css/industry.css">
 </head>
 <body>
+<div id="gameover-banner" hidden role="alert" aria-live="assertive">
+  <strong>市长已下台 —</strong>
+  <span id="gameover-reasons">未知原因</span>
+  <button id="gameover-newgame" type="button">新建城市</button>
+</div>
 <header>
   <div class="header-info">
     <span class="eyebrow">BIPOLE / 城市经营</span>
@@ -31,6 +36,7 @@
     <input id="advance-months" type="number" min="1" max="120" step="1" value="1">
     <button class="primary" type="submit">月进 →</button>
   </form>
+  <p id="gameover-hint" class="gameover-hint" hidden>⚠ 城市已结束，请点上方红色横幅"新建城市"重启。</p>
   <hr>
 
   <h3>2. 计划调整（下月起生效）</h3>

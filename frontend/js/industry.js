@@ -43,8 +43,29 @@ function sumHouseholds(d){return Object.entries(d.cash||{}).filter(([k])=>k.star
 
 function notice(text,error=false){$('status').textContent=text;$('status').classList.toggle('error',error)}
 
+function applyGameOver(data){
+  const banner=$('gameover-banner');
+  const reasonsEl=$('gameover-reasons');
+  const hint=$('gameover-hint');
+  const advanceBtn=document.querySelector('#advance-form button[type="submit"]');
+  if(!data||!data.is_game_over){
+    if(banner)banner.hidden=true;
+    if(hint)hint.hidden=true;
+    if(advanceBtn)advanceBtn.disabled=false;
+    document.body.classList.remove('player-defeated');
+    return;
+  }
+  const reasons=(data.game_over_reasons||[]).join('；')||'未指明';
+  if(reasonsEl)reasonsEl.textContent=reasons;
+  if(banner)banner.hidden=false;
+  if(hint)hint.hidden=false;
+  if(advanceBtn)advanceBtn.disabled=true;
+  document.body.classList.add('player-defeated');
+}
+
 function render(data){
   snapshot=data;
+  applyGameOver(data);
   const r=data.latest;
   $('month').textContent=data.month;
   $('employment').textContent=`${number(sumEmployment(data))} / ${number(r?.labor_force ?? data.labor_force)} / ${number(r?.population ?? data.population)}`;
@@ -240,6 +261,9 @@ $('tax-amnesty-form').onsubmit=e=>{e.preventDefault();command('mayor_command',{m
 $('save').onclick=()=>command('save');
 $('load').onclick=()=>command('load');
 $('new').onclick=()=>{if(confirm('新建会替换当前经营状态，确认吗？'))command('new_game')};
+// M24：游戏结束横幅上的「新建城市」按钮
+const _bannerNewGame=$('gameover-newgame');
+if(_bannerNewGame){_bannerNewGame.onclick=()=>{if(confirm('新建会替换当前城市（含下台历史），确认吗？'))command('new_game')}}
 $('chart-reset').onclick=()=>{chartStartMonth=snapshot?.month||0;chartSeries=[];drawChart()};
 $('industry').onchange=()=>{if(snapshot){$('wage').value=snapshot.scenario.sectors[$('industry').value].wage_multiplier}};
 

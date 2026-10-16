@@ -27,7 +27,8 @@ async function refresh() {
     state.cities = data.cities;
     state.links = data.links;
     state.world = data.world;
-    renderWorld(state);
+    state.player_game_over = data.player_game_over || {is_game_over: false, reasons: []};
+    renderWorld(state, { player_game_over: state.player_game_over });
     const year = Math.floor(state.world.month / 12) + 1;
     const monthOfYear = (state.world.month % 12) + 1;
     document.getElementById('status-line').textContent =

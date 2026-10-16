@@ -33,7 +33,10 @@ class IndustryGame:
                 'recent_mayor_actions': list(self.city._last_policy_actions),
                 'history': getattr(self.city, 'report_history', []),
                 'latest': self.city.last_report,
-                'save_exists': (self.save_dir/'industry-slot.json').exists()})
+                'save_exists': (self.save_dir/'industry-slot.json').exists(),
+                'is_game_over': self.city._trigger.is_game_over,
+                'game_over_reasons': self.city._trigger.reasons,
+                'trigger_streak': self.city._trigger.streak})
 
     def is_replay(self, command):
         """地图和行业入口共用操作编号，失败的操作不会占用编号。"""
@@ -107,6 +110,10 @@ class IndustryGame:
                 history = getattr(city, 'report_history', [])
                 history.append(report)
                 city.report_history = history[-city.scenario['city']['max_months']:]
+                # M24：触发器只读检查已在 city.advance() 末尾完成。
+                # 若任一触发器 grace_months 已达，立即冻结剩余 advance。
+                if city._trigger.is_game_over:
+                    break
         elif kind == 'set_parameter':
             city.scenario = change_control(city.scenario, command.get('section'), command.get('key'),
                                            command.get('value'), command['industry'])
@@ -167,11 +174,37 @@ async def state(request: Request):
         return request.app.state.industry_game.snapshot()
 
 
+@router.post('/_dev/inject_game_over')
+async def dev_inject_game_over(request: Request):
+    """Dev-only：直接置 game_over=True 用于浏览器端到端验收。
+
+    仅当环境变量 BIPOLE_DEV=1 时启用；生产环境拒绝。
+    """
+    import os
+    if os.environ.get('BIPOLE_DEV') != '1':
+        raise HTTPException(status_code=404, detail='dev inject 端点未启用')
+    game = request.app.state.industry_game
+    game.city._trigger._game_over = True
+    game.city._trigger._reasons = ['端到端测试：政府现金破产（≤-1000 CR）']
+    game.city._trigger._streak['government_bankruptcy'] = 3
+    return game.snapshot()
+
+
 @router.post('/commands')
 async def commands(command: Command, request: Request):
     async with request.app.state.lock:
+        game = request.app.state.industry_game
+        # M24：游戏结束后只允许 new_game / save / load，禁止 advance / set_parameter / mayor_command / purchase_external
+        if (game.city._trigger.is_game_over
+                and command.type not in ('new_game', 'save', 'load')):
+            raise HTTPException(status_code=409, detail={
+                'error': 'game_over',
+                'reasons': game.city._trigger.reasons,
+                'message': '市长已下台：' + '；'.join(game.city._trigger.reasons)
+                            + '。请 new_game 开新城市。',
+            })
         try:
-            return request.app.state.industry_game.command(command.model_dump(exclude_none=True))
+            return game.command(command.model_dump(exclude_none=True))
         except (ValueError, KeyError, TypeError) as exc:
             raise HTTPException(status_code=400, detail=f'操作未生效：{exc}') from exc
         except OSError as exc:

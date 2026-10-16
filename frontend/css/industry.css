@@ -43,3 +43,16 @@ footer.error{background:#fbe4df;color:#9f342e}
 #panel-sectors{margin-bottom:18px}
 @media(max-width:1100px){.grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:700px){.metrics{grid-template-columns:repeat(2,1fr)}}
+
+/* M24 市长下台横幅 */
+#gameover-banner[hidden]{display:none}
+#gameover-banner{display:flex;align-items:center;gap:14px;padding:14px 24px;
+  background:#9f342e;color:#fff;font-size:14px;border-bottom:2px solid #6e221d}
+#gameover-banner strong{font-size:15px}
+#gameover-banner button{margin-left:auto;background:#fff;color:#9f342e;
+  border:1px solid #fff;font-weight:600}
+#gameover-banner button:hover{background:#fbe4df}
+.gameover-hint[hidden]{display:none}
+.gameover-hint{color:#9f342e;font-weight:600;margin:6px 0}
+.advance-form-disabled{opacity:.45;pointer-events:none}
+.player-defeated #advance-form button{background:#9aa5a6}
