@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BIPOLE · 世界地图</title>
+  <link rel="stylesheet" href="/static/css/world.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="BIPOLE 首页">
+        <img src="/static/assets/emblem.svg" alt="">
+        <span>BIPOLE<small>双极 · 世界地图</small></span>
+      </a>
+      <nav class="main-nav">
+        <a href="/">返回城市</a>
+        <a href="/industry">行业经营</a>
+      </nav>
+    </header>
+
+    <main class="world-layout">
+      <section class="map-panel" aria-label="世界地图">
+        <div class="map-header">
+          <span class="map-title"><i></i>国家大陆</span>
+          <small id="map-subtitle">北方河湾 / 第一年</small>
+        </div>
+        <svg id="world-svg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet" aria-label="世界地图 SVG">
+          <!-- 由 js/world_map.js 渲染 -->
+        </svg>
+        <div class="map-help">
+          <span>点击节点查看城市详情</span>
+          <i>·</i>
+          <span>友好度越高，看到信息越多</span>
+        </div>
+      </section>
+
+      <aside class="detail-panel" aria-label="城市详情">
+        <h2>城市详情</h2>
+        <div id="detail-content">
+          <p class="hint">点击地图节点查看 NPC 城市信息。数据由友好度脱敏。</p>
+        </div>
+        <div class="legend">
+          <h3>可见等级</h3>
+          <ul>
+            <li><span class="lv lv-0">0</span> 陌生人：仅名字 + 千人量级</li>
+            <li><span class="lv lv-1">1</span> 认识：+ 百人量级</li>
+            <li><span class="lv lv-2">2</span> 友好：+ 7 行业就业 + 财政</li>
+            <li><span class="lv lv-3">3</span> 盟友：+ 月产</li>
+            <li><span class="lv lv-4">4</span> 完全开放：全部字段</li>
+          </ul>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="bottombar">
+      <span id="status-line">加载中……</span>
+      <button id="advance-btn">推进 1 个月 →</button>
+    </footer>
+  </div>
+  <script type="module" src="/static/js/world_main.js"></script>
+</body>
+</html>

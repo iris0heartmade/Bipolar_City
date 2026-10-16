@@ -1,0 +1,155 @@
+/* 世界地图页面样式 */
+.world-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #1a1820, #2c2530);
+  min-height: calc(100vh - 9rem);
+}
+.map-panel {
+  background: #d4c89a;
+  border: 2px solid #8b6f47;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,0,0,0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.map-header {
+  background: rgba(139, 111, 71, 0.85);
+  color: #f4e6c0;
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: Georgia, serif;
+}
+.map-header .map-title {
+  font-weight: bold;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+}
+#world-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  flex: 1;
+  background: #e8d9a8;
+}
+.map-help {
+  background: rgba(139, 111, 71, 0.7);
+  color: #f4e6c0;
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  text-align: center;
+}
+.map-help i {
+  margin: 0 0.5rem;
+  color: #d4a537;
+}
+.detail-panel {
+  background: #1a1820;
+  color: #f4e6c0;
+  border: 2px solid #8b6f47;
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-y: auto;
+  max-height: calc(100vh - 9rem);
+}
+.detail-panel h2 {
+  margin: 0 0 1rem;
+  font-size: 1.2rem;
+  color: #d4a537;
+  border-bottom: 1px solid #5a3d44;
+  padding-bottom: 0.5rem;
+}
+.detail-panel h3 {
+  font-size: 1rem;
+  margin: 1rem 0 0.4rem;
+  color: #d4a537;
+}
+.detail-panel .row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+  border-bottom: 1px dotted #5a3d44;
+  font-size: 0.9rem;
+}
+.detail-panel .row.locked .value {
+  color: #888;
+  font-style: italic;
+}
+.detail-panel .row.locked .value::after {
+  content: ' ？？？';
+}
+.detail-panel .row span:first-child {
+  color: #d4a537;
+}
+.detail-panel .row .value {
+  font-family: 'Courier New', monospace;
+  color: #f4e6c0;
+}
+.detail-panel .hint {
+  color: #8a9bb0;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+.detail-panel .event {
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #5a3d44;
+  font-size: 0.85rem;
+  color: #d4a537;
+}
+.detail-panel .legend ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+  font-size: 0.8rem;
+}
+.detail-panel .legend li {
+  display: flex;
+  align-items: center;
+  margin: 0.2rem 0;
+}
+.detail-panel .legend .lv {
+  display: inline-block;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-right: 0.4rem;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 1.5rem;
+  font-weight: bold;
+}
+.lv-0 { background: #5a3d44; color: #888; }
+.lv-1 { background: #a13d2b; color: #fff; }
+.lv-2 { background: #d4a537; color: #1a1820; }
+.lv-3 { background: #2c7a3d; color: #fff; }
+.lv-4 { background: #507ba0; color: #fff; }
+.bottombar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  background: #1a1820;
+  color: #f4e6c0;
+  border-top: 1px solid #5a3d44;
+}
+.bottombar button {
+  background: #d4a537;
+  color: #1a1820;
+  border: 1px solid #8b6f47;
+  padding: 0.4rem 1.2rem;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.bottombar button:hover:not(:disabled) {
+  background: #f4c862;
+}
+.bottombar button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
