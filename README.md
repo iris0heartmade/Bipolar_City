@@ -2,6 +2,8 @@
 
 魔导城市经营原型。当前使用同一套七行业经济状态驱动地图、行业经营页面与桌面实验室；按月决策和结算。
 
+> **完整游戏介绍**：[BIPOLE 介绍书](docs/03_设计规范/BIPOLE介绍书.md)（按模块梳理 14 个核心玩法 + 术语表）
+
 作者：**iris0heartmade**。原仓库：[Bipolar_City](https://github.com/iris0heartmade/Bipolar_City)，使用 [MIT 许可证](LICENSE)。
 
 ## 目录
