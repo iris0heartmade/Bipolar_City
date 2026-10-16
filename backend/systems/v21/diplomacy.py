@@ -30,6 +30,8 @@ class DiplomacySystem:
         self.player_city_id = player_city_id
         self._initial_friendliness = initial_friendliness
         self.relations: dict = {}  # 'cityA|cityB' -> Relation
+        # M26：玩家外交行动历史（最近 N 条）
+        self._player_actions_history: list = []
         self._init_relations()
     
     def _init_relations(self):
@@ -42,6 +44,71 @@ class DiplomacySystem:
                     friendliness=self._initial_friendliness,
                     last_event='初次接触',
                 )
+
+    # M26：玩家外交行动
+    def player_actions_history(self, limit: int = 50) -> list:
+        """最近 N 条玩家行动（按时间倒序）。"""
+        return list(reversed(self._player_actions_history[-limit:]))
+
+    def apply_player_action(self, action, current_month: int,
+                            player_cash_cr: float = None) -> tuple:
+        """应用一次玩家外交行动。
+
+        返回 (success: bool, reject_reason: str, action_record: DiplomacyAction)。
+        不修改 cash；现金扣款由 caller 负责（避免引入对 IndustryGame 的循环引用）。
+        """
+        from backend.systems.v21.diplomacy_action import DiplomacyActionValidator
+        if player_cash_cr is None:
+            player_cash_cr = 0.0
+        validator = DiplomacyActionValidator()
+        visibility = self.get_visibility(action.target_city_id)
+        ok, reason, delta = validator.validate(
+            action=action, current_month=current_month,
+            visibility=visibility, history=self._player_actions_history,
+            player_cash_cr=player_cash_cr,
+        )
+        if not ok:
+            record = type(action)(  # 同 type 工厂
+                action_key=action.action_key,
+                target_city_id=action.target_city_id,
+                month=current_month,
+                cost_cr=action.cost_cr,
+                friendliness_delta=0,
+                note=action.note,
+                success=False,
+                reject_reason=reason,
+            )
+            self._record_action(record)
+            return False, reason, record
+        # 调友好度
+        action_label_map = {
+            'trade_agreement': '签订贸易协议',
+            'aid': '援助',
+            'tariff': '征收关税',
+            'immigration_open': '开放移民',
+            'statement': '公开声明',
+        }
+        label = action_label_map.get(action.action_key, action.action_key)
+        reason_text = f'{label}（{action.note or "玩家行动"}）'
+        self.adjust_friendliness(self.player_city_id, action.target_city_id, delta, reason_text)
+        # 记录
+        record = type(action)(
+            action_key=action.action_key,
+            target_city_id=action.target_city_id,
+            month=current_month,
+            cost_cr=action.cost_cr,
+            friendliness_delta=delta,
+            note=action.note,
+            success=True,
+            reject_reason='',
+        )
+        self._record_action(record)
+        return True, '', record
+
+    def _record_action(self, action):
+        self._player_actions_history.append(action)
+        # 保留最近 200 条（玩家行动频率低，不需要无限保留）
+        self._player_actions_history = self._player_actions_history[-200:]
     
     @staticmethod
     def _pair_key(a: str, b: str) -> str:

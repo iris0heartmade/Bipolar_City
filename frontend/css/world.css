@@ -160,6 +160,27 @@
 .lv-2 { background: #d4a537; color: #1a1820; }
 .lv-3 { background: #2c7a3d; color: #fff; }
 .lv-4 { background: #507ba0; color: #fff; }
+
+/* M26 外交行动 */
+.detail-panel .actions{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.dip-btn{flex:1 1 calc(50% - 6px);min-width:110px;background:#1a1820;
+  color:#f4e6c0;border:1px solid #5a3d44;border-radius:4px;padding:6px 8px;
+  font-size:0.85rem;cursor:pointer;display:flex;flex-direction:column;
+  align-items:flex-start;line-height:1.3}
+.dip-btn:hover{background:#2c2530;border-color:#d4a537}
+.dip-btn strong{font-size:0.9rem;color:#d4a537}
+.dip-btn small{font-size:0.7rem;color:#8a9bb0}
+.aid-input{margin:8px 0;padding:8px;background:#1a1820;border:1px solid #5a3d44;
+  border-radius:4px;display:flex;gap:6px;align-items:center}
+.aid-input label{display:flex;gap:4px;align-items:center;font-size:0.85rem;flex:1}
+.aid-input input{flex:1;background:#0d0c12;color:#f4e6c0;border:1px solid #5a3d44;
+  border-radius:3px;padding:4px 6px}
+.aid-input button{background:#d4a537;color:#1a1820;border:0;padding:4px 10px;
+  border-radius:3px;font-weight:bold;cursor:pointer}
+.dip-result{margin:6px 0;padding:4px 8px;border-radius:3px;font-size:0.85rem}
+.dip-result .ok{color:#2c7a3d}
+.dip-result .err{color:#a13d2b}
+.dip-history{margin-top:8px;font-size:0.8rem;color:#8a9bb0}
 .bottombar {
   display: flex;
   justify-content: space-between;

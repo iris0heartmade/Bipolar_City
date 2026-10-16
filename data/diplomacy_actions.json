@@ -1,0 +1,55 @@
+{
+  "_comment": "M26 玩家外交行动契约：5 类行动 + 友好度影响公式 + 限制。外置于 data/，启动时读取。模块 M26。",
+  "actions": {
+    "trade_agreement": {
+      "label": "签订贸易协议",
+      "description": "与对方签订长期贸易协议。月贸易额上限提升，友好度按月小额增长（每 100 CR/月 → +0.5 友好度）。",
+      "cost_cr": 0,
+      "monthly_cost_cr": 500,
+      "friendliness_delta_per_month": 1,
+      "cooldown_months": 0,
+      "max_per_month": 3,
+      "requires_visibility": 1
+    },
+    "aid": {
+      "label": "援助（叙事）",
+      "description": "向对方政府承诺一笔现金援助（仅作叙事友好度信号，不实际扣玩家现金以免破坏经济守恒）。友好度按金额正比增长（每 100 CR → +1 友好度，向上取整）。",
+      "cost_cr": "user_supplied_narrative",
+      "monthly_cost_cr": 0,
+      "friendliness_delta_per_month": 0,
+      "cooldown_months": 2,
+      "max_per_month": 1,
+      "requires_visibility": 0
+    },
+    "tariff": {
+      "label": "征收关税",
+      "description": "对对方商品征收关税。友好度大幅下降（-10），对方视玩家态度不当。",
+      "cost_cr": 0,
+      "monthly_cost_cr": 0,
+      "friendliness_delta_per_month": -10,
+      "cooldown_months": 3,
+      "max_per_month": 1,
+      "requires_visibility": 0
+    },
+    "immigration_open": {
+      "label": "开放移民",
+      "description": "放宽对对方居民的人口流动限制。友好度 +3。",
+      "cost_cr": 0,
+      "monthly_cost_cr": 0,
+      "friendliness_delta_per_month": 3,
+      "cooldown_months": 1,
+      "max_per_month": 2,
+      "requires_visibility": 0
+    },
+    "statement": {
+      "label": "公开声明",
+      "description": "对全国发表公开声明（友好/敌意）。无现金成本，友好度 ±2，但月限 1 次。",
+      "cost_cr": 0,
+      "monthly_cost_cr": 0,
+      "friendliness_delta_per_month": 2,
+      "cooldown_months": 0,
+      "max_per_month": 1,
+      "requires_visibility": 0
+    }
+  }
+}

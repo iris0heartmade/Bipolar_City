@@ -80,4 +80,16 @@ window.onCityClick = async (cityId) => {
   });
 };
 
+// M26：外交行动成功后仅刷新地图（连线颜色变），不重写 detail 面板
+// （重写 detail 会清掉 #dip-result 区域）
+window.addEventListener('diplomacy-changed', () => {
+  fetchState().then(data => {
+    state.cities = data.cities;
+    state.links = data.links;
+    state.world = data.world;
+    state.player_game_over = data.player_game_over || {is_game_over: false, reasons: []};
+    renderWorld(state, { player_game_over: state.player_game_over });
+  });
+});
+
 refresh();

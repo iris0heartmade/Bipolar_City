@@ -1,4 +1,4 @@
-// 城市详情渲染：可见字段 + 锁定字段 + 关系 + AI 最近动作。
+// 城市详情渲染：可见字段 + 锁定字段 + 关系 + AI 最近动作 + M26 外交行动。
 
 const FIELD_LABELS = {
   population_g: '人口量级',
@@ -17,6 +17,14 @@ const FIELD_LABELS = {
   monthly_trade_volume_cents: '月贸易额',
   cash_months: 'GOV 现金覆盖月数',
 };
+
+const DIPLOMACY_ACTIONS = [
+  { key: 'trade_agreement', label: '贸易协议', delta: '+1/月' },
+  { key: 'aid',             label: '援助',     delta: '▲金额/100' },
+  { key: 'immigration_open', label: '开放移民', delta: '+3' },
+  { key: 'statement',       label: '公开声明', delta: '+2/月' },
+  { key: 'tariff',          label: '征收关税', delta: '-10' },
+];
 
 function formatValue(key, value) {
   if (value === null || value === undefined) return '？？？';
@@ -54,6 +62,23 @@ export function renderDetail(detail) {
   if (detail.is_player) {
     lines.push(`<p class="hint">玩家城市详情请访问 <a href="/industry" style="color:#d4a537">行业经营</a> 页面。</p>`);
   } else {
+    // M26：外交行动按钮（仅 NPC 城市）
+    lines.push('<h3>外交行动</h3>');
+    lines.push('<div class="actions">');
+    for (const action of DIPLOMACY_ACTIONS) {
+      lines.push(`<button class="dip-btn" data-action="${action.key}" data-city="${detail.id}">
+        <strong>${action.label}</strong><small>${action.delta}</small>
+      </button>`);
+    }
+    lines.push('</div>');
+    // 援助金额输入
+    lines.push(`<div id="aid-input-wrap" class="aid-input" style="display:none">
+      <label>援助金额（CR）<input id="aid-amount" type="number" min="100" step="100" value="500"></label>
+      <button id="aid-confirm" class="primary">执行援助</button>
+    </div>`);
+    lines.push(`<div id="dip-result" class="dip-result"></div>`);
+    // 历史
+    lines.push(`<div id="dip-history" class="dip-history"></div>`);
     // 字段顺序按 FIELD_LABELS
     for (const [key, label] of Object.entries(FIELD_LABELS)) {
       const hasValue = detail[key] !== undefined && detail[key] !== null;
@@ -83,4 +108,83 @@ export function renderDetail(detail) {
   }
 
   document.getElementById('detail-content').innerHTML = lines.join('');
+  // M26：绑定外交按钮
+  bindDiplomacyHandlers(detail.id);
+  // 加载玩家对该城市的历史
+  loadDiplomacyHistory(detail.id);
+}
+
+function bindDiplomacyHandlers(cityId) {
+  const buttons = document.querySelectorAll('.dip-btn');
+  buttons.forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const action = btn.dataset.action;
+      if (action === 'aid') {
+        // 援助需要金额：弹出输入框
+        document.getElementById('aid-input-wrap').style.display = 'block';
+        document.getElementById('aid-confirm').onclick = () => {
+          const amount = Number(document.getElementById('aid-amount').value || 0);
+          submitDiplomacyAction(cityId, 'aid', amount);
+        };
+      } else {
+        submitDiplomacyAction(cityId, action, 0);
+      }
+    });
+  });
+}
+
+async function submitDiplomacyAction(cityId, actionKey, amountCr) {
+  const resultEl = document.getElementById('dip-result');
+  resultEl.textContent = '执行中…';
+  try {
+    const r = await fetch('/api/world/diplomacy_action', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        action_key: actionKey, target_city_id: cityId,
+        amount_cr: amountCr, note: '',
+      }),
+    });
+    const data = await r.json();
+    if (data.success) {
+      const f = data.relation.friendliness;
+      const v = data.relation.visibility;
+      resultEl.innerHTML = `<span class="ok">✓ 友好度 → ${f}/100（可见等级 ${v}）</span>`;
+      // 隐藏 aid 输入框
+      const aiWrap = document.getElementById('aid-input-wrap');
+      if (aiWrap) aiWrap.style.display = 'none';
+      // 重新加载历史
+      loadDiplomacyHistory(cityId);
+      // 触发外层 refresh（更新地图连线颜色 + 详情面板友好度）
+      window.dispatchEvent(new Event('diplomacy-changed'));
+    } else {
+      resultEl.innerHTML = `<span class="err">✗ 拒绝：${data.reason}</span>`;
+    }
+  } catch (error) {
+    resultEl.innerHTML = `<span class="err">✗ 网络错误：${error.message}</span>`;
+  }
+}
+
+async function loadDiplomacyHistory(cityId) {
+  const histEl = document.getElementById('dip-history');
+  if (!histEl) return;
+  try {
+    const r = await fetch(`/api/world/diplomacy_actions/${cityId}`);
+    const data = await r.json();
+    if (!data || data.length === 0) {
+      histEl.innerHTML = '<p class="hint">暂无外交行动历史</p>';
+      return;
+    }
+    const lines = ['<h3>外交行动历史</h3>'];
+    for (const a of data.slice(0, 8)) {
+      const sign = a.friendliness_delta >= 0 ? '+' : '';
+      const okMark = a.success ? '✓' : '✗';
+      lines.push(`<div class="row"><span>${okMark} ${a.action_key}（月 ${a.month}）</span>` +
+                 `<span class="value">${sign}${a.friendliness_delta} ${a.success ? '' : '— ' + a.reject_reason}</span></div>`);
+    }
+    histEl.innerHTML = lines.join('');
+  } catch (error) {
+    histEl.innerHTML = '';
+  }
 }
