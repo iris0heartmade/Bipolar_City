@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.industry_api import IndustryGame, router as industry_router
 from backend.game_api import router as game_router
+from backend.world_api import router as world_router
 from backend.config import ROOT, SERVER
 from backend.logging_setup import setup_logging
 
@@ -32,6 +33,8 @@ app = FastAPI(title="BIPOLE 城市纪事", version="2.1.2", lifespan=lifespan)
 app.include_router(industry_router)
 # 地图游戏（index.html 等距地图 + 房屋建造视觉）路由
 app.include_router(game_router)
+# 世界地图（/world 独立页面 + 5 NPC 城市 + AI 市长 + 脱敏视图）路由
+app.include_router(world_router)
 app.mount("/static", StaticFiles(directory=ROOT / "frontend"), name="static")
 
 
@@ -45,6 +48,12 @@ def index():
 def industry():
     """行业经营子页面（图表 webui，阶段 14+15）。"""
     return FileResponse(ROOT / 'frontend/industry.html')
+
+
+@app.get('/world', include_in_schema=False)
+def world():
+    """世界地图独立页面（5 NPC 城市节点 + 关系 + 脱敏视图）。"""
+    return FileResponse(ROOT / 'frontend/world.html')
 
 
 if __name__ == "__main__":

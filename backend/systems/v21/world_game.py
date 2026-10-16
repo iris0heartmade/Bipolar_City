@@ -70,9 +70,13 @@ class WorldGame:
             return self.world.player_city().id
         except ValueError:
             return None
-    
+
     def get_city_node(self, city_id: str):
         return self.world.get_city(city_id)
+
+    def player_city_proxy(self):
+        """玩家城市的代理占位；实际 IndustryEconomy 由 IndustryGame 持有。"""
+        return None
 
 
 # 全局单例（API 层使用）
